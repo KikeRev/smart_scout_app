@@ -1,0 +1,520 @@
+/* ==========================================================================
+   0) Importaciones y fuentes
+   ========================================================================== */
+/* 1) Import Montserrat para todo el sitio */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+body, h1, h2, h3, h4, h5, h6, .btn, .card {
+  font-family: "Montserrat", sans-serif;
+}
+
+
+/* ==========================================================================
+   1) RESET / UTILIDADES GENERALES
+   ========================================================================== */
+/* Bordes genéricos */
+.border {
+  border: 2px solid #222 !important;
+}
+
+/* Anchor genérico “registro/entrar” */
+.link-register {
+  color: #0b3d0b;
+  font-weight: bold;
+  text-decoration: none;
+}
+.link-register:hover {
+  color: #165b16;
+  text-decoration: underline;
+}
+
+/* Botón submit genérico */
+.btn-submit {
+  background-color: #0b3d0b;
+  color: #fff !important;
+  text-transform: uppercase;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  border: none;
+}
+.btn-submit:hover {
+  background-color: #145a14;
+}
+
+
+/* ==========================================================================
+   2) BACKGROUND GENERAL Y EFECTOS
+   ========================================================================== */
+/* Capa de fondo con césped */
+body {
+  position: relative;
+  z-index: 0;
+  background-color: #f8f9fa; /* backup */
+}
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url("../img/grass.jpg") center center / cover no-repeat;
+  opacity: 0.15;          /* ajusta la transparencia */
+  z-index: -1;            /* detrás de todo */
+  pointer-events: none;   /* no interfiere con clicks */
+}
+
+/* ==========================================================================
+   3) NAVBAR
+   ========================================================================== */
+.navbar.bg-primary {
+  background-color: #0b3d0b !important;  /* verde oscuro */
+  border-color: #064009 !important;      /* borde más oscuro opcional */
+}
+.navbar .navbar-brand,
+.navbar .nav-link {
+  color: #f8f9fa !important;             /* texto claro */
+}
+.navbar .nav-link:hover {
+  color: #c4e1c4 !important;             /* hover suave */
+}
+
+
+/* ==========================================================================
+   4) FOOTER
+   ========================================================================== */
+footer.site-footer {
+  background-color: #0b3d0b !important;
+  background-image: none !important;
+  color: #f8f9fa !important;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  margin-top: 2rem;
+}
+footer.site-footer img {
+  opacity: 0.8;
+  transition: opacity .2s;
+}
+footer.site-footer img:hover {
+  opacity: 1;
+}
+
+
+/* ==========================================================================
+   5) TIPOGRAFÍA / TÍTULOS Y BOTONES PRINCIPALES
+   ========================================================================== */
+/* Títulos uppercase, centrados y verde oscuro */
+h1.display-5, h2, h4 {
+  text-transform: uppercase;
+  text-align: center;
+  color: #0b3d0b;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+/* Subtítulos (p.lead) */
+.lead {
+  text-align: center;
+  color: rgba(0,0,0,0.7);
+  margin-bottom: 2rem;
+}
+/* Botones principales */
+.btn-outline-primary {
+  border-color: #0b3d0b !important;
+  color: #0b3d0b !important;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+}
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background-color: #0b3d0b !important;
+  color: #fff !important;
+}
+
+
+/* ==========================================================================
+   6) GALERÍA DE FOTOS (HOME)
+   ========================================================================== */
+/* Aumenta la altura de las imágenes en móviles */
+@media (max-width: 576px) {
+  #galleryCarousel .carousel-item img {
+    height: 200px !important;
+  }
+}
+/* Box-shadow ligero */
+#galleryCarousel .carousel-item img {
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+
+/* ==========================================================================
+   7) NEWS TICKER
+   ========================================================================== */
+#newsCarousel .carousel-item .bg-dark {
+  background-color: rgba(11, 61, 11, 0.85) !important; /* semitransparente */
+}
+
+
+/* ==========================================================================
+   8) HOME – ÚLTIMOS INFORMES
+   ========================================================================== */
+/* Título “Tus últimos informes” */
+.home-reports-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  font-size: 1.25rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+.home-reports-title svg {
+  font-size: 1.5rem;
+  color: #0b3d0b;
+}
+/* Link bajo la imagen */
+a.report-link {
+  color: #0b3d0b;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+a.report-link:hover {
+  color: #2a5c2a;
+}
+/* Overlay y zoom en hover */
+.report-thumb {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  border-radius: 4px;
+}
+.report-thumb img {
+  display: block;
+  transition: transform .3s ease;
+}
+.report-thumb::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(11, 61, 11, 0);
+  transition: background .3s ease;
+}
+.report-thumb:hover::after {
+  background: rgba(11, 61, 11, 0.3);
+}
+.report-thumb:hover img {
+  transform: scale(1.05);
+}
+
+
+/* ==========================================================================
+   9) LOGIN PAGE
+   ========================================================================== */
+.login-wrapper {
+  display: flex;
+  align-items: flex-start; /* empuja hacia arriba */
+  justify-content: center;
+  padding-top: 1vh;
+  padding-bottom: 5vh;
+}
+.login-card {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(8px);
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  padding: 2rem;
+  max-width: 360px;
+  width: 100%;
+}
+.login-logo {
+  max-width: 120px;
+  margin-bottom: 1rem;
+}
+.login-title {
+  color: #0b3d0b;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  font-family: 'Montserrat', serif;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+.login-input {
+  border: 2px solid #0b3d0b;
+}
+.login-card .form-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-transform: uppercase;
+  font-family: 'Montserrat', serif;
+  font-weight: bold;
+  color: #0b3d0b;
+  margin-bottom: 0.5rem;
+}
+.btn-login {
+  background-color: #0b3d0b;
+  color: #fff;
+  text-transform: uppercase;
+  font-weight: bold;
+  border: none;
+}
+.btn-login:hover {
+  background-color: #08320a;
+}
+.login-footer-text {
+  font-size: 0.9rem;
+}
+
+
+/* ==========================================================================
+   10) PROFILE VIEW
+   ========================================================================== */
+.profile-wrapper {
+  padding: 2rem 1rem;
+}
+.profile-card {
+  max-width: 900px;
+  background: rgba(255,255,255,0.9);
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+}
+.avatar-img {
+  width: 350px;
+  height: 350px;
+  object-fit: cover;
+  border: 4px solid #0b3d0b;
+}
+.profile-username {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #0b3d0b;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+.profile-info ul li {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #1a1a1a;
+}
+.team-logo {
+  max-height: 60px;
+}
+.btn-edit-profile {
+  background-color: #0b3d0b;
+  border-color: #0b3d0b;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+.btn-edit-profile:hover {
+  background-color: #165b16;
+  border-color: #165b16;
+}
+
+
+/* ==========================================================================
+   11) PROFILE EDIT FORM
+   ========================================================================== */
+.profile-form-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+.profile-form-card {
+  width: 100%;
+  max-width: 500px;
+  background: rgba(255,255,255,0.9);
+  border: none;
+  border-radius: .5rem;
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,0.1);
+  padding: 2rem;
+}
+.profile-form-card h2 {
+  font-size: 1.75rem;
+  color: #0b3d0b;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.profile-form-card label {
+  font-weight: bold;
+  color: #0b3d0b;
+  text-transform: uppercase;
+}
+.profile-form-card .form-control {
+  border: 2px solid #0b3d0b;
+  border-radius: .25rem;
+  padding: .5rem;
+}
+.profile-form-card .form-control:focus {
+  box-shadow: 0 0 0 .2rem rgba(11,61,11,.25);
+  border-color: #0b3d0b;
+}
+.profile-form-card .btn-save {
+  background-color: #0b3d0b;
+  border-color: #0b3d0b;
+  color: #fff !important;
+  text-transform: uppercase;
+  font-weight: bold;
+  width: 100%;
+  margin-top: 1rem;
+}
+.profile-form-card .btn-save:hover {
+  background-color: #165b16;
+  border-color: #165b16;
+  color: #fff !important;
+}
+.profile-form-card .alert-success {
+  background-color: rgba(11,61,11,.1);
+  color: #0b3d0b;
+  border: 1px solid #0b3d0b;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+
+/* ==========================================================================
+   12) GENERIC FORM CARD (REPORT FORM, REGISTER FORM…)
+   ========================================================================== */
+.form-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+.form-card {
+  background: rgba(255,255,255,0.95);
+  border-radius: 0.5rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 900px;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+}
+.form-card .card-title,
+.form-card .form-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 3rem;
+  color: #0b3d0b;
+  text-align: center;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+.form-card .control-label,
+.form-card .form-label {
+  text-transform: uppercase;
+  font-family: 'Montserrat', sans-serif;
+  color: #0b3d0b;
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+.form-card .form-input,
+.form-card textarea.form-input {
+  border: 1px solid #0b3d0b;
+  font-size: 1.25rem;
+  font-family: 'Montserrat', sans-serif;
+  padding: 0.5rem;
+}
+.form-card .btn-submit {
+  /* coincide con .btn-submit genérico */
+}
+
+/* -------------- Finder form box -------------- */
+.finder-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.form-card {
+  border: 0;
+  box-shadow: 0 0 12px rgba(0,0,0,.15);
+}
+
+.form-card h3 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  color: #004400;
+}
+
+/* unify select-multiple height */
+select[multiple] { min-height: 150px; }
+
+/* Submit button reuse */
+.btn-submit {
+  background:#004400;
+  color:#fff;
+  font-weight:600;
+}
+.btn-submit:hover { background:#007900; }
+
+/* --- REPORTS: LISTA --- */
+.reports-list-title   { font-family: 'Montserrat', sans-serif; }
+.reports-badge        { font-size: .75rem; max-width: 40ch; }
+
+/* --- REPORTS: DETALLE --- */
+#candidates-table thead th { text-transform: uppercase; font-size: .8rem; }
+
+/* Botón primario coherente */
+.btn-submit { background:#0b3d0b; border-color:#0b3d0b; }
+.btn-submit:hover { background:#094a09; border-color:#094a09; }
+
+/*------------------- Menu Perfil ----------------------*/
+/* 1. Asegúrate de usar la misma familia y pesos de fuente */
+.navbar-nav .nav-link,
+.navbar-brand,
+.navbar-nav .dropdown-item {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+}
+
+/* 2. Dropdown: fondo y bordes coherentes con la navbar */
+.navbar-dark .dropdown-menu {
+  background-color: #0b3d0b !important;
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+}
+
+/* 3. Items del dropdown: texto y hover */
+.navbar-dark .dropdown-menu .dropdown-item {
+  color: #fff;                              /* texto blanco */
+  padding: 0.5rem 1rem;
+}
+.navbar-dark .dropdown-menu .dropdown-item:hover,
+.navbar-dark .dropdown-menu .dropdown-item:focus {
+  background-color: rgba(255,255,255,0.1);  /* aclarar ligeramente al pasar el ratón */
+  color: #fff;
+}
+
+/* 4. Separador más suave (si lo usas) */
+.navbar-dark .dropdown-menu .dropdown-divider {
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* 5. Cuadro del toggle igual que nav-link pero con cursor pointer */
+.navbar-dark .nav-link.dropdown-toggle {
+  color: #fff;
+}
+.navbar-dark .nav-link.dropdown-toggle:hover,
+.navbar-dark .nav-link.dropdown-toggle:focus {
+  color: rgba(255,255,255,0.75);
+}
+
+/* 6. Ajuste de padding para mayor espacio */
+.navbar-nav .nav-item {
+  margin-left: 1rem;
+}
+
+/* limita el form de logout dentro de la navbar a comportarse como un enlace */
+.navbar .logout-form {
+    display: inline-flex;          /* se comporta como <a> */
+    margin: 0;    
+}
+.navbar .logout-form button {
+    padding: 0;                    /* que parezca texto */
+    color: var(--bs-navbar-color); /* mismo color que nav-link */
+    background: none;
+    border: none;
+    line-height: 1;
+}
+.navbar .logout-form button:hover,
+.navbar .logout-form button:focus {
+    color: var(--bs-navbar-hover-color);
+    text-decoration: underline;    /* imita a <a> al pasar el ratón */
+}
+

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static form_tags %} 
+{% block title %}Entrar · Smart Scout{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-4">
+    <h2 class="mb-4 text-center">Iniciar sesión</h2>
+
+    {% if form.errors %}
+      <div class="alert alert-danger">
+        Usuario o contraseña incorrectos
+      </div>
+    {% endif %}
+
+    <form method="post" novalidate class="vstack gap-3">
+      {% csrf_token %}
+      <div>
+        <label class="form-label" for="id_username">Email</label>
+        {{ form.username|add_class:"form-control" }}
+      </div>
+      <div>
+        <label class="form-label" for="id_password">Contraseña</label>
+        {{ form.password|add_class:"form-control" }}
+      </div>
+
+      {% if redirect_field_value %}
+        <input type="hidden"
+               name="{{ redirect_field_name }}"
+               value="{{ redirect_field_value }}">
+      {% endif %}
+
+      <button class="btn btn-success w-100">Entrar</button>
+    </form>
+
+    <p class="mt-3 text-center">
+      ¿No tienes cuenta?
+      <a href="{% url 'users:signup' %}">Regístrate</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

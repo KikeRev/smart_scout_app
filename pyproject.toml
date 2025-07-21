@@ -1,0 +1,73 @@
+[project]
+name = "agent-smart-scouting-ai"
+version = "0.0.1"
+description = "Conversational AI scouting platform – FastAPI backend, Django UI, embeddings & RAG"
+authors = [
+  { name = "Enrique Revuelta", email = "enrique.revuelta@bain.com" }
+]
+requires-python = ">=3.11"
+
+dependencies = [
+  # --- Web & API layer ---
+  "fastapi",
+  "uvicorn[standard]",
+  "django==5.2.3",
+  "django-bootstrap5>=25.1",
+  "django-widget-tweaks>=1.5.0",
+  "dj-database-url>=1.0",
+  "python-decouple>=3.8",
+  "django-allauth",
+
+  # --- GenAI & RAG ---
+  "langchain",
+  "langgraph",
+  "sentence-transformers",
+  "llama-cpp-python",
+  "faiss-cpu>=1.8",
+  "transformers>=4.43",
+  "torch>=2.3",
+  "sentencepiece>=0.2",
+
+  # --- Data processing & ML ---
+  "pandas",
+  "numpy",
+  "scipy",
+  "scikit-learn",
+  "rapidfuzz",
+  "matplotlib",
+  "plotly",
+  "mplsoccer",
+  "highlight_text",
+
+  # --- ETL / scraping ---
+  "feedparser>=6.0",
+  "newspaper3k>=0.2.8",
+  "lxml_html_clean",
+  "tabulate>=0.9",
+  "requests",
+
+  # --- Vector & storage ---
+  "psycopg2-binary",
+  "pgvector",
+  "redis",
+  "sqlalchemy",
+
+  # --- Task queue & workers ---
+  "celery>=5.4",
+  "python-dotenv",
+
+  # --- Reporting ---
+  "fpdf2",
+  "kaleido",
+  "markdown",
+
+  # --- Dev & notebooks (optional, installed in dev profile) ---
+  "jupyterlab",
+  "ipykernel"
+]
+
+[tool.pip]
+extra-index-url = ["https://download.pytorch.org/whl/cpu"]
+
+[tool.uv]
+# Additional uv configuration can go here if needed
