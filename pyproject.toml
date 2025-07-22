@@ -38,6 +38,7 @@ dependencies = [
   "plotly",
   "mplsoccer",
   "highlight_text",
+  "unidecode",
 
   # --- ETL / scraping ---
   "feedparser>=6.0",
