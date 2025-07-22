@@ -1,10 +1,38 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, Body, HTTPException
 from sqlalchemy import select, func, literal, cast
 from sqlalchemy.orm import Session
 import numpy as np
 from pgvector.sqlalchemy import Vector
 from apps.ingestion.seed_and_ingest import Player   # modelo ya existente
 from apps.agent_service.db import get_session
+from typing import List
+from decimal import Decimal
+from pgvector.sqlalchemy import Vector as PGVector
+
+
+def _serialize(v):
+    """Convierte cualquier valor de SQLAlchemy a algo JSON-safe."""
+    if v is None:
+        return None
+
+    # ── vectores o secuencias ───────────────────────────────
+    if isinstance(v, (PGVector, list, tuple, np.ndarray)):
+        # Asegura que *cada* elemento sea float/int nativo
+        return [ _serialize(x) for x in list(v) ]
+
+    # ── escalares numpy (np.float32, np.int64, …) ───────────
+    if isinstance(v, np.generic):
+        return v.item()           # → float / int de Python
+
+    # ── Decimals opcionales ─────────────────────────────────
+    if isinstance(v, Decimal):
+        return float(v)
+
+    # ── tipos ya serializables (str, int, float, datetime…) ─
+    return v
+
+def player_to_dict(p: Player) -> dict:
+    return {c.name: _serialize(getattr(p, c.name)) for c in Player.__table__.columns}
 
 router = APIRouter(prefix="/players", tags=["players"])
 
@@ -79,3 +107,15 @@ def similar_players(
         }
         for p, dist in rows
     ]
+
+@router.post("/batch", summary="Devuelve todas las métricas de varios jugadores")
+def players_batch(
+    ids: List[int] = Body(..., embed=True, example=[274, 311, 658]),
+    db: Session = Depends(get_session),
+):
+    rows = db.query(Player).filter(Player.id.in_(ids)).all()
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="No players found")
+
+    return [player_to_dict(p) for p in rows]

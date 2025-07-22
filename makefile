@@ -1,41 +1,43 @@
 # Root‑level Makefile helpers -------------------------------------
 COMPOSE = docker compose
+PROJECT = smart_scouting_app
 
-.PHONY: build up dev down logs ps shell migrate test clean
+SERVICES := api dashboard ingestion db redis web jupyter
 
+.PHONY: up build stop down down-all restart prune clean
+
+## Compila imágenes si hace falta y levanta (recrea contenedores)
+up: build
+	$(COMPOSE) up -d --force-recreate --remove-orphans $(SERVICES)
+
+## Build explícito (opcional)
 build:
-	$(COMPOSE) build  
+	$(COMPOSE) build $(SERVICES)
 
-up:
-	$(COMPOSE) up -d api dashboard ingestion db redis web jupyter
+## Detiene contenedores (NO borra redes ni volúmenes)
+stop:
+	$(COMPOSE) stop $(SERVICES)
 
-dev:
-	$(COMPOSE) --profile dev up -d web jupyter db redis
-
+## Elimina contenedores y la red; CONSERVA volúmenes
 down:
-	$(COMPOSE) down
+	$(COMPOSE) down --remove-orphans
+	-$(COMPOSE) rm -fv $(SERVICES) 2>NUL
+	-@docker network rm $(PROJECT_NAME)_scouting-net 2>NUL || echo Net cleared
 
-logs:
-	$(COMPOSE) logs -f --tail=100
+## Versión “todo-a-cero” (incluye volúmenes) → úsala sólo si estás de acuerdo en borrar pgdata
+down-all:
+	$(COMPOSE) down --volumes --remove-orphans
+	-@docker network rm $(PROJECT_NAME)_scouting-net 2>NUL || echo Net cleared
 
-ps:
-	$(COMPOSE) ps
+## Reinicia rápido
+restart: down up                     # o  stop && up  si no quieres recrear
 
-shell-dev:
-	$(COMPOSE) exec jupyter web bash
+## Limpieza agresiva de todo lo huérfano (imágenes, builds, etc.)
+prune:
+	docker container prune -f
+	docker network   prune -f
+	docker volume    prune -f
+	docker buildx    prune -af
 
-shell-web:
-	$(COMPOSE) exec web db redis bash
-
-shell:
-	$(COMPOSE) exec api bash
-
-migrate:
-	$(COMPOSE) exec dashboard python apps/dashboard/manage.py migrate
-
-test:
-	$(COMPOSE) exec api pytest -q
-
-clean:
-	$(COMPOSE) down -v --remove-orphans
-	docker system prune -f
+## “clean” = prune + build fresco
+clean: prune build
