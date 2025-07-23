@@ -22,8 +22,10 @@ from django.views.generic import RedirectView
 
 urlpatterns = [
     path("", include("apps.dashboard.urls")),     # /
-    path("accounts/", include("apps.users.urls")),# login / signup
+    path("users/", include("apps.users.urls", namespace="users")),
+    path("chat/", include(("apps.dashboard.chats.urls", "chats"), namespace="chats")),
     path("admin/", admin.site.urls),
+    
 ]
 
 if settings.DEBUG:

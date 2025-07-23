@@ -7,6 +7,17 @@ x-networks: &default_networks
     - scouting-net
 
 services:
+# ============== LLM ====================
+  llm:
+    image: ollama/ollama:latest
+    container_name: mistral-ollama
+    ports:
+       - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama    # cache modelos
+    environment:
+      - OLLAMA_MODELS=/root/.ollama
+      
   # ==================== CORE ====================
   api:
     build:
@@ -18,10 +29,14 @@ services:
     volumes:
       - ./:/app  # monta repo completo
     environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_BASE: ${OPENAI_API_BASE}
+      OPENAI_MODEL: ${OPENAI_MODEL}
       PYTHONUNBUFFERED: 1
       PYTHONPATH: /app
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
       REDIS_URL: redis://redis:6379/0
+      
     ports:
       - "8001:8001"
     depends_on:
@@ -135,3 +150,7 @@ networks:
 
 volumes:
   pgdata:
+  ollama:
+
+# - MODEL-
+

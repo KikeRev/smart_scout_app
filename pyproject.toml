@@ -27,6 +27,9 @@ dependencies = [
   "transformers>=4.43",
   "torch>=2.3",
   "sentencepiece>=0.2",
+  "langchain-community>=0.0.34",
+  "openai>=1.30.0",
+  "langchain-openai>=0.1.8",
 
   # --- Data processing & ML ---
   "pandas",

@@ -1,0 +1,5 @@
+.msg {margin:1rem 0; padding:.5rem 1rem; border-radius:6px;}
+.msg.user       {background:#e1ffe1; text-align:right;}
+.msg.assistant  {background:#fff;}
+.chat-form textarea{width:100%; min-height:80px;}
+.session-list li{margin:.5rem 0;}

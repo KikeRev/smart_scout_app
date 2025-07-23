@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.dashboard",
     "django_bootstrap5", 
     "apps.users.templatetags",
+    "apps.dashboard.chats",
 ]
 
 MIDDLEWARE = [

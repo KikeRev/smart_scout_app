@@ -119,3 +119,13 @@ def players_batch(
         raise HTTPException(status_code=404, detail="No players found")
 
     return [player_to_dict(p) for p in rows]
+
+@router.get("/players/search")
+def search_players(query: str, limit: int = 5, db: Session = Depends(get_session)):
+    rows = (
+        db.query(Player.id, Player.full_name, Player.club, Player.position)
+          .filter(Player.full_name.ilike(f"%{query}%"))
+          .limit(limit)
+          .all()
+    )
+    return [dict(r._mapping) for r in rows]
