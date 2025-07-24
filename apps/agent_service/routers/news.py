@@ -47,7 +47,7 @@ _embedder = SentenceTransformer(_EMB_MODEL)
 
 EMB_DIM = 768  # la misma dimensión que usaste al crear la columna embedding
 
-@router.get("/news/search")
+@router.get("/search")
 def news_search_endpoint(
     query: str = Query(..., min_length=3),
     limit: int = Query(10, ge=1, le=50),
