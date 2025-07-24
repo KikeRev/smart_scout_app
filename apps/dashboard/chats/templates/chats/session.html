@@ -1,25 +1,50 @@
 {% extends "base.html" %}
 {% load static %}
-{% block extra_head %}
-  <script src="{% static 'chats/chat.js' %}" defer></script>
-{% endblock %}
 
 {% block content %}
-<div id="chat-container"
-     data-stream-url="{% url 'chats:chat_stream' %}"
-     data-api-url="{% url 'chats:chat_api' %}"
-     data-session-id="{{ session.id }}">
-  <h2 class="title">{{ session.title|default:"Nuevo informe" }}</h2>
+<div class="chat-page">
 
-  <div id="messages">
+  <!-- Historial de mensajes (scroll) -->
+  <div id="chat-log" class="chat-log">
     {% for m in messages %}
       {% include "chats/_message.html" with m=m %}
+    {% empty %}
+        <p class="text-center text-muted">No hay mensajes todavía.</p>
     {% endfor %}
   </div>
 
-  <form id="chat-form" class="chat-form">
-    <textarea name="message" placeholder="Escribe tu pregunta…" required></textarea>
-    <button type="submit" class="btn btn-primary">Enviar</button>
-  </form>
+<!-- Formulario -->
+<form id="chat-form"
+      method="POST"                               
+      hx-post="{% url 'chats:message' session.id %}"
+      hx-target="#chat-log"
+      hx-swap="beforeend"
+      hx-trigger="submit"
+      hx-include="this"
+      class="chat-form">
+
+  {% csrf_token %}
+  
+    <textarea name="text" class="chat-input mb-2" rows="3"
+            placeholder="Escribe tu pregunta…">
+    </textarea>  
+
+    {# botón debajo #}
+    <button type="submit" class="btn btn-submit mu-3 mb-3 align-self-end">
+        <span>Enviar</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+             viewBox="0 0 16 16"><path
+             d="M15.854 0.146a.5.5 0 0 0-.527-.112l-15 6a.5.5 0 0 0 .014.94L5.5 9.418l2.444 5.158a.5.5 0 0 0 .918-.09l6-15a.5.5 0 0 0-.008-.34z"/></svg>
+      </button>
+</form>
+<!-- Limpia el textarea al acabar -->
+<script>
+  document.addEventListener('htmx:afterRequest', (e) => {
+    if (e.target.id === 'chat-form') {
+      e.target.querySelector('textarea').value = '';
+    }
+  });
+</script>
 </div>
 {% endblock %}
+

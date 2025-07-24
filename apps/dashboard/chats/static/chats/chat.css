@@ -3,3 +3,76 @@
 .msg.assistant  {background:#fff;}
 .chat-form textarea{width:100%; min-height:80px;}
 .session-list li{margin:.5rem 0;}
+
+/* ======== Composición general ======== */
+.chat-page{
+  display:flex;            /* columna: historial arriba, input abajo */
+  flex-direction:column;
+  height:calc(100vh - 160px); /* resta cabecera/fotografía; ajusta */
+}
+
+/* ======== Historial ======== */
+.chat-log{
+  flex:1 1 auto;
+  overflow-y:auto;
+  padding:1rem 22%;
+}
+
+/* ======== Caja de entrada ======== */
+.chat-form{
+  flex:0 0 auto;
+  padding:1rem 20%;
+}
+
+.input-wrapper{
+  position:relative;
+  display:flex;
+  align-items:center;
+  max-width:100%;
+}
+
+.input-wrapper textarea{
+  flex:1;
+  resize:none;
+  padding:1rem 3.5rem 1rem 1rem;
+  font-family:inherit;
+  border:2px solid var(--ss-green, #008144);
+  border-radius:0.75rem;
+  min-height:54px;
+  background:#fff;
+  transition:border-color .2s;
+}
+.input-wrapper textarea:focus{
+  outline:none;
+  border-color:#006c36;
+}
+
+/* Botón flotante dentro del textarea (esquina inferior‑derecha) */
+.input-wrapper button{
+  position:absolute;
+  right:8px;
+  bottom:8px;
+  border:none;
+  background:var(--ss-green,#008144);
+  color:#fff;
+  padding:.55rem .9rem;
+  border-radius:.5rem;
+  display:flex;
+  align-items:center;
+  gap:.35rem;
+  font-weight:600;
+  cursor:pointer;
+  transition:background .2s;
+}
+.input-wrapper button:hover{
+  background:#006c36;
+}
+
+/* ======== Responsivo ======== */
+@media (max-width: 991px){   /* tablets / móviles */
+  .chat-log,
+  .chat-form{
+    padding:1rem 5%;
+  }
+}
+

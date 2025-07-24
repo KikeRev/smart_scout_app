@@ -5,9 +5,6 @@ from django.http import StreamingHttpResponse, JsonResponse
 from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt  # si usas CSRF token, no lo quites
 
-FASTAPI = "http://api:8001"   # ajusta si tienes otra URL
-
-# apps/dashboard/chats/views.py
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, TemplateView
@@ -15,6 +12,13 @@ from django.shortcuts import get_object_or_404, redirect
 from apps.dashboard.chats.models import ChatSession, Message
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import DetailView
+
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from django.middleware.csrf import get_token
+from django.utils import timezone
+
+FASTAPI = "http://api:8001"   # ajusta si tienes otra URL
 
 @method_decorator(login_required, name="dispatch")
 class ChatListView(ListView):
@@ -160,3 +164,53 @@ def chat_stream(request):
         "X-Accel-Buffering": "no",   # nginx
     }
     return StreamingHttpResponse(event_stream(), headers=headers)
+
+
+
+@login_required
+@transaction.atomic
+def chat_message(request, pk):
+    """
+    Recibe un POST HTMX con el texto del usuario,
+    llama al agente (sin stream) y devuelve el fragmento
+    HTML de los dos mensajes (user + assistant).
+    """
+    session = get_object_or_404(ChatSession, pk=pk, user=request.user)
+    text     = request.POST.get("text", "").strip()
+    if not text:
+        return HttpResponse(status=204)
+
+    # guarda mensaje del usuario
+    m_user = Message.objects.create(
+        session=session, role="user", content=text, created_at=timezone.now()
+    )
+
+    # llamada síncrona a FastAPI
+    payload = {"message": text, "user_id": str(request.user.id)}
+    r = requests.post(f"{FASTAPI}/chat/", json=payload, timeout=120)
+    r.raise_for_status()
+    answer = r.json()["answer"]
+
+    # guarda respuesta del asistente
+    m_bot = Message.objects.create(
+        session=session, role="assistant", content=answer, created_at=timezone.now()
+    )
+
+    # actualiza título la 1ª vez
+    if not session.title:
+        session.title = answer.split("\n", 1)[0][:100]
+        session.save(update_fields=["title"])
+
+    # devuelve el HTML de ambos mensajes para que HTMX los inserte
+    rendered = render_to_string(
+        "chats/_message.html",
+        {"m": m_user},
+        request=request,
+    ) + render_to_string(
+        "chats/_message.html",
+        {"m": m_bot},
+        request=request,
+    )
+
+    return HttpResponse(rendered)
+

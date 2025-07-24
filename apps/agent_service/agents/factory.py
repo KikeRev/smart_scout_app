@@ -2,6 +2,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain.agents import initialize_agent
 from langchain_core.messages import SystemMessage
 from langchain.callbacks.base import BaseCallbackHandler
+from langchain.schema import HumanMessage, AIMessage, SystemMessage
 from apps.agent_service.agents.tools import TOOLS
 from apps.agent_service.llm_provider import get_llm
 from typing import Optional

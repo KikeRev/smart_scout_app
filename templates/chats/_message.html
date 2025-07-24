@@ -1,9 +1,0 @@
-<div class="msg {{ m.role }}">
-  {{ m.content|linebreaksbr }}
-  {% if m.role == "assistant" %}
-     <span class="rating">
-        👍 <input type="radio" name="rate_{{ m.id }}" value="up">
-        👎 <input type="radio" name="rate_{{ m.id }}" value="down">
-     </span>
-  {% endif %}
-</div>

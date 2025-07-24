@@ -518,3 +518,36 @@ select[multiple] { min-height: 150px; }
     text-decoration: underline;    /* imita a <a> al pasar el ratón */
 }
 
+/* ==========================================================================
+   13) MISCELLANEOUS
+   ========================================================================== */
+
+   .chat-form {
+  max-width: 60%;
+  margin: 2rem auto 0;
+}
+
+.chat-input {
+  width: 100%;
+  border: 2px solid var(--scout-green);
+  border-radius: 8px;
+  padding: .75rem 1rem;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.btn-send {
+  margin-top: .75rem;
+  display: block;
+  margin-left: auto;            /* alineado a la derecha */
+  background: var(--scout-green);
+  color: #fff;
+  border: none;
+  padding: .65rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  transition: background .15s;
+}
+
+.btn-send:hover { background: #0b4e0b; }
