@@ -54,6 +54,9 @@ services:
     volumes:
       - ./:/app
     environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_BASE: ${OPENAI_API_BASE}
+      OPENAI_MODEL: ${OPENAI_MODEL}
       PYTHONUNBUFFERED: 1
       PYTHONPATH: /app
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
@@ -73,6 +76,9 @@ services:
     volumes:
       - ./:/app
     environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_BASE: ${OPENAI_API_BASE}
+      OPENAI_MODEL: ${OPENAI_MODEL}
       PYTHONUNBUFFERED: 1
       PYTHONPATH: /app
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
@@ -114,6 +120,9 @@ services:
       - ./:/app
       - ./notebooks:/notebooks
     environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_BASE: ${OPENAI_API_BASE}
+      OPENAI_MODEL: ${OPENAI_MODEL}
       PYTHONUNBUFFERED: 1
       PYTHONPATH: /app
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
@@ -128,6 +137,9 @@ services:
     build: .
     container_name: scouting-web
     environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_BASE: ${OPENAI_API_BASE}
+      OPENAI_MODEL: ${OPENAI_MODEL}
       DJANGO_SUPERUSER_USERNAME: gobuub
       DJANGO_SUPERUSER_EMAIL: botica1982@msn.com
       DJANGO_SUPERUSER_PASSWORD: 16082016No@
