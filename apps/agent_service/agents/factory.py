@@ -17,8 +17,16 @@ SYSTEM = SystemMessage(
     )
 )
 
-def build_agent(user_id: str = "anon", *, streaming_callback: Optional[BaseCallbackHandler] = None):
-    llm = get_llm(stream=True, callbacks=[streaming_callback] if streaming_callback else None)
+def build_agent(
+    user_id: str = "anon",
+    *,
+    messages=None,                       #  <-- NUEVO
+    streaming_callback: BaseCallbackHandler | None = None,
+):
+    llm = get_llm(
+        stream=True,
+        callbacks=[streaming_callback] if streaming_callback else None,
+    )
 
     memory = ConversationBufferMemory(
         memory_key="chat_history",
@@ -26,7 +34,14 @@ def build_agent(user_id: str = "anon", *, streaming_callback: Optional[BaseCallb
         human_prefix=f"user_{user_id}",
     )
 
-    # Con Ollama/Mistral usamos zero-shot-react-description
+    # ---------- precarga ----------
+    if messages:                         # iterable de objetos Message
+        for m in messages:
+            if m.role == "user":
+                memory.chat_memory.add_message(HumanMessage(content=m.content))
+            else:
+                memory.chat_memory.add_message(AIMessage(content=m.content))
+
     agent = initialize_agent(
         tools=TOOLS,
         llm=llm,

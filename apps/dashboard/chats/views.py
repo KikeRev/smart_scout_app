@@ -17,6 +17,7 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.middleware.csrf import get_token
 from django.utils import timezone
+from apps.agent_service.agents.factory import build_agent
 
 FASTAPI = "http://api:8001"   # ajusta si tienes otra URL
 
@@ -34,14 +35,19 @@ def new_chat_redirect(request):
     return redirect("chats:session", pk=sess.id)
 
 @method_decorator(login_required, name="dispatch")
-class ChatSessionView(TemplateView):
-    template_name = "chats/session.html"
+class ChatSessionView(DetailView):
+    """Pantalla de una conversación concreta"""
+    model = ChatSession
+    template_name = "chats/session.html"      # tu template
+    context_object_name = "session"
+
+    def get_queryset(self):
+        # cada usuario sólo ve sus sesiones
+        return super().get_queryset().filter(user=self.request.user)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        session = get_object_or_404(ChatSession, pk=kwargs["pk"], user=self.request.user)
-        ctx["session"] = session
-        ctx["messages"] = session.message_set.order_by("created_at")
+        ctx["messages"] = self.object.messages.order_by("created_at")
         return ctx
 
 @method_decorator(login_required, name="dispatch")
@@ -171,46 +177,38 @@ def chat_stream(request):
 @transaction.atomic
 def chat_message(request, pk):
     """
-    Recibe un POST HTMX con el texto del usuario,
-    llama al agente (sin stream) y devuelve el fragmento
-    HTML de los dos mensajes (user + assistant).
+    POST HTMX → guarda turno del usuario, invoca al agente (no‑stream),
+    guarda la respuesta y devuelve los dos bloques HTML.
     """
     session = get_object_or_404(ChatSession, pk=pk, user=request.user)
-    text     = request.POST.get("text", "").strip()
+    text = request.POST.get("text", "").strip()
     if not text:
         return HttpResponse(status=204)
 
-    # guarda mensaje del usuario
-    m_user = Message.objects.create(
-        session=session, role="user", content=text, created_at=timezone.now()
+    # 1. histórico
+    past_msgs = session.messages.order_by("created_at")
+
+    # 2. agente con memoria precargada
+    agent = build_agent(
+        user_id=str(request.user.id),
+        messages=past_msgs,
     )
+    answer = agent.invoke({"input": text})["output"]
 
-    # llamada síncrona a FastAPI
-    payload = {"message": text, "user_id": str(request.user.id)}
-    r = requests.post(f"{FASTAPI}/chat/", json=payload, timeout=120)
-    r.raise_for_status()
-    answer = r.json()["answer"]
+    # 3. persistimos
+    m_user, m_bot = Message.objects.bulk_create([
+        Message(session=session, role="user",      content=text),
+        Message(session=session, role="assistant", content=answer),
+    ])
 
-    # guarda respuesta del asistente
-    m_bot = Message.objects.create(
-        session=session, role="assistant", content=answer, created_at=timezone.now()
-    )
-
-    # actualiza título la 1ª vez
+    # 4. título la primera vez
     if not session.title:
         session.title = answer.split("\n", 1)[0][:100]
         session.save(update_fields=["title"])
 
-    # devuelve el HTML de ambos mensajes para que HTMX los inserte
-    rendered = render_to_string(
-        "chats/_message.html",
-        {"m": m_user},
-        request=request,
-    ) + render_to_string(
-        "chats/_message.html",
-        {"m": m_bot},
-        request=request,
+    # 5. render de ambos mensajes
+    rendered = (
+        render_to_string("chats/_message.html", {"m": m_user}, request=request) +
+        render_to_string("chats/_message.html", {"m": m_bot},  request=request)
     )
-
     return HttpResponse(rendered)
-
