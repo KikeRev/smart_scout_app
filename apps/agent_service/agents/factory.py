@@ -13,7 +13,13 @@ SYSTEM = SystemMessage(
         "Si el usuario pide jugadores similares:\n"
         "  1. Llama primero a `player_lookup` para obtener el `player_id`.\n"
         "  2. Después usa `similar_players` con los filtros que el usuario mencione.\n"
-        "Responde en español y muestra las listas como tablas Markdown breves."
+        "  3. En memoria tienes las respuestas pasadas para poder consultar tus respuestas anteriores.\n" \
+        "     por si el usuario pregunta por un jugador que ya has respondido o por listas que ya has creado.\n"
+        "  4. Puedes preguntar al usuario si quiere ver algunas estadísticas concretas de la lista que has .\n"
+        "     propocionado, en ese caso puedes consultar las estadísticas de los jugadores en la base de datos.\n"
+        "     y devolverlas en forma de dataframe de pandas y mostrarlo en pantalla, si no te dice estadisticas.\n"
+        "     concretas, muestra las estadísticas más relevantes en base a la posición de los jugadores.\n"
+        "Responde en español y muestra las listas como pandas dataframes."
     )
 )
 
