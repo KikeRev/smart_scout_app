@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import AsyncIterator, Dict, Optional
+from typing import AsyncIterator, Dict, Optional, Literal, List
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
@@ -15,17 +15,28 @@ import queue
 from starlette.responses import StreamingResponse
 from langchain.callbacks.base import BaseCallbackHandler
 
+import langchain
+
+langchain.debug = True       
+langchain.verbose = True
+
+
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
 # --------------------------------------------------------------------------- #
 #  Modelos Pydantic
 # --------------------------------------------------------------------------- #
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant", "system"]
+    content: str
+
 class ChatRequest(BaseModel):
-    """
-    Petición para respuesta «no-stream» (una única respuesta).
-    """
-    message: str = Field(..., description="Mensaje del usuario")
+    message: str
+    session_id: Optional[str] = None
+    user_id:    Optional[str] = None      # ← opcional, por si lo mandas
+    messages:   Optional[List[ChatMessage]] = None
 
 
 class ChatStreamRequest(ChatRequest):
@@ -65,11 +76,11 @@ class QueueStreamCallback(BaseCallbackHandler):
 # --------------------------------------------------------------------------- #
 @router.post("/", summary="Chat sin streaming")
 def chat(req: ChatRequest):
-    """
-    Devuelve una única respuesta completa del agente.
-    """
-    agent = build_agent()                      # sin auth  →  user_id = "anon"
-    result: Dict[str, str] = agent.invoke({"input": req.message})
+    agent = build_agent(
+        user_id=req.user_id or "anon",
+        messages=req.messages,            # ← histórico llega aquí
+    )
+    result = agent.invoke({"input": req.message})
     return {"answer": result["output"]}
 
 
@@ -79,7 +90,11 @@ def chat(req: ChatRequest):
 @router.post("/stream", summary="Chat con streaming (SSE)")
 async def chat_stream(req: ChatRequest):
     callback = QueueStreamCallback()
-    agent = build_agent(streaming_callback=callback)
+    agent = build_agent(
+        user_id=req.user_id or "anon",
+        messages=req.messages,
+        streaming_callback=callback,
+    )
 
     # lanza el LLM en segundo plano para no bloquear
     async with anyio.create_task_group() as tg:

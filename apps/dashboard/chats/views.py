@@ -60,74 +60,92 @@ class ChatDetailView(LoginRequiredMixin, DetailView):
         # filtra por usuario → nadie ve las sesiones de otros
         return super().get_queryset().filter(user=self.request.user)
 
+# --------------------------------------------------------------------------- #
+#  1)  /chat  – respuesta completa JSON
+# --------------------------------------------------------------------------- #
 @login_required
 @transaction.atomic
 def chat_api(request):
-    data = json.loads(request.body)
-    text = data["message"].strip()
-    user = request.user
+    data  = json.loads(request.body)
+    text  = data["message"].strip()
+    user  = request.user
 
-    # 1. crea sesión si viene session_id o crea nueva
+    # 1. sesión (crea o recupera)
     session_id = data.get("session_id")
     if session_id:
         session = ChatSession.objects.select_for_update().get(id=session_id, user=user)
     else:
         session = ChatSession.objects.create(user=user)
 
+    # 2. guarda el turno del usuario  (✔ una sola vez)
     Message.objects.create(session=session, role="user", content=text)
 
-    # 2. llama al agente con user.id para que guarde contexto allí
-    payload = {"message": text, "user_id": str(user.id)}
+    # 3. prepara histórico (k = 20 últimos)
+    past = session.messages.order_by("-created_at")[:20][::-1]
+    history = [
+        {"role": "user" if m.role == "user" else "assistant", "content": m.content}
+        for m in past
+    ]
+
+    # 4. invoca al micro‑servicio FastAPI
+    payload = {
+        "session_id": str(session.id),
+        "user_id":    str(user.id),
+        "message":    text,
+        "messages":   history,
+    }
     r = requests.post(f"{FASTAPI}/chat/", json=payload, timeout=120)
     r.raise_for_status()
     answer = r.json()["answer"]
 
+    # 5. guarda la respuesta del asistente
     Message.objects.create(session=session, role="assistant", content=answer)
 
-    # 3. Primera respuesta → define título
+    # 6. título automático (primera vez)
     if not session.title:
-        session.title = answer.split("\n", 1)[0][:100]  # primer renglón / 100 chars
+        session.title = answer.split("\n", 1)[0][:100]
         session.save(update_fields=["title"])
 
-    return JsonResponse({
-        "session_id": session.id,
-        "answer":     answer,
-    })
+    return JsonResponse({"session_id": session.id, "answer": answer})
 
+
+# --------------------------------------------------------------------------- #
+#  2)  /chat – streaming (Server‑Sent Events)
+# --------------------------------------------------------------------------- #
 @login_required
 @csrf_exempt
 @transaction.atomic
 def chat_stream(request):
-    """
-    Devuelve la respuesta del agente como un stream (SSE o chunks JSON-lines).
-    Front-end: abrir con fetch y procesar línea a línea.
-    """
-    data = json.loads(request.body)
-    text = data["message"].strip()
-    user = request.user
+    data  = json.loads(request.body)
+    text  = data["message"].strip()
+    user  = request.user
 
-    # 1. crear/recuperar la sesión del usuario
+    # 1. sesión (crea o recupera)
     session_id = data.get("session_id")
     if session_id:
         session = ChatSession.objects.select_for_update().get(id=session_id, user=user)
     else:
         session = ChatSession.objects.create(user=user)
 
+    # 2. guarda el turno del usuario (✔ una sola vez)
     Message.objects.create(session=session, role="user", content=text)
 
+    # 3. histórico para el agente
+    past = session.messages.order_by("-created_at")[:20][::-1]
+    history = [
+        {"role": "user" if m.role == "user" else "assistant", "content": m.content}
+        for m in past
+    ]
+
+    # 4. generador SSE
     def event_stream():
-        """
-        Generador que:
-        1. abre conexión al agente en modo stream
-        2. va reenviando los trozos al navegador y guardándolos en la BD
-        3. cierra guardando el mensaje completo
-        Formato de salida = Server-Sent Events:
-          data: <chunk>\n\n
-        """
-        # -------------------------------------------
-        # abrir el stream hacia FastAPI
-        # -------------------------------------------
-        payload = {"message": text, "user_id": str(user.id), "stream": True}
+        payload = {
+            "session_id": str(session.id),
+            "user_id":    str(user.id),
+            "message":    text,
+            "messages":   history,
+            "stream":     True,
+        }
         with requests.post(
             f"{FASTAPI}/chat/",
             json=payload,
@@ -135,43 +153,35 @@ def chat_stream(request):
             stream=True,
         ) as r:
             r.raise_for_status()
-
-            assistant_chunks = []   # para agrupar el mensaje final
+            assistant_chunks = []
 
             for raw in r.iter_lines(decode_unicode=True):
                 if not raw:
-                    continue  # keep-alive vacías
-
-                # FastAPI envía JSON-lines: {"content": "...", "finish": false}
-                obj = json.loads(raw)
+                    continue
+                obj   = json.loads(raw)
                 delta = obj.get("content", "")
                 assistant_chunks.append(delta)
-
-                # ------  emitir al navegador (SSE) ------
-                yield f"data: {delta}\n\n"
+                yield f"data: {delta}\n\n"      # envía token al navegador
 
             full_answer = "".join(assistant_chunks)
 
-        # guardar el mensaje completo cuando termina
+        # 5. guarda la respuesta completa
         Message.objects.create(session=session, role="assistant", content=full_answer)
 
-        # si era la 1ª respuesta -> título
+        # 6. título automático
         if not session.title:
             session.title = full_answer.split("\n", 1)[0][:100]
             session.save(update_fields=["title"])
 
-        # evento especial para cerrar stream y pasar session_id
+        # 7. marca fin de stream
         yield f"event: done\ndata: {json.dumps({'session_id': session.id})}\n\n"
 
-    # Cabeceras SSE
     headers = {
-        "Content-Type":  "text/event-stream",
-        "Cache-Control": "no-cache",
-        "X-Accel-Buffering": "no",   # nginx
+        "Content-Type":      "text/event-stream",
+        "Cache-Control":     "no-cache",
+        "X-Accel-Buffering": "no",
     }
     return StreamingHttpResponse(event_stream(), headers=headers)
-
-
 
 @login_required
 @transaction.atomic

@@ -3,9 +3,15 @@ from langchain.agents import initialize_agent
 from langchain_core.messages import SystemMessage
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.schema import HumanMessage, AIMessage, SystemMessage
+from langchain.prompts.chat import MessagesPlaceholder
 from apps.agent_service.agents.tools import TOOLS
 from apps.agent_service.llm_provider import get_llm
 from typing import Optional
+
+import langchain
+
+langchain.debug = True       
+langchain.verbose = True
 
 SYSTEM = SystemMessage(
     content=(
@@ -23,10 +29,12 @@ SYSTEM = SystemMessage(
     )
 )
 
+
+
 def build_agent(
     user_id: str = "anon",
     *,
-    messages=None,                       #  <-- NUEVO
+    messages=None,
     streaming_callback: BaseCallbackHandler | None = None,
 ):
     llm = get_llm(
@@ -34,26 +42,31 @@ def build_agent(
         callbacks=[streaming_callback] if streaming_callback else None,
     )
 
+    # --- memoria ------------------------------------------------------------
     memory = ConversationBufferMemory(
         memory_key="chat_history",
         return_messages=True,
-        human_prefix=f"user_{user_id}",
     )
 
-    # ---------- precarga ----------
-    if messages:                         # iterable de objetos Message
+    if messages:                              # precarga BD → buffer
         for m in messages:
             if m.role == "user":
                 memory.chat_memory.add_message(HumanMessage(content=m.content))
             else:
                 memory.chat_memory.add_message(AIMessage(content=m.content))
 
+    # --- NUEVO: agent_kwargs con placeholder --------------------------------
     agent = initialize_agent(
         tools=TOOLS,
         llm=llm,
         agent="openai-multi-functions",
         memory=memory,
-        system_message=SYSTEM,
+        agent_kwargs={
+            "system_message": SYSTEM,
+            "extra_prompt_messages": [
+                MessagesPlaceholder(variable_name="chat_history")
+            ],
+        },
         verbose=True,
     )
     return agent

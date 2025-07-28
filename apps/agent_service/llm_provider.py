@@ -18,6 +18,11 @@ from langchain.callbacks.base import BaseCallbackHandler
 from langchain_community.chat_models import ChatOllama
 from langchain_openai import ChatOpenAI
 
+import langchain
+
+langchain.debug = True       
+langchain.verbose = True
+
 
 def get_llm(
     *,
