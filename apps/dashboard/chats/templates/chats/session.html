@@ -19,10 +19,13 @@
       class="chat-form">
   {% csrf_token %}
 
-  <textarea id="chat-input" name="text" class="chat-input"
-            placeholder="Escribe tu pregunta…" required></textarea>
+  <textarea name="text"
+          class="form-control chat-input"
+          rows="4"
+          style="min-height:6rem; width:100%; max-width:800px; resize:vertical;"
+          placeholder="Escribe tu pregunta…" required></textarea>
 
-  <button type="submit" class="btn btn-submit mu-3 mb-3 align-self-end">
+  <button type="submit" class="btn btn-submit btn-send mu-3 mb-3 align-self-end">
         <span>Enviar</span>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
              viewBox="0 0 16 16"><path

@@ -13,5 +13,6 @@ urlpatterns = [
     # endpoints AJAX / streaming
     path("api/",        views.chat_api,    name="chat_api"),                # POST /chat/api
     path("stream/",     views.chat_stream, name="chat_stream"),             # POST /chat/stream
+    path("chat/<int:pk>/delete/", views.chat_delete, name="chat_delete"),
 ]
 

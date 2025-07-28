@@ -18,6 +18,8 @@ from django.template.loader import render_to_string
 from django.middleware.csrf import get_token
 from django.utils import timezone
 from apps.agent_service.agents.factory import build_agent
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_protect
 
 FASTAPI = "http://api:8001"   # ajusta si tienes otra URL
 
@@ -222,3 +224,19 @@ def chat_message(request, pk):
         render_to_string("chats/_message.html", {"m": m_bot},  request=request)
     )
     return HttpResponse(rendered)
+
+# --------------------------------------------------------------------------- #
+#  Elimina una sesión de chat (y sus mensajes)
+# --------------------------------------------------------------------------- #
+
+@login_required
+@require_POST          # ← en lugar de DELETE
+@csrf_protect 
+def chat_delete(request, pk):
+    """
+    Borra una ChatSession (y sus mensajes en cascada).
+    Devuelve 204 para que HTMX quite el nodo del DOM.
+    """
+    session = get_object_or_404(ChatSession, pk=pk, user=request.user)
+    session.delete()
+    return HttpResponse(status=204)

@@ -522,26 +522,34 @@ select[multiple] { min-height: 150px; }
    13) MISCELLANEOUS
    ========================================================================== */
 
-   .chat-form {
-  max-width: 60%;
-  margin: 2rem auto 0;
+form.chat-form {
+  max-width: none !important;
+  width: 100% !important;
 }
 
-.chat-input {
+form.chat-form textarea.chat-input {
+  width: 100% !important;   /* llena todo el contenedor */
+  max-width: none !important;  /* sin límite horizontal */
+  min-height: 6rem;
+  resize: vertical;         /* sigue permitiendo estirar a lo alto */
+}
+
+textarea.chat-input {
   width: 100%;
-  border: 2px solid var(--scout-green);
-  border-radius: 8px;
-  padding: .75rem 1rem;
-  font-family: inherit;
-  font-size: 1rem;
+  min-width: 6rem;            /* llena el padre */
+  max-width: 80%;       /* tope opcional */
+  min-height: 6rem;       /* altura cómoda */
+  resize: vertical;       /* solo estirar en vertical */
+  resize: horizontal;
+  font-size: 1rem;        /* texto legible */
 }
 
 .btn-send {
   margin-top: .75rem;
   display: block;
   margin-left: auto;            /* alineado a la derecha */
-  background: var(--scout-green);
-  color: #fff;
+  background:#0b3d0b;   /* verde oscuro permanente */
+  color:#fff !important;
   border: none;
   padding: .65rem 1.5rem;
   border-radius: 6px;
@@ -550,4 +558,13 @@ select[multiple] { min-height: 150px; }
   transition: background .15s;
 }
 
-.btn-send:hover { background: #0b4e0b; }
+.btn-send:hover { background: #007900; }
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: #d33;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+.btn-delete:hover { color:#a00; }

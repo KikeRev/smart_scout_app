@@ -68,6 +68,14 @@
   background:#006c36;
 }
 
+textarea.chat-input {
+  width: 100%;            /* llena el padre */
+  max-width: 800px;       /* tope opcional */
+  min-height: 6rem;       /* altura cómoda */
+  resize: vertical;       /* solo estirar en vertical */
+  font-size: 1rem;        /* texto legible */
+}
+
 /* ======== Responsivo ======== */
 @media (max-width: 991px){   /* tablets / móviles */
   .chat-log,
