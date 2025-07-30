@@ -32,3 +32,4 @@ data/
 
 # ─── Otros ────────────────────────────────────────────────
 .env  # variables de entorno con claves
+./media/charts/  # gráficos generados
