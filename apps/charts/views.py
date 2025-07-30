@@ -4,6 +4,8 @@ from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from .models import TempChart
 from pathlib import Path
+from django.http import HttpResponse
+import pandas as pd
 
 
 def serve_chart(request, pk, download: bool = False):

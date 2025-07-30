@@ -12,6 +12,11 @@
           {% if att.type == "image" %}
               <figure class="my-3 text-center">
                   <img src="{{ att.url }}" alt="{{ att.alt }}" class="img-fluid rounded shadow-sm"/>
+                  <figcaption class="mt-2">
+                    <a href="{{ att.url }}" download class="btn btn-send btn-outline-secondary">
+                      Descargar imagen
+                    </a>
+                  </figcaption>
               </figure>
           {% elif att.type == "table" %}
               {{ att.html|safe }}

@@ -23,6 +23,7 @@ from django.views.decorators.csrf import csrf_protect
 from apps.charts.models import TempChart
 from pathlib import Path
 from django.urls import reverse
+import pandas as pd
 
 
 
@@ -252,3 +253,4 @@ def chat_delete(request, pk):
 def serve_chart(request, pk):
     obj = get_object_or_404(TempChart, pk=pk)
     return redirect(obj.image.url)  
+

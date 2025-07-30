@@ -12,6 +12,9 @@ def stats_to_html_table(stats: dict) -> str:
     clean = {k: v for k, v in stats.items()
              if pd.api.types.is_scalar(v) or isinstance(v, str)}
 
+    clean.pop("team_logo")
+    clean.pop("id")  # Elimina 'team_logo' si existe
+    
     # ── 2) DataFrame ordenado (alfabético) ─────────────────
     df = (pd.DataFrame(clean, index=[0])
             .T
