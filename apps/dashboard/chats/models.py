@@ -1,6 +1,8 @@
 # dashboard/models.py
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import JSONField
+
 User = get_user_model()
 
 class ChatSession(models.Model):
@@ -14,9 +16,12 @@ class ChatSession(models.Model):
         ordering = ["-updated_at"]
 
 class Message(models.Model):
-    session   = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name="messages")
-    role      = models.CharField(max_length=10)  # 'user' / 'assistant'
-    content   = models.TextField()
+    session    = models.ForeignKey(
+        ChatSession, on_delete=models.CASCADE, related_name="messages"
+    )
+    role       = models.CharField(max_length=10)          # 'user' | 'assistant'
+    content    = models.TextField()
+    meta       = JSONField(default=list, blank=True)      # ← NUEVO
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

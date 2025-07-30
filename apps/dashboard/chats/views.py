@@ -20,6 +20,11 @@ from django.utils import timezone
 from apps.agent_service.agents.factory import build_agent
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
+from apps.charts.models import TempChart
+from pathlib import Path
+from django.urls import reverse
+
+
 
 FASTAPI = "http://api:8001"   # ajusta si tienes otra URL
 
@@ -188,37 +193,38 @@ def chat_stream(request):
 @login_required
 @transaction.atomic
 def chat_message(request, pk):
-    """
-    POST HTMX → guarda turno del usuario, invoca al agente (no‑stream),
-    guarda la respuesta y devuelve los dos bloques HTML.
-    """
     session = get_object_or_404(ChatSession, pk=pk, user=request.user)
-    text = request.POST.get("text", "").strip()
-    if not text:
+
+    text_in = request.POST.get("text", "").strip()
+    if not text_in:
         return HttpResponse(status=204)
 
-    # 1. histórico
+    # ------------------ 1) memoria ------------------
     past_msgs = session.messages.order_by("created_at")
+    agent = build_agent(user_id=str(request.user.id), messages=past_msgs)
 
-    # 2. agente con memoria precargada
-    agent = build_agent(
-        user_id=str(request.user.id),
-        messages=past_msgs,
-    )
-    answer = agent.invoke({"input": text})["output"]
+    # ------------------ 2) AGENTE -------------------
+    raw = agent.invoke({"input": text_in})["output"]
 
-    # 3. persistimos
+    if isinstance(raw, dict):
+        answer_text = raw.get("text", "")
+        attachments = raw.get("attachments", [])        # lista [{}]
+    else:                                               # fallback
+        answer_text = str(raw)
+        attachments = []
+
+    # ------------------ 3) PERSISTENCIA -------------
     m_user, m_bot = Message.objects.bulk_create([
-        Message(session=session, role="user",      content=text),
-        Message(session=session, role="assistant", content=answer),
+        Message(session=session, role="user",      content=text_in),
+        Message(session=session, role="assistant", content=answer_text,
+                meta=attachments),                 #  <<<<<<<<<<<<<<
     ])
 
-    # 4. título la primera vez
     if not session.title:
-        session.title = answer.split("\n", 1)[0][:100]
+        session.title = answer_text.split("\n", 1)[0][:100]
         session.save(update_fields=["title"])
 
-    # 5. render de ambos mensajes
+    # ------------------ 4) RENDER -------------------
     rendered = (
         render_to_string("chats/_message.html", {"m": m_user}, request=request) +
         render_to_string("chats/_message.html", {"m": m_bot},  request=request)
@@ -240,3 +246,9 @@ def chat_delete(request, pk):
     session = get_object_or_404(ChatSession, pk=pk, user=request.user)
     session.delete()
     return HttpResponse(status=204)
+
+
+
+def serve_chart(request, pk):
+    obj = get_object_or_404(TempChart, pk=pk)
+    return redirect(obj.image.url)  

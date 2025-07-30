@@ -3,6 +3,30 @@
 .msg.assistant  {background:#fff;}
 .chat-form textarea{width:100%; min-height:80px;}
 .session-list li{margin:.5rem 0;}
+.msg table {
+  font-size: .85rem;         /* letra más pequeña */
+}
+
+.msg th {
+  white-space: nowrap;       /* evita quiebres raros */
+}
+
+.msg td, .msg th {
+  vertical-align: middle;
+  padding: .25rem .5rem;
+}
+
+.msg .table-responsive {
+  overflow-x: auto;          /* por si Bootstrap no está incluido */
+}
+.msg figure              { white-space: normal; }   /* que se comporten normal  */
+.msg img                 { max-width: 100%; height: auto; display:block; margin:auto; }
+
+.msg table               { width:auto;             /* no se salga del bocadillo */
+                           margin: .5rem 0; }
+
+.msg thead tr            { background:#f8f9fa; font-weight:600; }
+.msg td, .msg th         { padding:.25rem .5rem; }
 
 /* ======== Composición general ======== */
 .chat-page{

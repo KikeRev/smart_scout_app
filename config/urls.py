@@ -25,8 +25,9 @@ urlpatterns = [
     path("users/", include("apps.users.urls", namespace="users")),
     path("chat/", include(("apps.dashboard.chats.urls", "chats"), namespace="chats")),
     path("admin/", admin.site.urls),
+    path("charts/", include(("apps.charts.urls", "charts"), namespace="charts")),
     
-]
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

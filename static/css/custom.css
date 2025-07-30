@@ -568,3 +568,10 @@ textarea.chat-input {
   font-size: 1.2rem;
 }
 .btn-delete:hover { color:#a00; }
+
+.msg-body img {
+    display: block !important;      /* anula posibles display:none  */
+    max-width: 100%;               /* que no se salga del bocadillo */
+    height: auto;                  /* mantiene proporción            */
+    margin: 0.75rem 0;             /* un poco de aire                */
+}

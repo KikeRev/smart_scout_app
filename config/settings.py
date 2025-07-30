@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     "django_bootstrap5", 
     "apps.users.templatetags",
     "apps.dashboard.chats",
+    "apps.charts",
+    'markdownify.apps.MarkdownifyConfig',
 ]
 
 MIDDLEWARE = [
@@ -155,3 +157,20 @@ TEMPLATES[0]["DIRS"] = [ BASE_DIR / "templates" ]
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [ BASE_DIR / "static" ]   # añade tu carpeta
 STATIC_ROOT  = BASE_DIR / "staticfiles"      # para collectstatic
+
+MARKDOWNIFY = {
+    "bleach": {
+        "tags": [
+            "p", "br",              # básicos
+            "strong", "em", "a",
+            "h1", "h2", "h3",
+            "ul", "ol", "li",
+            "table", "thead", "tbody", "tr", "th", "td",
+            "img"                  # ← ¡importante!
+        ],
+        "attributes": {
+            "a":   ["href", "title"],
+            "img": ["src", "alt", "title", "width", "height", "style"],
+        },
+    }
+}

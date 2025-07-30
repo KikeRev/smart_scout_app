@@ -1,8 +1,10 @@
-from typing import List, Optional
-
 import requests
 from pydantic import BaseModel, Field
-from langchain.tools import StructuredTool
+from langchain.tools import StructuredTool, tool
+from apps.agent_service.viz_tools import radar_chart, pizza_chart
+from apps.agent_service.players_service import player_stats
+from apps.agent_service.utils import stats_to_html_table
+from typing import List, Optional       
 
 
 # --------------------------- 1) Similar Players ----------------------------- #
@@ -114,9 +116,55 @@ player_news_tool = StructuredTool.from_function(
 )
 
 
+#@tool(description="Devuelve la tabla html de estadísticas de un jugador como adjunto al contexto.")
+def stats_table(player_name: str) -> str:
+    """
+    Busca las estadísticas (player_stats) y las devuelve formateadas
+    como tabla Markdown para su impresión en el chat.
+    """
+    data = player_stats.invoke({"player_name": player_name})
+    tabla_html = stats_to_html_table(data["stats"])
+    return {
+        "text": f"Aquí tienes la tabla de {player_name}:",
+        "attachments": [
+            {"type": "table", "html": tabla_html}
+        ]
+    }
+    
+pizza_chart = StructuredTool.from_function(
+    func=pizza_chart,
+    name="pizza_chart",
+    description=(
+        "Pizza chart de 9 métricas por rol (verde=ataque, azul=posesión, naranja=defensa)."
+        """Requiere: role (position) ('GK'|'DF'|'MF'|'FW') y stats (dict con las métricas), 
+        el player_name (full_name) y club (team)"""
+        ),
+    return_direct=True          #  <<–– ¡clave!
+)
+
+radar_chart = StructuredTool.from_function(
+    func=radar_chart,
+    name="radar_chart",
+    description=(
+    "Radar de 6 métricas genéricas para un jugador (edad, minutos/juego, partidos_90s, goles, asistencias, G+A)."
+    "Requiere:  un dict con las player stats, el player_name, club, position (role) y nationality."),
+    return_direct=True          #  <<–– ¡clave!
+)
+
+stats_table = StructuredTool.from_function(
+    func=stats_table,
+    name="stats_table",
+    description="Genera una tabla HTML de estadísticas de un jugador",
+    return_direct=True          #  <<–– ¡clave!
+)
+
 # --------------------------- 5) Exporta la lista ---------------------------- #
 TOOLS = [
     player_lookup_tool,      # <-- importante: primero lookup
+    player_stats,            # <-- herramienta para obtener stats de un jugador
+    stats_table,             # <-- herramienta para formatear stats a Markdown
+    pizza_chart,             # <-- herramienta para generar pizza charts
+    radar_chart,             # <-- herramienta para generar radar charts   
     similar_players_tool,
     news_search_tool,
     player_news_tool,
