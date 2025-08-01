@@ -1,9 +1,9 @@
 import requests
 from pydantic import BaseModel, Field
 from langchain.tools import StructuredTool, tool
-from apps.agent_service.viz_tools import radar_chart, pizza_chart
+from apps.agent_service.viz_tools import radar_chart, pizza_chart, radar_comparison_chart, pizza_comparison_chart
 from apps.agent_service.players_service import player_stats
-from apps.agent_service.utils import stats_to_html_table
+from apps.agent_service.utils import stats_to_html_table, compare_stats_to_html_table
 from typing import List, Optional       
 
 
@@ -115,8 +115,7 @@ player_news_tool = StructuredTool.from_function(
     args_schema=PlayerNewsInput,
 )
 
-
-#@tool(description="Devuelve la tabla html de estadísticas de un jugador como adjunto al contexto.")
+# --------------------------- 5) Visualización de estadísticas ---------------- #
 def stats_table(player_name: str) -> str:
     """
     Busca las estadísticas (player_stats) y las devuelve formateadas
@@ -130,8 +129,24 @@ def stats_table(player_name: str) -> str:
             {"type": "table", "html": tabla_html}
         ]
     }
+
+def compare_stats_table(player1_name: str, player2_name: str) -> str:
+    """
+    Busca las estadísticas (player_stats) y las devuelve formateadas
+    como tabla Markdown para su impresión en el chat.
+    """
+    player1 = player_stats.invoke({"player_name": player1_name})
+    player2 = player_stats.invoke({"player_name": player2_name})
+
+    tabla_html = compare_stats_to_html_table(player1["stats"], player2["stats"])
+    return {
+        "text": f"Aquí tienes la tabla de {player1_name} vs {player2_name}:",
+        "attachments": [
+            {"type": "table", "html": tabla_html}
+        ]
+    }
     
-pizza_chart = StructuredTool.from_function(
+pizza_chart_tool = StructuredTool.from_function(
     func=pizza_chart,
     name="pizza_chart",
     description=(
@@ -139,32 +154,61 @@ pizza_chart = StructuredTool.from_function(
         """Requiere: role (position) ('GK'|'DF'|'MF'|'FW') y stats (dict con las métricas), 
         el player_name (full_name) y club (team)"""
         ),
-    return_direct=True          #  <<–– ¡clave!
+    return_direct=True          #  <<–– Importante: permite devolver el gráfico directamente al chat 
 )
 
-radar_chart = StructuredTool.from_function(
+pizza_comparison_chart_tool = StructuredTool.from_function(
+    func=pizza_comparison_chart,
+    name="pizza_comparison_chart",
+    description=(
+        "Pizza comparison chart de 9 métricas por rol (verde=ataque, azul=posesión, naranja=defensa)."
+        """Requiere: player1_name, player2_name como mínimo, ya que el role lo podemos inferir de las stats"""
+        ),
+    return_direct=True          #  <<–– Importante: permite devolver el gráfico directamente al chat 
+)
+
+radar_chart_tool = StructuredTool.from_function(
     func=radar_chart,
     name="radar_chart",
     description=(
     "Radar de 6 métricas genéricas para un jugador (edad, minutos/juego, partidos_90s, goles, asistencias, G+A)."
     "Requiere:  un dict con las player stats, el player_name, club, position (role) y nationality."),
-    return_direct=True          #  <<–– ¡clave!
+    return_direct=True          #  <<–– Importante: permite devolver el gráfico directamente al chat
 )
 
-stats_table = StructuredTool.from_function(
+radar_comparison_chart_tool = StructuredTool.from_function(
+    func=radar_comparison_chart,
+    name="radar_comparison_chart",
+    description=(
+    "Radar de 6 métricas genéricas para dos jugadores (edad, minutos/juego, partidos_90s, goles, asistencias, G+A)."
+    "Requiere:  player1_name, player2_name como mínimo, ya que el role y el resto lo podemos inferir de las stats."),
+    return_direct=True          #  <<–– Importante: permite devolver el gráfico directamente al chat
+)
+
+stats_table_tool = StructuredTool.from_function(
     func=stats_table,
     name="stats_table",
     description="Genera una tabla HTML de estadísticas de un jugador",
-    return_direct=True          #  <<–– ¡clave!
+    return_direct=True          #  <<–– Importante: permite devolver la tabla directamente al chat
+)
+
+compare_stats_table_tool = StructuredTool.from_function(
+    func=compare_stats_table,
+    name="compare_stats_table",
+    description="Genera una tabla HTML con estadísticas de dos jugadores y resalta el mejor valor de cada fila",
+    return_direct=True          #  <<–– Importante: permite devolver la tabla directamente al chat
 )
 
 # --------------------------- 5) Exporta la lista ---------------------------- #
 TOOLS = [
     player_lookup_tool,      # <-- importante: primero lookup
     player_stats,            # <-- herramienta para obtener stats de un jugador
-    stats_table,             # <-- herramienta para formatear stats a Markdown
-    pizza_chart,             # <-- herramienta para generar pizza charts
-    radar_chart,             # <-- herramienta para generar radar charts   
+    stats_table_tool,             # <-- herramienta para formatear stats a Markdown
+    compare_stats_table_tool,     # <-- herramienta para comparar stats de dos jugadores
+    pizza_chart_tool,             # <-- herramienta para generar pizza charts
+    pizza_comparison_chart_tool,  # <-- herramienta para generar pizza comparison charts
+    radar_chart_tool,             # <-- herramienta para generar radar charts   
+    radar_comparison_chart_tool,  # <-- herramienta para generar radar comparison charts
     similar_players_tool,
     news_search_tool,
     player_news_tool,

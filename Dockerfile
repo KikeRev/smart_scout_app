@@ -29,6 +29,7 @@ COPY . .
 
 # ---- Usuario sin privilegios -----------------------------------
 RUN useradd -m -u 1001 scout
+RUN mkdir -p /app/media/charts && chown -R scout:scout /app/media
 USER scout
 
 ENV PYTHONUNBUFFERED=1 \

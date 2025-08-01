@@ -28,7 +28,8 @@ services:
       uvicorn apps.agent_service.main:app --host 0.0.0.0 --port 8001 --reload
     volumes:
       - ./:/app 
-      - media:/app/media 
+      - ./media:/app/media
+      - ./media_data:/app/media_data 
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_API_BASE: ${OPENAI_API_BASE}
@@ -54,7 +55,8 @@ services:
       python apps/dashboard/manage.py runserver 0.0.0.0:8501
     volumes:
       - ./:/app
-      - media:/app/media
+      - ./media:/app/media
+      - ./media_data:/app/media_data
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_API_BASE: ${OPENAI_API_BASE}
@@ -77,7 +79,8 @@ services:
     command: python apps/ingestion/worker.py  # ajusta al script real
     volumes:
       - ./:/app
-      - media:/app/media
+      - ./media:/app/media
+      - ./media_data:/app/media_data
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_API_BASE: ${OPENAI_API_BASE}
@@ -155,7 +158,8 @@ services:
          python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./:/app
-      - media:/app/media 
+      - ./media:/app/media
+      - ./media_data:/app/media_data
     ports:
       - "8000:8000"
     depends_on: [db, redis]
@@ -169,7 +173,8 @@ networks:
 volumes:
   pgdata:
   ollama:
-  media: {}
+  media: 
+  media_data:
 
 # - MODEL-
 
