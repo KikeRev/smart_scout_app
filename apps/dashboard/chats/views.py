@@ -235,6 +235,7 @@ def chat_message(request, pk):
 # --------------------------------------------------------------------------- #
 #  Elimina una sesión de chat (y sus mensajes)
 # --------------------------------------------------------------------------- #
+from django.urls import reverse
 
 @login_required
 @require_POST          # ← en lugar de DELETE
@@ -246,7 +247,7 @@ def chat_delete(request, pk):
     """
     session = get_object_or_404(ChatSession, pk=pk, user=request.user)
     session.delete()
-    return HttpResponse(status=204)
+    return HttpResponse(status=204, headers={"HX-Redirect": reverse("chats:list")})
 
 
 
