@@ -22,21 +22,8 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
 # 2️⃣ context manager para usar con `with`
-@contextmanager
+#@contextmanager
 def get_session():
-    """
-    Abre una sesión de BD y la cierra siempre al salir.
 
-    Ejemplo
-    -------
-    with get_session() as db:
-        db.query(...)
-
-    De esta forma evitamos fugas de conexiones.
-    """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    return SessionLocal() 
 

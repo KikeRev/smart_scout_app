@@ -15,11 +15,13 @@ def player_stats(player_name: str) -> Dict[str, any]:
       • team           → club
       • nationality    → país
     """
-    with get_session() as db:
+    #with get_session() as db:
+    db = get_session()
+    try:
         row = (
             db.query(Player)
-              .filter(Player.full_name.ilike(player_name))
-              .first()
+                .filter(Player.full_name.ilike(player_name))
+                .first()
         )
         if row is None:
             raise ValueError(f"Jugador {player_name} no encontrado")
@@ -37,3 +39,5 @@ def player_stats(player_name: str) -> Dict[str, any]:
             "team":        row.club,
             "nationality": row.nationality,
         }
+    finally:
+        db.close()
