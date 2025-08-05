@@ -22,24 +22,60 @@
 
 <header class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="{% url 'dashboard:home' %}">Smart Scout</a>
+    <a class="navbar-brand fw-bold" href="{% url 'dashboard:home' %}">Smart Scout App Home</a>
 
     <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto align-items-center">
         {% if user.is_authenticated %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'dashboard:home' %}">Inicio</a>
-          </li>
-          <li class="nav-item">
-            <li><a class="nav-link" href="{% url 'chats:list' %}">Informes</a></li>
-          <li class="nav-item">
-            <form action="{% url 'users:logout' %}" method="post" class="logout-form d-inline-flex">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-link nav-link p-0">
-                  Salir
-                </button>
-              </form>
-          </li>
+
+          {# Botón colapsable en móvil #}
+          <button class="navbar-toggler" type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#mainNavbar"
+                  aria-controls="mainNavbar"
+                  aria-expanded="false"
+                  aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          {# Menú colapsable #}
+          <div class="collapse navbar-collapse" id="mainNavbar">
+            {# Solo un <ul>; con ms-auto empujamos todo a la derecha #}
+            <ul class="navbar-nav ms-auto align-items-lg-center">
+
+                {# — Luego el dropdown Mi cuenta — #}
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="accountDropdown"
+                    role="button" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    Mi cuenta
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end"
+                      aria-labelledby="accountDropdown">
+                    <li>
+                      <a class="dropdown-item" href="{% url 'users:profile' %}">
+                        Mi Perfil
+                      </a>
+                    </li>
+                      <li>
+                      <a class="dropdown-item" href="{% url 'chats:new' %}">
+                        Nuevo Informe
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="{% url 'chats:list' %}">
+                        Mis Informes
+                      </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <a class="dropdown-item" href="{% url 'users:logout' %}">
+                        Salir
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+
         {% else %}
           <li class="nav-item">
             <a class="nav-link" href="{% url 'users:login' %}">Entrar</a>
