@@ -7,16 +7,6 @@ x-networks: &default_networks
     - scouting-net
 
 services:
-# ============== LLM ====================
-  llm:
-    image: ollama/ollama:latest
-    container_name: mistral-ollama
-    ports:
-       - "11434:11434"
-    volumes:
-      - ollama:/root/.ollama    # cache modelos
-    environment:
-      - OLLAMA_MODELS=/root/.ollama
       
   # ==================== CORE ====================
   api:
@@ -38,6 +28,7 @@ services:
       PYTHONPATH: /app
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
       REDIS_URL: redis://redis:6379/0
+      DASHBOARD_HOST: http://web:8000
       
     ports:
       - "8001:8001"
@@ -46,30 +37,6 @@ services:
       - redis
     <<: *default_networks
 
-  dashboard:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: scouting-dashboard
-    command: >-
-      python apps/dashboard/manage.py runserver 0.0.0.0:8501
-    volumes:
-      - ./:/app
-      - ./media:/app/media
-      - ./media_data:/app/media_data
-    environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      OPENAI_API_BASE: ${OPENAI_API_BASE}
-      OPENAI_MODEL: ${OPENAI_MODEL}
-      PYTHONUNBUFFERED: 1
-      PYTHONPATH: /app
-      DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
-    ports:
-      - "8501:8501"
-    depends_on:
-      - db
-      - api
-    <<: *default_networks
 
   ingestion:
     build:
@@ -151,6 +118,7 @@ services:
       DJANGO_SUPERUSER_PASSWORD: 16082016No@
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
       REDIS_URL: redis://redis:6379/0
+      DASHBOARD_HOST: http://localhost:8000
     command: >
         sh -c "python manage.py migrate &&
          python manage.py createsuperuser --no-input ||
@@ -172,9 +140,6 @@ networks:
 
 volumes:
   pgdata:
-  ollama:
   media: 
   media_data:
-
-# - MODEL-
 

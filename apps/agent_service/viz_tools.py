@@ -379,7 +379,7 @@ def pizza_chart(
         fetched = player_stats.invoke({"player_name": player_name})
         role    = role  or fetched["role"]
         stats   = stats or fetched["stats"]
-        team    = team or fetched["club"]
+        team    = team or fetched["team"]
 
     role = role.upper()
     if role not in ROLE_METRICS:

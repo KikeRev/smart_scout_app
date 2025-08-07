@@ -21,13 +21,17 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
 urlpatterns = [
-    path("", include("apps.dashboard.urls")),     # /
-    path("users/", include("apps.users.urls", namespace="users")),
-    path("chat/", include(("apps.dashboard.chats.urls", "chats"), namespace="chats")),
+    # raíz → landing del dashboard
+    path("", RedirectView.as_view(url="/dashboard/", permanent=False)),
+
+    # todas las rutas del dashboard bajo /dashboard/…
+    path("dashboard/", include("apps.dashboard.urls", namespace="dashboard")),
+
+    path("users/",  include("apps.users.urls",  namespace="users")),
+    path("chat/",   include(("apps.dashboard.chats.urls", "chats"), namespace="chats")),
+    path("charts/", include(("apps.charts.urls",   "charts"), namespace="charts")),
     path("admin/", admin.site.urls),
-    path("charts/", include(("apps.charts.urls", "charts"), namespace="charts")),
-    
-]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

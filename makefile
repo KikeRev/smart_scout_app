@@ -2,7 +2,7 @@
 COMPOSE = docker compose
 PROJECT = smart_scouting_app
 
-SERVICES := api dashboard ingestion db redis web jupyter llm
+SERVICES := api ingestion db redis web jupyter
 
 .PHONY: up build stop down down-all restart prune clean
 

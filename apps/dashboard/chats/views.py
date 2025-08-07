@@ -200,32 +200,51 @@ def chat_message(request, pk):
     if not text_in:
         return HttpResponse(status=204)
 
-    # ------------------ 1) memoria ------------------
+    # ---------- 1) memoria ----------
     past_msgs = session.messages.order_by("created_at")
     agent = build_agent(user_id=str(request.user.id), messages=past_msgs)
 
-    # ------------------ 2) AGENTE -------------------
+    # ---------- 2) AGENTE ----------
     raw = agent.invoke({"input": text_in})["output"]
+
+    # ­—— detect posible redirect (dashboard_inline) -------------
+    redirect_url = raw.get("url") if isinstance(raw, dict) else None
 
     if isinstance(raw, dict):
         answer_text = raw.get("text", "")
-        attachments = raw.get("attachments", [])        # lista [{}]
-    else:                                               # fallback
+        attachments = raw.get("attachments", [])
+    else:                                    # fallback
         answer_text = str(raw)
         attachments = []
 
-    # ------------------ 3) PERSISTENCIA -------------
+    # ---------- 3) PERSISTENCIA ----------
     m_user, m_bot = Message.objects.bulk_create([
         Message(session=session, role="user",      content=text_in),
         Message(session=session, role="assistant", content=answer_text,
-                meta=attachments),                 #  <<<<<<<<<<<<<<
+                meta=attachments),
     ])
 
     if not session.title:
         session.title = answer_text.split("\n", 1)[0][:100]
         session.save(update_fields=["title"])
 
-    # ------------------ 4) RENDER -------------------
+    # ---------- 4) RENDER / DASHBOARD LINK ----------
+    if isinstance(raw, dict) and raw.get("url"):
+        link_html = render_to_string(
+            "chats/_dashboard_link.html",
+            {"url": raw["url"]},
+            request=request,
+        )
+        # guardamos igualmente el mensaje del bot (texto vacío ≈ “ok, hecho”)
+        Message.objects.create(
+            session=session, role="assistant", content="",
+            meta={"type": "dashboard", "url": raw["url"]},
+        )
+        return HttpResponse(
+            render_to_string("chats/_message.html", {"m": m_user}, request=request)
+            + link_html
+        )
+
     rendered = (
         render_to_string("chats/_message.html", {"m": m_user}, request=request) +
         render_to_string("chats/_message.html", {"m": m_bot},  request=request)
@@ -235,8 +254,6 @@ def chat_message(request, pk):
 # --------------------------------------------------------------------------- #
 #  Elimina una sesión de chat (y sus mensajes)
 # --------------------------------------------------------------------------- #
-from django.urls import reverse
-
 @login_required
 @require_POST          # ← en lugar de DELETE
 @csrf_protect 
@@ -248,8 +265,6 @@ def chat_delete(request, pk):
     session = get_object_or_404(ChatSession, pk=pk, user=request.user)
     session.delete()
     return HttpResponse(status=204, headers={"HX-Redirect": reverse("chats:list")})
-
-
 
 def serve_chart(request, pk):
     obj = get_object_or_404(TempChart, pk=pk)

@@ -5,6 +5,7 @@ from apps.agent_service.viz_tools import radar_chart, pizza_chart, radar_compari
 from apps.agent_service.players_service import player_stats
 from apps.agent_service.utils import stats_to_html_table, compare_stats_to_html_table
 from typing import List, Optional       
+from apps.agent_service.dash_tools import dashboard_inline
 
 
 # --------------------------- 1) Similar Players ----------------------------- #
@@ -212,4 +213,5 @@ TOOLS = [
     similar_players_tool,
     news_search_tool,
     player_news_tool,
+    dashboard_inline,  # <-- herramienta para generar dashboard inline
 ]

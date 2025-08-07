@@ -15,7 +15,6 @@ import os
 from typing import List, Optional
 
 from langchain.callbacks.base import BaseCallbackHandler
-from langchain_community.chat_models import ChatOllama
 from langchain_openai import ChatOpenAI
 
 import langchain
@@ -38,24 +37,15 @@ def get_llm(
         Callbacks que procesarán los tokens (streaming, tracing, logging…).
     """
     # --- OpenAI remoto ---------------------------------------------------- #
-    if os.getenv("OPENAI_API_KEY"):
-        return ChatOpenAI(
-            api_key=os.environ["OPENAI_API_KEY"],
-            base_url=os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1"),
-            model_name=os.getenv("OPENAI_MODEL", "gpt-4o"),
-            temperature=0.2,
-            request_timeout=60,
-            streaming=stream,
-            callbacks=callbacks,
-        )
+    api_key = os.environ["OPENAI_API_KEY"]          # ❶ fail-fast si no existe
 
-    # --- Ollama / Mistral local ------------------------------------------ #
-    return ChatOllama(
-        base_url=os.getenv("OLLAMA_BASE_URL", "http://llm:11434"),
-        model=os.getenv("OLLAMA_MODEL", "mistral"),
+    return ChatOpenAI(
+        api_key=api_key,
+        base_url=os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1"),
+        model_name=os.getenv("OPENAI_MODEL", "gpt-4o"),
         temperature=0.2,
-        timeout=60,
-        streaming=stream,          # ChatOllama también soporta streaming
+        request_timeout=60,
+        streaming=stream,
         callbacks=callbacks,
     )
 
