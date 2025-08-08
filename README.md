@@ -294,6 +294,6 @@ Here are some useful prompts to try with the Smart Scout Agent:
 
 <p align="center">
   <!-- Replace the src below with your real file path -->
-  <img src="./static/img/example_dashboard.png" alt="Dashboard Example" width="800">
+  <img src="./static/img/example_dashboard.PNG" alt="Dashboard Example" width="800">
 </p>
 
