@@ -195,7 +195,7 @@ flowchart TD
     B --> D[Conversation Memory]
     B --> E[Scouting System Prompt]
 
-    subgraph Tools (LangChain)
+    subgraph Tools LangChain
       F1[player_lookup]
       F2[similar_players]
       F3[player_stats]
