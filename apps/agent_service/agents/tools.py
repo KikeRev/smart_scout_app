@@ -1,11 +1,12 @@
 import requests
 from pydantic import BaseModel, Field
-from langchain.tools import StructuredTool, tool
+from langchain.tools import StructuredTool
 from apps.agent_service.viz_tools import radar_chart, pizza_chart, radar_comparison_chart, pizza_comparison_chart
 from apps.agent_service.players_service import player_stats
 from apps.agent_service.utils import stats_to_html_table, compare_stats_to_html_table
 from typing import List, Optional       
 from apps.agent_service.dash_tools import dashboard_inline
+from apps.agent_service.report_pdf import build_report_pdf
 
 
 # --------------------------- 1) Similar Players ----------------------------- #
@@ -200,18 +201,26 @@ compare_stats_table_tool = StructuredTool.from_function(
     return_direct=True          #  <<–– Importante: permite devolver la tabla directamente al chat
 )
 
+build_report_pdf_tool = StructuredTool.from_function(
+    func=build_report_pdf,
+    name="build_report_pdf",
+    description="Genera un informe descargable en pdf",
+    return_direct=True          #  <<–– Importante: permite devolver la tabla directamente al chat
+)
+
 # --------------------------- 5) Exporta la lista ---------------------------- #
 TOOLS = [
-    player_lookup_tool,      # <-- importante: primero lookup
-    player_stats,            # <-- herramienta para obtener stats de un jugador
+    player_lookup_tool,           # <-- importante: primero lookup
+    player_stats,                 # <-- herramienta para obtener stats de un jugador
     stats_table_tool,             # <-- herramienta para formatear stats a Markdown
     compare_stats_table_tool,     # <-- herramienta para comparar stats de dos jugadores
     pizza_chart_tool,             # <-- herramienta para generar pizza charts
     pizza_comparison_chart_tool,  # <-- herramienta para generar pizza comparison charts
     radar_chart_tool,             # <-- herramienta para generar radar charts   
     radar_comparison_chart_tool,  # <-- herramienta para generar radar comparison charts
-    similar_players_tool,
-    news_search_tool,
-    player_news_tool,
-    dashboard_inline,  # <-- herramienta para generar dashboard inline
-]
+    similar_players_tool,         # <-- herramienta para buscar jugadores similares
+    news_search_tool,             # <-- herramienta para buscar noticias
+    player_news_tool,             # <-- herramienta para buscar noticias relaconadas con un jugador
+    dashboard_inline,             # <-- herramienta para generar dashboard inline
+    build_report_pdf_tool         # <-- herramienta para crear un report en pfd
+] 

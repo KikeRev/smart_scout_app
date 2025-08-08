@@ -20,6 +20,10 @@
               </figure>
           {% elif att.type == "table" %}
               {{ att.html|safe }}
+          {% elif att.type == "file" %}
+            <a href="{{ att.url }}" target="_blank" class="btn btn-send btn-outline-secondary my-2">
+              📄 {{ att.title|default:"Descargar archivo" }}
+            </a>
           {% endif %}
       {% endfor %}
   {% endif %}

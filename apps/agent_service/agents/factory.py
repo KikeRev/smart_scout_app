@@ -39,6 +39,21 @@ SYSTEM = SystemMessage(
         10. Si el usuario pide un dashboard interactivo, llama a `dashboard_inline` usando el `base_player_id` y la lista de `candidate_ids` los ids de 
         los candidatos los tienes en la salida de `similar_players` en el campo 'id', no te inventes ids.
         11. Devuelve el HTML del dashboard inline para que se muestre en la interfaz.
+        12. Si el usuario pide un informe en pdf, deberas generar un informe usando `build_report_pdf` que devolverá una url de descarga del informe en pdf.
+        Un ejemplo de uso de esta tool seria:
+            input:
+                {
+                "objective": "Buscar extremo izquierdo sub-23 para rotación inmediata",
+                "base_id": 640,
+                "candidate_ids": [4858, 6253, ...],
+                "chosen_id": 4858,
+                "recommendation": "Aqui debes de incluir un informe detallado del jugador seleccionado con al menos dos tres parrafos explicando las virtudes
+                                    y defectos del jugadors en 4-5 bullet points, y un parrafo final con la justificación de porque deberíamos de contratar
+                                    al jugador y que podría aportar al equipo",
+                "pros": ["Precio accesible", "Perfil U-23"],
+                "cons": ["Sin experiencia en 1ª división"]
+                }
+            output → {"file_url": "/media/reports/xxxx.pdf"}
         """
     )
 )
