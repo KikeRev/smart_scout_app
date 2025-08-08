@@ -159,23 +159,23 @@ exit
 ```mermaid
 flowchart TD
     subgraph Frontend
-        Web[Web (Django)]
+        Web[Web-Django]
     end
 
     subgraph Backend
-        API[API (FastAPI)]
+        API[API-FastAPI]
         Agent[Agent Service]
         LangChain[LangChain]
         Jupyter[Jupyter Notebook]
     end
 
     subgraph Data
-        Redis[(Redis)]
-        Postgres[(PostgreSQL DB)]
+        Redis[Redis]
+        Postgres[PostgreSQL DB]
         Ingest[Ingestion Service]
     end
 
-    User[👤 User] --> Web
+    User[User] --> Web
     Web --> API
     API --> Agent
     Agent --> LangChain
@@ -190,8 +190,8 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[👤 User] -->|natural query| B[Scout Agent (LangChain)]
-    B --> C[LLM with Functions (OpenAI)]
+    A[User] -->|natural query| B[Scout Agent-LangChain]
+    B --> C[LLM with Functions-OpenAI]
     B --> D[Conversation Memory]
     B --> E[Scouting System Prompt]
 
