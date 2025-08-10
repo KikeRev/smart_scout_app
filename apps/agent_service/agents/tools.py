@@ -7,6 +7,10 @@ from apps.agent_service.utils import stats_to_html_table, compare_stats_to_html_
 from typing import List, Optional       
 from apps.agent_service.dash_tools import dashboard_inline
 from apps.agent_service.report_pdf import build_report_pdf
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from typing import Optional, Annotated
+from apps.agent_service.llm_provider import get_llm  # Asegúrate de importar bien la función
 
 
 # --------------------------- 1) Similar Players ----------------------------- #
@@ -117,6 +121,139 @@ player_news_tool = StructuredTool.from_function(
     args_schema=PlayerNewsInput,
 )
 
+# -------------------------- 4.1) New summarizer -------------------------------#
+
+class SummarizePlayerNewsInput(BaseModel):
+    player_id: int = Field(..., description="ID del jugador")
+    k: Optional[int] = Field(5, description="Número máximo de noticias a resumir")
+
+def _summarize_player_news(player_id: int, k: int = 5) -> str:
+    try:
+        # Paso 1: Recuperar noticias
+        news = _player_news(player_id=player_id, k=k)
+        if not news or len(news) == 0:
+            return "No hay noticias relevantes sobre este jugador en los últimos meses."
+
+        # Paso 2: Extraer contenido completo
+        contents = [n.get("content", "").strip() for n in news if n.get("content")]
+        if not contents:
+            return "No hay contenido detallado disponible en las noticias recientes de este jugador."
+
+        # Paso 3: Concatenar y resumir con tu LLM
+        full_text = "\n\n".join(contents)
+
+        prompt = PromptTemplate.from_template(
+            """
+            Eres un analista de scouting. A continuación tienes varias noticias sobre un jugador.
+            Resume los aspectos clave (traspasos, rumores, interés de clubes, lesiones, declaraciones, etc.).
+            Usa un estilo técnico, conciso y profesional. No repitas información redundante.
+
+            Noticias:
+            {text}
+
+            Resumen:"""
+        )
+
+        chain = LLMChain(
+            llm=get_llm(),  # Usamos tu función aquí
+            prompt=prompt,
+        )
+        resumen = chain.run({"text": full_text})
+        return resumen.strip()
+
+    except Exception as e:
+        return f"Error al generar el resumen de noticias: {str(e)}"
+
+# Tool LangChain
+summarize_player_news_tool = StructuredTool.from_function(
+    func=_summarize_player_news,
+    name="summarize_player_news",
+    description="Resume en lenguaje técnico las noticias recientes relacionadas con un jugador.",
+    args_schema=SummarizePlayerNewsInput,
+)
+
+# -------------------------- 4.2) Recomendación con noticias ------------------- #
+
+class BuildScoutingReportInput(BaseModel):
+    objective: str = Field(..., description="Objetivo del informe (e.g. 'Buscar lateral izquierdo joven')")
+    base_id: int = Field(..., description="ID del jugador base de comparación")
+    candidate_ids: List[int] = Field(..., description="Lista de IDs de jugadores candidatos")
+    chosen_id: int = Field(..., description="ID del jugador elegido como fichaje recomendado")
+    pros: List[str] = Field(..., description="Lista de ventajas del jugador")
+    cons: List[str] = Field(..., description="Lista de inconvenientes o riesgos del jugador")
+
+def generate_recommendation_with_news(
+    chosen_id: int,
+    player_name: str,
+    objective: str,
+    base_id: int,
+    candidate_ids: List[int],
+    pros: List[str],
+    cons: List[str],
+) -> str:
+    # Paso 1: Obtener resumen de noticias
+    summary = summarize_player_news_tool.run({"player_id": chosen_id, "k": 5})
+
+    # Paso 2: Crear prompt con contexto
+    prompt = PromptTemplate.from_template(
+        """
+        Eres un analista profesional de scouting.
+        Tu objetivo es redactar un informe técnico para recomendar un fichaje. 
+
+        Objetivo: {objective}
+
+        Jugador recomendado: {player_name}
+        Resumen de noticias recientes (si existen):
+        {news}
+
+        Genera un informe profesional que incluya:
+        - Al menos tres párrafos sobre virtudes, defectos, estilo de juego.
+        - Un párrafo final con justificación del fichaje y encaje en el equipo.
+        - Referencias a las noticias si son relevantes.
+
+        Informe:
+        """
+    )
+
+    chain = LLMChain(llm=get_llm(), prompt=prompt)
+    return chain.run({
+        "objective": objective,
+        "player_name": player_name,
+        "news": summary,
+    }).strip()
+
+def build_scouting_report(
+    objective: str,
+    base_id: int,
+    candidate_ids: List[int],
+    chosen_id: int,
+    pros: List[str],
+    cons: List[str],
+) -> dict:
+    from apps.dashboard.views import _fetch_stats 
+    players_map = _fetch_stats(candidate_ids + [base_id])
+
+    recommendation = generate_recommendation_with_news(
+        chosen_id=chosen_id,
+        player_name=players_map[chosen_id]["full_name"],
+        objective=objective,
+        base_id=base_id,
+        candidate_ids=candidate_ids,
+        pros=pros,
+        cons=cons,
+    )
+
+    return build_report_pdf(
+        objective=objective,
+        base_id=base_id,
+        candidate_ids=candidate_ids,
+        chosen_id=chosen_id,
+        recommendation=recommendation,
+        pros=pros,
+        cons=cons,
+    )
+
+
 # --------------------------- 5) Visualización de estadísticas ---------------- #
 def stats_table(player_name: str) -> str:
     """
@@ -208,11 +345,28 @@ build_report_pdf_tool = StructuredTool.from_function(
     return_direct=True          #  <<–– Importante: permite devolver la tabla directamente al chat
 )
 
+dashboard_inline_tool = StructuredTool.from_function(
+    func=dashboard_inline,
+    name="dashboard_inline",
+    description="Genera un dashboard interactivo con el jugador base y los candidatos",
+)
+
+build_scouting_report_tool = StructuredTool.from_function(
+    func=build_scouting_report,
+    name="build_scouting_report",
+    description=(
+        "Genera un informe PDF profesional de scouting usando datos estadísticos y contexto de mercado actual "
+        "(noticias recientes). El informe incluye análisis técnico, pros, contras y recomendación final."
+    ),
+    return_direct=True
+)
+
 # --------------------------- 5) Exporta la lista ---------------------------- #
 TOOLS = [
     player_lookup_tool,           # <-- importante: primero lookup
     player_stats,                 # <-- herramienta para obtener stats de un jugador
     stats_table_tool,             # <-- herramienta para formatear stats a Markdown
+    summarize_player_news_tool,       # <-- herramienta para resumir las noticias
     compare_stats_table_tool,     # <-- herramienta para comparar stats de dos jugadores
     pizza_chart_tool,             # <-- herramienta para generar pizza charts
     pizza_comparison_chart_tool,  # <-- herramienta para generar pizza comparison charts
@@ -221,6 +375,7 @@ TOOLS = [
     similar_players_tool,         # <-- herramienta para buscar jugadores similares
     news_search_tool,             # <-- herramienta para buscar noticias
     player_news_tool,             # <-- herramienta para buscar noticias relaconadas con un jugador
-    dashboard_inline,             # <-- herramienta para generar dashboard inline
+    dashboard_inline_tool,        # <-- herramienta para generar dashboard inline
+    build_scouting_report_tool,   # <-- Herramienta para generar el la recomendación dentro del report pdf
     build_report_pdf_tool         # <-- herramienta para crear un report en pfd
 ] 

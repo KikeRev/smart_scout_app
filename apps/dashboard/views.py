@@ -2,7 +2,6 @@
 from django.shortcuts import render
 import logging
 from django.contrib.auth.decorators import login_required
-from django.shortcuts      import render
 from django.contrib.staticfiles import finders
 import os, random
 
@@ -21,8 +20,8 @@ from apps.agent_service.utils import compare_stats_to_html_table
 
 import requests
 from django.urls import reverse
-import json
 import json, urllib.parse
+from typing import Annotated
 
 logger = logging.getLogger(__name__)
 

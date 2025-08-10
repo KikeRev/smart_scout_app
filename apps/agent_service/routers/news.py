@@ -31,7 +31,8 @@ def player_news_endpoint(
             "title": n.title,
             "url": n.url,
             "summary": n.summary,
-            "published_at": n.published_at,
+            "content":n.article_text,
+            "published_at": n.article_text,
             "source": n.source_id,
         }
         for n in rows

@@ -7,6 +7,7 @@ from weasyprint import HTML
 from django.template.loader import render_to_string
 from django.templatetags.static import static
 from django.utils import timezone
+from urllib.parse import urljoin, urlparse
 try:
     # Solo funcionará cuando Django esté inicializado (proceso web)
     from django.conf import settings        # noqa: WPS433  (runtime import)
@@ -20,80 +21,6 @@ except Exception:                           # settings no existe → FastAPI
 
 # crea el directorio si no existe
 MEDIA_DIR.mkdir(parents=True, exist_ok=True)
-
-TEMPLATE = """
-<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8"/>
-<style>
-  body{ font-family:Arial,Helvetica,sans-serif;margin:0 2rem;color:#222 }
-  h1,h2{ color:#236192; margin-bottom:.2em }
-  h1{ border-bottom:3px solid #236192; padding-bottom:.1em }
-  table{ width:100%; border-collapse:collapse; margin:1rem 0 }
-  th,td{ border:1px solid #999; padding:.4em; text-align:center }
-  img{ max-width:100%; }
-  .charts{ display:flex; justify-content:space-between; gap:.5rem; }
-  .charts img{ flex:1; }
-  .proscons li{ margin-bottom:.2em; }
-</style>
-</head><body>
-
-<h1>Informe de Scouting</h1>
-
-<h2>1. Objetivo</h2>
-<p>{{ objective }}</p>
-
-<h2>2. Jugadores alternativos propuestos</h2>
-<ul>
-  {% for p in alt_players %}
-    <li>{{ p["full_name"] }} ({{ p["club"] }}, {{ p["age"] }} a)</li>
-  {% endfor %}
-</ul>
-
-<h2>3. Recomendación</h2>
-<p><strong>Jugador elegido:</strong> {{ chosen["full_name"] }} ({{ chosen["club"] }})</p>
-<p>{{ recommendation }}</p>
-
-<h3>Pros</h3><ul class="proscons">
-  {% for item in pros %}<li>✔️ {{ item }}</li>{% endfor %}
-</ul>
-<h3>Contras</h3><ul class="proscons">
-  {% for item in cons %}<li>⚠️ {{ item }}</li>{% endfor %}
-</ul>
-
-<h3>Resumen de prensa reciente</h3>
-<ul>
-  {% for n in news %}
-   <li>{{ n }}</li>
-  {% endfor %}
-</ul>
-
-<h2>4. Comparativa estadística</h2>
-{{ table_html|safe }}
-
-<div class="charts">
-  <img src="{{ radar_base }}">
-  <img src="{{ radar_cand }}">
-</div>
-<img src="{{ pizza_cmp }}">
-
-<small>Generado el {{ now }}</small>
-</body></html>
-"""
-
-
-def render_html(context: dict) -> str:
-    """Rellena el template con {{ mustaches }} muy simples."""
-    html = TEMPLATE
-    for k, v in context.items():
-        placeholder = "{{ "+k+" }}"
-        html = html.replace(placeholder, str(v))
-    # templating muy rudimentario para listas
-    # (o instala jinja2 si prefieres)
-    return html
-
-from urllib.parse import urljoin, urlparse
 
 def _abs_uri(url: str) -> str:
     """Convierte /media/… o /static/… en file://… para WeasyPrint."""

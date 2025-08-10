@@ -190,20 +190,22 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[User] -->|natural query| B[Scout Agent-LangChain]
-    B --> C[LLM with Functions-OpenAI]
+    A[User] -->|Natural Query| B[Scout Agent - LangChain]
+    B --> C[LLM with Function Calling - OpenAI]
     B --> D[Conversation Memory]
     B --> E[Scouting System Prompt]
 
-    subgraph Tools LangChain
-      F1[player_lookup]
-      F2[similar_players]
-      F3[player_stats]
-      F4[stats_table / compare_stats]
-      F5[radar_chart / pizza_chart]
-      F6[news_search / player_news]
-      F7[dashboard_inline]
-      F8[build_report_pdf]
+    subgraph Tools - LangChain
+        F1[player_lookup]
+        F2[similar_players]
+        F3[player_stats]
+        F4[stats_table / compare_stats_table]
+        F5[radar_chart / pizza_chart / comparisons]
+        F6[news_search / player_news]
+        F6A[summarize_player_news]
+        F7[dashboard_inline]
+        F8[build_report_pdf]
+        F9[build_scouting_report]
     end
 
     C --> F1
@@ -211,13 +213,16 @@ flowchart TD
     C --> F3 --> F4
     C --> F5
     C --> F6
+    C --> F6A
     C --> F7
     C --> F8
+    C --> F9
 
     F4 -->|HTML table| G1[UI Output]
-    F5 -->|Chart Image| G1
-    F7 -->|Inline Dashboard| G1
+    F5 -->|Chart image| G1
+    F7 -->|Inline dashboard| G1
     F8 -->|PDF URL| G1
+    F9 -->|PDF URL - with recommendation| G1
 ```
 
 # 📄 Prompt Examples
