@@ -25,6 +25,16 @@ The project is composed of several Docker containers:
 * `db` and `redis`: Databases and caching layers for persistent and fast-access storage.
 * `jupyter`: Jupyter Lab instance for interactive development and testing.
 
+### 🔐 Environment Variables
+
+To run the project, copy the `.env.example` file and fill in your own keys:
+
+```bash
+cp .env.example .env
+```
+
+> Then, set your API keys and secrets accordingly.
+
 ### 🔗 Accessing the Services
 
 After running `make up`, the services are accessible at:
@@ -116,8 +126,6 @@ Once the containers are running, you can seed the PostgreSQL database with playe
 ```bash
 docker compose exec web bash
 ```
-
-> You can also use `api` or `ingest` if the script lives in one of those, depending on your architecture.
 
 ---
 
