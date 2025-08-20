@@ -411,9 +411,6 @@ a.report-link:hover {
   font-family: 'Montserrat', sans-serif;
   padding: 0.5rem;
 }
-.form-card .btn-submit {
-  /* coincide con .btn-submit genérico */
-}
 
 /* -------------- Finder form box -------------- */
 .finder-wrapper {
@@ -574,4 +571,83 @@ textarea.chat-input {
     max-width: 100%;               /* que no se salga del bocadillo */
     height: auto;                  /* mantiene proporción            */
     margin: 0.75rem 0;             /* un poco de aire                */
+}
+
+/* -- Estilo de mensajes tipo WhatsApp -- */
+.chat-row {
+    display: flex;
+    margin: 0.5rem 1rem;
+    clear: both;
+}
+
+.chat-user {
+    justify-content: flex-end;
+}
+
+.chat-bot {
+    justify-content: flex-start;
+}
+
+.bubble {
+    position: relative;
+    max-width: 75%;
+    padding: 12px 16px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.25s ease-out forwards;
+}
+
+.bubble-user {
+    background-color: #d9fdd3;
+    color: #111;
+    border-bottom-left-radius: 2px;
+    margin-right: 25%;
+    text-align: left;
+}
+
+.bubble-bot {
+    background-color: #f1f0f0;
+    color: #111;
+    border-bottom-right-radius: 2px;
+    margin-left: 25%;
+    text-align: left;
+}
+
+/* -- Cola de burbuja tipo WhatsApp -- */
+.bubble-user::after {
+    content: "";
+    position: absolute;
+    left: -10px;
+    bottom: 0;
+    border: 10px solid transparent;
+    border-left-color: #d9fdd3;
+    border-right: 0;
+    border-bottom: 0;
+    margin-bottom: -1px;
+    margin-right: -1px;
+}
+
+.bubble-bot::after {
+    content: "";
+    position: absolute;
+    right: -10px;
+    bottom: 0;
+    border: 10px solid transparent;
+    border-right-color: #f1f0f0;
+    border-left: 0;
+    border-bottom: 0;
+    margin-bottom: -1px;
+    margin-left: -1px;
+}
+
+/* -- Animación de entrada -- */
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

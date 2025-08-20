@@ -113,6 +113,9 @@ def build_report_pdf(
             "radar_comp_url": _abs_uri(ctx_dash["radar_cand"]),
             "pizza_url":      _abs_uri(ctx_dash["pizza_cmp"]),
             "logo_url":       _abs_uri(static("img/app_logo_6.png")),
+            "github_url": _abs_uri(static("img/github.png")),
+            "linkedin_url": _abs_uri(static("img/linkedin.png")),
+            "instagram_url": _abs_uri(static("img/instagram.png")),
         },
     )
 
