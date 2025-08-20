@@ -349,6 +349,7 @@ dashboard_inline_tool = StructuredTool.from_function(
     func=dashboard_inline,
     name="dashboard_inline",
     description="Genera un dashboard interactivo con el jugador base y los candidatos",
+    return_direct=True          #  <<–– Importante: permite devolver la URL directamente al chat
 )
 
 build_scouting_report_tool = StructuredTool.from_function(

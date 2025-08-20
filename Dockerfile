@@ -6,7 +6,7 @@ RUN apt-get update \
       build-essential git curl python3-dev \
       # ── dependencias de WeasyPrint ───────────────────────────────
       libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
-      libgdk-pixbuf2.0-0 libglib2.0-0 libgirepository1.0-dev \
+      libgdk-pixbuf-2.0-0 libglib2.0-0 libgirepository1.0-dev \
       libffi-dev shared-mime-info libjpeg-dev libpng-dev \
       fonts-liberation \
  && rm -rf /var/lib/apt/lists/*
