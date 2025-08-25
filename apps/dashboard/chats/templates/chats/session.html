@@ -6,7 +6,11 @@
           {% include "chats/_message.html" with m=m %}
       {% endfor %}
   {% else %}
-      <p class="text-center text-muted">Bienvenido a Smart Scout, ¿En que te puedo ayudar?</p>
+      <div class="typewriter-wrapper text-center">
+      <span class="typewriter-text">Bienvenido, ¿En qué te puedo ayudar? 🤖</span>
+      <span class="typewriter-cursor">|</span>
+      <span class="bot-icon">🤖</span>
+    </div>
   {% endif %}
 </div>
 
