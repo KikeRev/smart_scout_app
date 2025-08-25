@@ -11,12 +11,14 @@ dependencies = [
   # --- Web & API layer ---
   "fastapi",
   "uvicorn[standard]",
-  "django==5.2.3",
+  "django>=5.2.4",
   "django-bootstrap5>=25.1",
   "django-widget-tweaks>=1.5.0",
   "dj-database-url>=1.0",
   "python-decouple>=3.8",
   "django-allauth",
+  "django-markdownify>=0.9.5",
+
 
   # --- GenAI & RAG ---
   "langchain",
@@ -27,6 +29,9 @@ dependencies = [
   "transformers>=4.43",
   "torch>=2.3",
   "sentencepiece>=0.2",
+  "langchain-community>=0.0.34",
+  "openai>=1.30.0",
+  "langchain-openai>=0.1.8",
 
   # --- Data processing & ML ---
   "pandas",
@@ -61,6 +66,8 @@ dependencies = [
   "fpdf2",
   "kaleido",
   "markdown",
+  "cairosvg",
+  "weasyprint",
 
   # --- Dev & notebooks (optional, installed in dev profile) ---
   "jupyterlab",

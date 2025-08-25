@@ -1,0 +1,28 @@
+<div class="row g-4">
+
+    <!-- tabla comparativa -->
+    <div class="col-12 col-lg-6 order-lg-1 order-2">
+        {{ table_html|safe }}
+    </div>
+
+    <!-- radares + pizza -->
+    <div class="col-12 col-lg-6 order-lg-2 order-1">
+        <div class="row gy-4">
+
+            <!-- radares -->
+            <div class="col-12 d-flex justify-content-between flex-wrap chart-wrapper">
+                <img src="{{ radar_base }}" alt="Radar base" class="flex-grow-1 p-2">
+                <img src="{{ radar_cand }}" alt="Radar candidato" class="flex-grow-1 p-2">
+            </div>
+
+            <!-- pizza comparison -->
+            <div class="col-12 chart-wrapper text-center">
+                <img src="{{ pizza_cmp }}" alt="Pizza comparison" class="p-2">
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+

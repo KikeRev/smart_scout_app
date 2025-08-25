@@ -1,0 +1,47 @@
+{% load markdownify %}
+
+{% if m.role == "user" %}
+<div class="chat-row chat-user">
+  <div class="bubble bubble-user fade-in">
+    {% autoescape off %}
+      {{ m.content|markdownify }}
+    {% endautoescape %}
+  </div>
+</div>
+{% else %}
+<div class="chat-row chat-bot">
+  <div class="bubble bubble-bot fade-in">
+    {% autoescape off %}
+      {{ m.content|markdownify }}
+    {% endautoescape %}
+
+    {# ─── Adjuntos (botón, imagen, tabla…) ─── #}
+    {% if m.meta %}
+        {% for att in m.meta %}
+            {% if att.type == "image" %}
+                <figure class="my-3 text-center">
+                    <img src="{{ att.url }}" alt="{{ att.alt }}" class="img-fluid rounded shadow-sm"/>
+                    <figcaption class="mt-2">
+                        <a href="{{ att.url }}" download class="btn btn-send btn-outline-secondary">
+                            Descargar imagen
+                        </a>
+                    </figcaption>
+                </figure>
+            {% elif att.type == "table" %}
+                {{ att.html|safe }}
+            {% elif att.type == "file" %}
+                <a href="{{ att.url }}" target="_blank" class="btn btn-send btn-outline-secondary my-2">
+                    📄 {{ att.title|default:"Descargar archivo" }}
+                </a>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    {# ─── Valoración 👍👎 solo para respuestas del bot ─── #}
+    <span class="rating">
+        👍 <input type="radio" name="rate_{{ m.id }}" value="up">
+        👎 <input type="radio" name="rate_{{ m.id }}" value="down">
+    </span>
+  </div>
+</div>
+{% endif %}

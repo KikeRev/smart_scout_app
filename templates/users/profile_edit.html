@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+<div class="container my-4">
+  <h2 class="mb-4">Editar perfil</h2>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    <button type="submit" class="btn btn-submit mb-3">Guardar</button>
+    <a href="{% url 'users:profile' %}" class="btn btn-link">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

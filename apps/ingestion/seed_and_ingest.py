@@ -158,6 +158,14 @@ class FootballNews(Base):
     article_meta = sa.Column(sa.JSON, nullable=True)  # <— en vez de `metadata`
 
 
+player_news = sa.Table(
+    "player_news",
+    Base.metadata,
+    sa.Column("player_id", sa.Integer, sa.ForeignKey("players.id", ondelete="CASCADE")),
+    sa.Column("news_id",   sa.Integer, sa.ForeignKey("football_news.id", ondelete="CASCADE")),
+    sa.PrimaryKeyConstraint("player_id", "news_id"),
+)
+
 # ---------------------------------------------------------------------------
 #  Helpers
 # ---------------------------------------------------------------------------

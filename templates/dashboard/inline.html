@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+    /* sólo lo específico del dashboard */
+    .chart-wrapper img { max-width:100%; height:auto; }
+</style>
+
+<div class="container-fluid py-3">
+
+    <!-- ──────────────── CABECERA ──────────────── -->
+    <header class="d-flex flex-wrap align-items-center gap-3 mb-4">
+        <h2 class="m-0 flex-grow-1">Dashboard comparativo</h2>
+
+        {# ⇩ al cambiar se hace un POST a /refresh y se reemplaza #dashboard-content #}
+        <form  hx-post="{% url 'dashboard:refresh' %}"
+               hx-target="#dashboard-content"
+               hx-swap="innerHTML"
+               class="d-flex align-items-center gap-2">
+
+            <input type="hidden" name="base_id" value="{{ base_id }}">
+
+            {# enviamos la lista completa; el servidor volverá a poblar el combo #}
+            {% for pid in cand_ids %}
+                <input type="hidden" name="cand_ids[]" value="{{ pid }}">
+            {% endfor %}
+
+            <label class="m-0">Candidato:</label>
+            <select name="cand_id"
+                    class="form-select"
+                    onchange="this.form.requestSubmit()">
+                {% for p in cand_players %}
+                    <option value="{{ p.id }}"
+                            {% if p.id == cand_id %}selected{% endif %}>
+                        {{ p.full_name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    </header>
+
+    <!-- ───────────── CONTENIDO DINÁMICO ───────────── -->
+    <div id="dashboard-content">
+        {# cuerpo inicial; luego HTMX lo irá sustituyendo #}
+        {% include "dashboard/_dash_body.html" %}
+    </div>
+
+</div><!-- /.container-fluid -->
+
+<!-- abre el dashboard en pestaña nueva si llega un HX-Redirect -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<script>
+document.body.addEventListener('htmx:beforeOnLoad', function (e){
+    const url = e.detail.xhr.getResponseHeader('HX-Redirect');
+    if (url){
+        window.open(url, '_blank');
+        e.preventDefault();
+    }
+}, { once:true });
+</script>
+{% endblock %}
+
+
+

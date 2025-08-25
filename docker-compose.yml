@@ -7,6 +7,7 @@ x-networks: &default_networks
     - scouting-net
 
 services:
+      
   # ==================== CORE ====================
   api:
     build:
@@ -16,12 +17,19 @@ services:
     command: >-
       uvicorn apps.agent_service.main:app --host 0.0.0.0 --port 8001 --reload
     volumes:
-      - ./:/app  # monta repo completo
+      - ./:/app 
+      - ./media:/app/media
+      - ./media_data:/app/media_data 
     environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_BASE: ${OPENAI_API_BASE}
+      OPENAI_MODEL: ${OPENAI_MODEL}
       PYTHONUNBUFFERED: 1
       PYTHONPATH: /app
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
       REDIS_URL: redis://redis:6379/0
+      DASHBOARD_HOST: http://web:8000
+      
     ports:
       - "8001:8001"
     depends_on:
@@ -29,25 +37,6 @@ services:
       - redis
     <<: *default_networks
 
-  dashboard:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: scouting-dashboard
-    command: >-
-      python apps/dashboard/manage.py runserver 0.0.0.0:8501
-    volumes:
-      - ./:/app
-    environment:
-      PYTHONUNBUFFERED: 1
-      PYTHONPATH: /app
-      DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
-    ports:
-      - "8501:8501"
-    depends_on:
-      - db
-      - api
-    <<: *default_networks
 
   ingestion:
     build:
@@ -57,7 +46,12 @@ services:
     command: python apps/ingestion/worker.py  # ajusta al script real
     volumes:
       - ./:/app
+      - ./media:/app/media
+      - ./media_data:/app/media_data
     environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_BASE: ${OPENAI_API_BASE}
+      OPENAI_MODEL: ${OPENAI_MODEL}
       PYTHONUNBUFFERED: 1
       PYTHONPATH: /app
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
@@ -99,6 +93,9 @@ services:
       - ./:/app
       - ./notebooks:/notebooks
     environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_BASE: ${OPENAI_API_BASE}
+      OPENAI_MODEL: ${OPENAI_MODEL}
       PYTHONUNBUFFERED: 1
       PYTHONPATH: /app
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
@@ -113,9 +110,15 @@ services:
     build: .
     container_name: scouting-web
     environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_BASE: ${OPENAI_API_BASE}
+      OPENAI_MODEL: ${OPENAI_MODEL}
       DJANGO_SUPERUSER_USERNAME: gobuub
       DJANGO_SUPERUSER_EMAIL: botica1982@msn.com
       DJANGO_SUPERUSER_PASSWORD: 16082016No@
+      DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
+      REDIS_URL: redis://redis:6379/0
+      DASHBOARD_HOST: http://localhost:8000
     command: >
         sh -c "python manage.py migrate &&
          python manage.py createsuperuser --no-input ||
@@ -123,6 +126,8 @@ services:
          python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./:/app
+      - ./media:/app/media
+      - ./media_data:/app/media_data
     ports:
       - "8000:8000"
     depends_on: [db, redis]
@@ -135,3 +140,6 @@ networks:
 
 volumes:
   pgdata:
+  media: 
+  media_data:
+

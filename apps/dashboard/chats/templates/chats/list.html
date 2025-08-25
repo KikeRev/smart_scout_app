@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container py-5">
+
+  <h2 class="section-title mb-4">Mis informes</h2>
+  <a href="{% url 'chats:new' %}" class="btn btn-submit mb-3">
+    <i class="bi bi-plus-lg me-1"></i> Nuevo chat
+  </a>
+
+  {% if sessions %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      {% for s in sessions %}
+        <div class="col" id="sess-{{ s.id }}">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="card-title mb-0">{{ s.title }}</h5>
+
+                <button
+                  class="btn btn-sm btn-outline-danger"
+                  hx-post="{% url 'chats:chat_delete' s.id %}"
+                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                  hx-target="#sess-{{ s.id }}"   
+                  hx-swap="delete"               
+                  hx-confirm="¿Borrar este chat? Se perderán sus mensajes."
+                >
+                  <i class="bi bi-trash"></i>
+                🗑️</button>
+              </div>
+
+              <p class="card-text small text-muted">
+                {{ s.created_at|date:"d M Y H:i" }}
+              </p>
+
+              <p class="card-text flex-grow-1">{{ s.preview|truncatewords:20 }}</p>
+
+              <a href="{% url 'chats:session' s.id %}"
+                 class="btn btn-submit mt-auto w-100">
+                 Abrir conversación
+              </a>
+
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="section-paragraph">Todavía no hay informes.</p>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+

@@ -499,3 +499,19 @@ select[multiple] { min-height: 150px; }
 .navbar-nav .nav-item {
   margin-left: 1rem;
 }
+
+ /*  Logo */
+.logo-app {
+    width: 15px;         /* ⇦ cámbialo a tu gusto */
+    height: auto;
+    margin: 0.5rem auto;
+    display: block;
+}
+
+/*  Radar / Pizza */
+.plot-img {
+    max-width: 15px;     /* ⇦ ancho máx. */
+    height: auto;         /* mantiene el ratio */
+    display: block;
+    margin: 0.5rem auto;
+}
