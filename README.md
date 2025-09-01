@@ -120,66 +120,64 @@ make ingest-full
 
 # 🕐 Populate the Databases
 
-Once the containers are running you can load player statistics **and** ingest football news with a single command‑line script.
+Once the core services (`db`, `redis`, etc.) are running you have **two equivalent ways** to load player data, build embeddings and ingest news.
 
 ---
 
-## 1 · Open a shell in the `web` (Django) container
+## 1 · Run the ingestion script _inside_ a container (classic way)
+
+### 1‑a · Open a shell
 
 ```bash
-docker compose exec web bash
+docker compose exec web bash      # or: docker compose exec api bash
 ```
 
-*(You can run the same commands inside the `api` container if you prefer.)*
-
----
-
-## 2 · Run the ingestion script
-
-Typical first‑time bootstrap: load a clean **players** table, build embeddings and ingest the latest news feeds.
+### 1‑b · Bootstrap players **and** news
 
 ```bash
-python -m apps.ingestion.seed_and_ingest \
-       --players-csv data/all_players_cleaned.csv \
-       --replace            \  # truncates players & player_news only
-       --refresh-embs       \  # recomputes the 43‑D feature_vector
+python -m apps.ingestion.seed_and_ingest        --players-csv data/all_players_cleaned.csv        --replace            \  # ↺ truncates players & player_news
+       --refresh-embs       \  # ↺ rebuilds the 43‑D feature_vector
        --ingest-news
 ```
 
-> Make sure `data/all_players_cleaned.csv` exists and contains the required columns.
+*Use `--skip-players` + `--ingest-news` when you only want fresh articles.*
 
 ---
 
-## 🔧 CLI flags (quick reference)
+## 2 · Use the dedicated *ingestion* service (preferred)
+
+The `docker-compose.yml` defines a one‑shot service called **`ingestion`**.  
+The Makefile wraps it with two handy targets:
+
+| Command | What it does |
+|---------|--------------|
+| `make ingest-full` | Runs the container with `INGEST_MODE=""` → full bootstrap (players + embeddings + news). |
+| `make ingest-news` | Runs the container with `INGEST_MODE=news` → fetch & embed **only new** news items. |
+
+These targets automatically ensure `db` and `redis` are up, build the image if needed, execute the job and remove the temporary container.
+
+```bash
+# First‑time load (or when you want a hard refresh)
+make ingest-full
+
+# Daily cron / manual refresh of news only
+make ingest-news
+```
+
+---
+
+## CLI flags (quick reference)
 
 | Flag | Purpose |
 |------|---------|
-| `--players-csv PATH` | CSV file with the raw player stats |
-| `--replace` | **Truncate** `players` and `player_news` before inserting (keeps `football_news` intact) |
-| `--refresh-embs` | Recompute **all** player `feature_vector` embeddings even if they already exist |
-| `--ingest-news` | Fetch, summarise, embed and upsert the latest football‑news RSS items |
-| `--skip-players` | Skip the player CSV step (news‑only run) |
-| `--echo-sql` | Print every SQL statement for debugging |
+| `--players-csv PATH` | CSV with raw player stats |
+| `--replace` | Truncate `players` and `player_news` before inserting |
+| `--refresh-embs` | Recompute every `feature_vector` with StandardScaler + pgvector |
+| `--ingest-news` | Fetch, summarise, embed and upsert RSS news |
+| `--skip-players` | Skip player ingestion (news‑only run) |
+| `--echo-sql` | Verbose SQL for debugging |
 
----
-
-### Examples
-
-```bash
-# News‑only run (do not touch players)
-python -m apps.ingestion.seed_and_ingest --ingest-news --skip-players
-
-# Re‑scale or change vector features without reloading CSV
-python -m apps.ingestion.seed_and_ingest --refresh-embs --skip-players
-```
-
----
-
-## 3 · Exit the container
-
-```bash
-exit
-```
+*(See `python -m apps.ingestion.seed_and_ingest --help` for all options.)*
 
 # 🔹 System Architecture Diagram
 
