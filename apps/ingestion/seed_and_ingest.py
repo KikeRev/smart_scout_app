@@ -35,12 +35,15 @@ from sqlalchemy.orm import declarative_base
 from pgvector.sqlalchemy import Vector
 from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
 from bs4 import BeautifulSoup
-import requests, re
+import requests
 import torch
 from transformers import logging as hf_logging
 import feedparser
 from tqdm.auto import tqdm
 from pgvector.sqlalchemy import Vector
+from sklearn.preprocessing import StandardScaler
+import unicodedata, unidecode, re
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 hf_logging.set_verbosity_error()
 
@@ -61,6 +64,10 @@ EMB_MODEL = "sentence-transformers/all-mpnet-base-v2"  # 768 d
 embedder = SentenceTransformer(EMB_MODEL)
 
 EMB_DIM = 768
+
+# ───  helper  ────────────────────────────────────────────────────────────
+_WS_RE = re.compile(r"\s+")
+_WS = re.compile(r"\s+")
 
 # ---------------------------------------------------------------------------
 #  DB setup
@@ -253,6 +260,21 @@ def _to_float(x):
 def _to_int(x):
     return int(_to_float(x))
 
+def clean_name(name: str) -> str:
+    """Normaliza tildes, elimina caracteres raros y colapsa espacios."""
+    if pd.isna(name):
+        return ""
+    # 1) Normaliza a NFKD y elimina diacríticos
+    name_ascii = (
+        unicodedata.normalize("NFKD", name)
+        .encode("ascii", "ignore")
+        .decode("ascii")
+    )
+    # 2) Colapsa espacios y quita espacios iniciales/finales
+    name_ascii = _WS_RE.sub(" ", name_ascii).strip()
+    # 3) Convierte a Title Case (opcional)
+    return name_ascii.title()
+
 
 def load_players(engine: sa.Engine, csv_path: Path,  if_exists: str = "append"):
     df = pd.read_csv(csv_path)
@@ -292,6 +314,8 @@ def load_players(engine: sa.Engine, csv_path: Path,  if_exists: str = "append"):
         "errors",
     ]
 
+    df["full_name"] = df["full_name"].apply(clean_name)
+
     for col in int_cols:
         df[col] = df[col].apply(_to_int)
 
@@ -301,7 +325,10 @@ def load_players(engine: sa.Engine, csv_path: Path,  if_exists: str = "append"):
 
     if if_exists == "replace":
         with engine.begin() as conn:
-            conn.execute(sa.text("TRUNCATE TABLE players RESTART IDENTITY"))
+            conn.execute(sa.text("""
+                TRUNCATE TABLE player_news, players
+                RESTART IDENTITY CASCADE
+            """))
 
     df.to_sql("players", con=engine, if_exists="append", index=False, method="multi")
     print(f"✅ Players upserted: {len(df)}")
@@ -486,25 +513,203 @@ def ingest_news(engine: sa.Engine):
 
     print(f"✅ News upserted: {inserted}")
 
+# ---------------------------------------------------------------------------
+#  ==  Embedding / Standard‑Scaler pipeline for players  ====================
+# ---------------------------------------------------------------------------
+
+PLAYER_DIM = 43                 # 42 stats + minutes_90s (🗒️ ajusta si cambias)
+IVF_LISTS  = 140                # number of lists for ivfflat
+
+FEATURE_COLS = [
+    "minutes", "minutes_90s",
+    "goals", "assists",
+    "expected_goals", "expected_assists",
+    "no_penalty_expected_goals_plus_expected_assists",
+    "progressive_carries", "progressive_passes", "progressive_passes_received",
+    "goals_per90", "assists_per90", "goals_assists_per90",
+    "expected_goals_per90", "expected_assists_per90", "expected_goals_assists_per90",
+    "gk_goals_against", "gk_pens_allowed", "gk_free_kick_goals_against",
+    "gk_corner_kick_goals_against", "gk_own_goals_against",
+    "gk_psxg", "gk_psnpxg_per_shot_on_target_against",
+    "passes_completed", "passes", "passes_pct",
+    "passes_progressive_distance", "passes_completed_long", "passes_long",
+    "passes_pct_long", "tackles", "tackles_won", "challenge_tackles",
+    "challenges", "challenge_tackles_pct", "challenges_lost", "blocks",
+    "blocked_shots", "blocked_passes", "interceptions",
+    "tackles_interceptions", "clearances", "errors",
+]
+
+assert len(FEATURE_COLS) == PLAYER_DIM, "Dim mismatch ‑ adjust FEATURE_COLS"
+
+def prepare_pgvector(engine: sa.Engine):
+    """Ensure pgvector extension + index exist (idempotent)."""
+    with engine.begin() as conn:
+        conn.exec_driver_sql("CREATE EXTENSION IF NOT EXISTS vector;")
+        conn.exec_driver_sql(f"""
+           ALTER TABLE players
+             ADD COLUMN IF NOT EXISTS feature_vector vector({PLAYER_DIM});
+        """)
+        #  index
+        conn.exec_driver_sql(f"""
+           CREATE INDEX IF NOT EXISTS players_feature_vec_idx
+             ON players USING ivfflat (feature_vector vector_cosine_ops)
+             WITH (lists = {IVF_LISTS});
+        """)
+
+def compute_and_store_player_vectors(engine: sa.Engine, refresh: bool=False):
+    """Compute Standard‑Scaled vectors and persist to DB (pgvector)."""
+    prepare_pgvector(engine)
+
+    query_cols = ["id"] + FEATURE_COLS
+    df = pd.read_sql(
+        f"SELECT {', '.join(query_cols)} FROM players", engine
+    )
+
+    if df.empty:
+        print("⚠️  No players found – skipping vector generation.")
+        return
+
+    if not refresh:
+        # Quick check – if any row already has vector skip unless refresh
+        existing = engine.execute(sa.text(
+            "SELECT COUNT(*) FROM players WHERE feature_vector IS NOT NULL"
+        )).scalar()
+        if existing == len(df):
+            print("🟢 Player vectors already present. Use --refresh-embs to recompute.")
+            return
+
+    # -------  Standardize ---------------------------------------------------
+    scaler = StandardScaler()
+    vec_matrix = scaler.fit_transform(df[FEATURE_COLS]).astype("float32")
+    df["feature_vector"] = [v.tolist() for v in vec_matrix]
+
+    # -------  Bulk update ---------------------------------------------------
+    with engine.begin() as conn:
+        conn.execute(
+            sa.text("""
+                UPDATE players
+                SET feature_vector = :vec
+                WHERE id = :pid
+            """),
+            [{"pid": pid, "vec": vec}
+             for pid, vec in zip(df.id, df.feature_vector)]
+        )
+
+    print(f"✅  Player embeddings stored: {len(df)} rows")
+
+# ---------------------------------------------------------------------------
+#  ==  Player ⇄ News linker  ================================================
+# ---------------------------------------------------------------------------
+
+def _norm(text: str) -> str:
+    """lower‑case, strip diacritics & collapse spaces – for matching."""
+    if not text:
+        return ""
+    text = unidecode.unidecode(
+        unicodedata.normalize("NFKD", text)
+    ).lower()
+    return _WS.sub(" ", text).strip()
+
+def ensure_link_index(engine: sa.Engine):
+    with engine.begin() as conn:
+        conn.exec_driver_sql(
+            """
+            CREATE TABLE IF NOT EXISTS player_news (
+              player_id  INTEGER NOT NULL REFERENCES players(id)  ON DELETE CASCADE,
+              news_id    INTEGER NOT NULL REFERENCES football_news(id) ON DELETE CASCADE,
+              PRIMARY KEY (player_id, news_id)
+            );
+            """
+        )
+        conn.exec_driver_sql(
+            """
+            CREATE INDEX IF NOT EXISTS player_news_player_idx
+              ON player_news(player_id);
+            """
+        )
+
+def link_player_news(engine: sa.Engine, only_new: bool = True) -> None:
+    """
+    Populate `player_news` by regex‑matching player names inside each article.
+    If `only_new` is True we link only news entries not yet in the bridge table.
+    """
+    ensure_link_index(engine)
+
+    with orm.Session(engine) as sess:
+
+        # 1️⃣ Dict {normalized_name: player_id}
+        name_to_id = {
+            _norm(name): pid
+            for pid, name in sess.query(Player.id, Player.full_name)
+        }
+
+        if not name_to_id:
+            print("⚠️  No players to link – skipping player_news linking.")
+            return
+
+        # Build single regex (word boundary) e.g.  \b(mbappe|vinicius jr|...) \b
+        pattern = r"\b(" + "|".join(re.escape(n) for n in name_to_id) + r")\b"
+        name_re = re.compile(pattern, re.I)
+
+        # 2️⃣ Rows to scan
+        q = sess.query(FootballNews.id, FootballNews.article_text)
+        if only_new:
+            q = q.filter(
+                ~FootballNews.id.in_(
+                    sess.query(player_news.c.news_id).distinct()
+                )
+            )
+
+        rows = q.all()
+        if not rows:
+            print("🟢  No new articles to link.")
+            return
+
+        inserted = 0
+        for news_id, article in tqdm(rows, desc="Linking news↔players", unit="article"):
+            matches = { _norm(m.group(0)) for m in name_re.finditer(article or "") }
+
+            for n in matches:
+                pid = name_to_id.get(n)
+                if not pid:
+                    continue
+
+                stmt = pg_insert(player_news).values(player_id=pid, news_id=news_id)
+                stmt = stmt.on_conflict_do_nothing()
+                sess.execute(stmt)
+                inserted += 1
+
+        sess.commit()
+        print(f"🔗  player_news linked: {inserted}")
+
 
 # ----------------------------- CLI --------------------------------
 
 def main():
     parser = argparse.ArgumentParser(description="Seed players & ingest news")
     parser.add_argument("--players-csv", type=Path, help="Path to players CSV", required=False)
+    parser.add_argument("--replace", action="store_true", help="TRUNCATE players before importing CSV")
     parser.add_argument("--ingest-news", action="store_true", help="Fetch & embed latest news")
     parser.add_argument("--echo-sql", action="store_true")
     parser.add_argument("--skip-players", action="store_true")
+    parser.add_argument(
+        "--refresh-embs",
+        action="store_true",
+        help="Re‑compute player embeddings even if they exist"
+    )
     args = parser.parse_args()
 
     engine = get_engine(echo=args.echo_sql)
     create_tables(engine)
 
     if not args.skip_players and args.players_csv:
-        load_players(engine, args.players_csv)
+        if not args.skip_players and args.players_csv:
+            load_players(engine, args.players_csv, if_exists="replace" if args.replace else "append")
+            compute_and_store_player_vectors(engine, refresh=args.refresh_embs)
 
     if args.ingest_news:
         ingest_news(engine)
+        link_player_news(engine)
 
     print("✅ All done")
 

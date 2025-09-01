@@ -39,8 +39,10 @@ SYSTEM = SystemMessage(
         Cuando el usuario solicite un informe en PDF:
 
         **Flujo inteligente recomendado:**
-        1. Si ya has generado todos los campos necesarios (`recommendation`, `pros`, `cons`), puedes llamar directamente a `build_report_pdf`.
-        2. Si aún no has generado la recomendación, o necesitas contexto de noticias:
+        1. Recupera de la memoria los ids de los jugadores ya sugeridos con `similar_players`, en el caso de no tener el listado, usa de nuevo
+         `similar_players` para obtener el listado usando `player_id`, si tampoco lo tienes usa `player_lookup` para obtenerlo. 
+        2. Si ya has generado todos los campos necesarios (`recommendation`, `pros`, `cons`), puedes llamar directamente a `build_report_pdf`.
+        3. Si aún no has generado la recomendación, o necesitas contexto de noticias:
         - Llama primero a `summarize_player_news` con el `player_id` del jugador elegido (`chosen_id`).
         - Usa el resumen generado como contexto para redactar un informe profesional llamando a `build_scouting_report`.
 

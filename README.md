@@ -49,114 +49,133 @@ After running `make up`, the services are accessible at:
 
 > Note: The Jupyter container is useful for testing tools, exploring player stats, or running analytics manually.
 
-# ⚙️ How to Initialize the Containers
+# ⚙️ Makefile – Common Developer Tasks
 
-We use a `Makefile` to simplify the most common Docker Compose operations. Below are the main commands available:
+The project ships with a root‑level **Makefile** that wraps the most frequent
+Docker Compose commands.  
+All targets are **idempotent** – running them twice in a row is safe.
 
-### 🔧 Build and Launch All Containers
+| Target | What it does |
+|--------|--------------|
+| **`make up`** | Build images (if missing) **and** bring up the full stack (`api`, `web`, `db`, `redis`, `jupyter`). Uses `--force-recreate` so code changes are picked up. |
+| **`make build`** | Only (re)build the images; nothing is started. |
+| **`make up-db`** | Start **just** PostgreSQL (`db`) and Redis. Handy for one‑off scripts. |
+| **`make ingest-full`** | ⬅️ **One‑off bootstrap**: <br>1. Ensures `db` + `redis` are running (`up-db`).<br>2. Runs the *ingestion* container with:<br>&nbsp;&nbsp;• `--replace` → truncates `players` & `player_news`<br>&nbsp;&nbsp;• loads `data/all_players_cleaned.csv`<br>&nbsp;&nbsp;• rebuilds embeddings (`--refresh-embs`)<br>&nbsp;&nbsp;• fetches & embeds the latest RSS news. |
+| **`make ingest-news`** | Fetch & embed **only new** football‑news articles (does **not** touch players). |
+| **`make stop`** | Stop all runtime containers, keep volumes & networks. |
+| **`make down`** | Remove containers & network but **keep volumes** (DB data survives). |
+| **`make down-all`** | Remove **everything** – containers **and** volumes. ⚠️ This deletes database data. |
+| **`make restart`** | Convenience shortcut: `down` ➜ `up`. |
+| **`make prune`** | Aggressive Docker clean‑up (orphan images, networks, volumes). |
+| **`make clean`** | `prune` followed by a fresh `build`. |
 
-Builds (if needed), recreates, and launches all services:
+---
+
+## 🔰 Typical workflows
+
+### First‑time bootstrap
 
 ```bash
+# Build images + run full ingestion (players + embeddings + news)
+make ingest-full
+```
+
+### Daily cron / manual refresh of news only
+
+```bash
+make ingest-news
+```
+
+### Build and launch api, web and jupyter enviroments
+
+```bash
+# Build and launch all the services necessary for the app workflow (api, db, redis, web & jupyter)
 make up
 ```
 
-### 💠 Build Only
-
-Rebuilds all containers without starting them:
-
-```bash
-make build
-```
-
-### ⏹️ Stop All Containers
-
-Stops running services without removing volumes or networks:
-
-```bash
-make stop
-```
-
-### 🧹 Remove Containers and Network (Keep Volumes)
-
-Use this when you want to shut down everything but preserve your database data:
-
-```bash
-make down
-```
-
-### 💣 Remove Everything (Containers + Volumes)
-
-This will remove **all containers, volumes, and networks**. Use with caution as it will delete persistent data:
-
-```bash
-make down-all
-```
-
-### 🔄 Quick Restart
-
-Stops and immediately restarts all services (without losing data):
+### Re‑run the stack after code changes
 
 ```bash
 make restart
 ```
 
-### 🧽 Deep Clean (Images, Builds, Volumes)
-
-Removes unused Docker resources such as orphaned containers, networks, and build cache:
+### Full reset (wipe DB – irreversible)
 
 ```bash
-make prune
+make down-all
+make ingest-full
 ```
 
-### 🧼 Full Clean and Rebuild
+---
 
-Performs a deep clean and then builds fresh images:
+## 📝 Notes
 
-```bash
-make clean
-```
+* `make ingest-*` uses `docker compose run --rm --build ingestion …`  
+  – it **builds** the `ingestion` image if needed  
+  – runs a **one‑off** container and removes it afterwards.
+* All long‑running services (`api`, `web`, etc.) stay up and keep using the
+  shared `pgdata` volume.
+* If you add or rename services, update the `SERVICES` variable at the top of
+  the Makefile and regenerate this section.
 
-# 🕐 Populate the Databases
+# 🕐 Populate the Databases
 
-Once the containers are running, you can seed the PostgreSQL database with player statistics and ingest football news using the provided script.
+Once the containers are running you can load player statistics **and** ingest football news with a single command‑line script.
 
-### 1. Access the `web` container
+---
+
+## 1 · Open a shell in the `web` (Django) container
 
 ```bash
 docker compose exec web bash
 ```
 
+*(You can run the same commands inside the `api` container if you prefer.)*
+
 ---
 
-### 2. Run the ingestion script
+## 2 · Run the ingestion script
 
-Use the following command to populate both the players table (from a CSV) and ingest football news from RSS feeds:
+Typical first‑time bootstrap: load a clean **players** table, build embeddings and ingest the latest news feeds.
 
 ```bash
 python -m apps.ingestion.seed_and_ingest \
        --players-csv data/all_players_cleaned.csv \
+       --replace            \  # truncates players & player_news only
+       --refresh-embs       \  # recomputes the 43‑D feature_vector
        --ingest-news
 ```
 
-> Make sure the file `data/all_players_cleaned.csv` exists and has the expected columns.
+> Make sure `data/all_players_cleaned.csv` exists and contains the required columns.
 
 ---
 
-### 🔧 Optional Flags
+## 🔧 CLI flags (quick reference)
 
-You can customize the behavior of the script using these flags:
-
-| Flag                 | Description                                      |
-| -------------------- | ------------------------------------------------ |
-| `--players-csv PATH` | Path to the CSV file containing player data      |
-| `--ingest-news`      | Fetch and process latest football news           |
-| `--skip-players`     | Skip player ingestion (useful for news-only run) |
-| `--echo-sql`         | Print executed SQL statements (for debugging)    |
+| Flag | Purpose |
+|------|---------|
+| `--players-csv PATH` | CSV file with the raw player stats |
+| `--replace` | **Truncate** `players` and `player_news` before inserting (keeps `football_news` intact) |
+| `--refresh-embs` | Recompute **all** player `feature_vector` embeddings even if they already exist |
+| `--ingest-news` | Fetch, summarise, embed and upsert the latest football‑news RSS items |
+| `--skip-players` | Skip the player CSV step (news‑only run) |
+| `--echo-sql` | Print every SQL statement for debugging |
 
 ---
 
-### 3. Exit the container
+### Examples
+
+```bash
+# News‑only run (do not touch players)
+python -m apps.ingestion.seed_and_ingest --ingest-news --skip-players
+
+# Re‑scale or change vector features without reloading CSV
+python -m apps.ingestion.seed_and_ingest --refresh-embs --skip-players
+```
+
+---
+
+## 3 · Exit the container
 
 ```bash
 exit

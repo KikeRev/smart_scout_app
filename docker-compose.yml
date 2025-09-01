@@ -43,7 +43,20 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: scouting-ingestion
-    command: python apps/ingestion/worker.py  # ajusta al script real
+    # ① = full bootstrap (players + embeddings + news)  
+    # ② = news‑only mode (no touch on players)
+    command: >
+      sh -c "
+        if [ \"$$INGEST_MODE\" = 'news' ]; then
+            python -m apps.ingestion.seed_and_ingest \
+                   --ingest-news --skip-players ;
+        else
+            # default = full bootstrap
+            python -m apps.ingestion.seed_and_ingest \
+                   --players-csv data/all_players_cleaned.csv \
+                   --replace --refresh-embs --ingest-news ;
+        fi
+      "
     volumes:
       - ./:/app
       - ./media:/app/media

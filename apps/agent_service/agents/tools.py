@@ -147,6 +147,7 @@ def _summarize_player_news(player_id: int, k: int = 5) -> str:
             Eres un analista de scouting. A continuación tienes varias noticias sobre un jugador.
             Resume los aspectos clave (traspasos, rumores, interés de clubes, lesiones, declaraciones, etc.).
             Usa un estilo técnico, conciso y profesional. No repitas información redundante.
+            Usa el idioma en que se te ha hecho la petición.
 
             Noticias:
             {text}
@@ -199,6 +200,10 @@ def generate_recommendation_with_news(
         """
         Eres un analista profesional de scouting.
         Tu objetivo es redactar un informe técnico para recomendar un fichaje. 
+        Usa el idioma que se te ha hecho la petición, si la petición es en inglés usa inglés, si es en español
+        usa español, etc.
+        Usa datos estadísticos, pros y contras, y contexto de mercado (noticias recientes).
+        Geera un texto fluido, coherente y profesional.
 
         Objetivo: {objective}
 
@@ -206,10 +211,10 @@ def generate_recommendation_with_news(
         Resumen de noticias recientes (si existen):
         {news}
 
-        Genera un informe profesional que incluya:
+        Genera un informe profesional que incluya, en el idioma de la petición, que incluya:
         - Al menos tres párrafos sobre virtudes, defectos, estilo de juego.
         - Un párrafo final con justificación del fichaje y encaje en el equipo.
-        - Referencias a las noticias si son relevantes.
+        - Referencias a las noticias si son relevantes. Si el texto de las noticas no aporta nada, ignóralo.
 
         Informe:
         """

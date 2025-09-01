@@ -21,6 +21,7 @@
       hx-trigger="submit"
       hx-include="#chat-input"
       hx-vals='{"hx-skip-ci":true}'
+      hx-indicator="#thinking-indicator"
       class="chat-form">
   {% csrf_token %}
 
@@ -35,7 +36,13 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
              viewBox="0 0 16 16"><path
              d="M15.854 0.146a.5.5 0 0 0-.527-.112l-15 6a.5.5 0 0 0 .014.94L5.5 9.418l2.444 5.158a.5.5 0 0 0 .918-.09l6-15a.5.5 0 0 0-.008-.34z"/></svg>
-      </button>
+  </button>
+
+  <div id="thinking-indicator" class="thinking-indicator">
+        <div class="spinner"></div>
+        <span>Pensando…</span>
+  </div>
+
 </form>
 
 <script>
@@ -43,6 +50,16 @@
   document.addEventListener('htmx:afterRequest', (e) => {
     if (e.target.id === 'chat-form') {
       e.target.querySelector('textarea').value = '';
+    }
+  });
+
+  /* Envía el formulario con Enter (Shift+Enter = salto de línea) */
+  document.addEventListener('keydown', (e) => {
+    const ta = e.target;
+    const inChat = ta.tagName === 'TEXTAREA' && ta.closest('#chat-form');
+    if (inChat && e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();          // evita línea nueva
+      ta.form.requestSubmit();     // dispara el submit (HTMX lo intercepta)
     }
   });
 </script>
