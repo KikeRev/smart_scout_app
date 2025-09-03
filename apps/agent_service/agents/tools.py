@@ -10,7 +10,7 @@ from apps.agent_service.report_pdf import build_report_pdf
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from typing import Optional, Annotated
-from apps.agent_service.llm_provider import get_llm  # Asegúrate de importar bien la función
+from apps.agent_service.llm_provider import get_llm
 
 
 # --------------------------- 1) Similar Players ----------------------------- #
