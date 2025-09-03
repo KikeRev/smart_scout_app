@@ -202,10 +202,18 @@ def chat_message(request, pk):
 
     # ---------- 1) memoria ----------
     past_msgs = session.messages.order_by("created_at")
-    agent = build_agent(user_id=str(request.user.id), messages=past_msgs)
+    sid = f"chat:{pk}:user:{request.user.id}"   # session_id estable por chat+usuario
+    agent = build_agent(
+        user_id=str(request.user.id),
+        session_id=sid,          # precarga opcional en factory (si se pasan messages)
+        messages=past_msgs,
+    )
 
     # ---------- 2) AGENTE ----------
-    raw = agent.invoke({"input": text_in})["output"]
+    raw = agent.invoke(
+        {"input": text_in},
+        {"configurable": {"session_id": sid}},   # <<< clave para la memoria 1.x
+    )["output"]
 
     # ­—— detect posible redirect (dashboard_inline) -------------
     redirect_url = raw.get("url") if isinstance(raw, dict) else None

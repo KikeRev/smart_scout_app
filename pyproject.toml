@@ -21,8 +21,8 @@ dependencies = [
 
 
   # --- GenAI & RAG ---
-  "langchain",
-  "langgraph",
+  "langchain==1.0.0a3",
+  "langgraph==1.0.0a2",
   "sentence-transformers",
   "llama-cpp-python",
   "faiss-cpu>=1.8",
@@ -30,8 +30,9 @@ dependencies = [
   "torch>=2.3",
   "sentencepiece>=0.2",
   "langchain-community>=0.0.34",
-  "openai>=1.30.0",
-  "langchain-openai>=0.1.8",
+  "openai==1.104.2",
+  "langchain-openai==1.0.0a2",
+  "langchain-core==1.0.0a2",
 
   # --- Data processing & ML ---
   "pandas",

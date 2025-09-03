@@ -1,20 +1,36 @@
 # apps/agent_service/memory.py
-# apps/agent_service/memory.py
-import json
-from langchain.memory import ConversationBufferMemory
-from langchain.schema import AIMessage, HumanMessage
 
-class SafeConversationMemory(ConversationBufferMemory):
-    """Guarda sólo texto en memoria; evita ValidationError con dicts."""
+from __future__ import annotations
+from typing import Dict, List, Optional
 
-    def save_context(self, inputs: dict, outputs: dict) -> None:
-        # ‑‑ entrada tal cual ‑‑
-        inp = inputs.get(self.input_key, inputs)
-        self.chat_memory.add_message(HumanMessage(content=str(inp)))
+from langchain_core.chat_history import InMemoryChatMessageHistory
+from langchain_core.messages import AIMessage, HumanMessage, BaseMessage
 
-        # ‑‑ salida: si es dict → toma "text"  o serializa a JSON ‑‑
-        out = outputs.get(self.output_key, outputs)
-        if isinstance(out, dict):
-            out = out.get("text") or json.dumps(out, ensure_ascii=False)
+# Almacenamiento simple en memoria del proceso (sustituible por Redis/DB)
+_HISTORY: Dict[str, InMemoryChatMessageHistory] = {}
 
-        self.chat_memory.add_message(AIMessage(content=str(out)))
+
+def get_history(session_id: str) -> InMemoryChatMessageHistory:
+    """Devuelve (o crea) el historial de chat para una sesión concreta."""
+    if session_id not in _HISTORY:
+        _HISTORY[session_id] = InMemoryChatMessageHistory()
+    return _HISTORY[session_id]
+
+
+def preload_history(session_id: str, messages: Optional[List[BaseMessage]]):
+    """
+    Opcional: precarga mensajes previos (si tu router te los pasa).
+    Adapta roles 'user'/'assistant' a Human/AI.
+    """
+    if not messages:
+        return
+    hist = get_history(session_id)
+    for m in messages:
+        role = getattr(m, "role", None)
+        content = getattr(m, "content", None)
+        if not content:
+            continue
+        if role == "user":
+            hist.add_message(HumanMessage(content=content))
+        elif role == "assistant":
+            hist.add_message(AIMessage(content=content))

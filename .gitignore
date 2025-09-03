@@ -31,5 +31,6 @@ data/
 *.parquet
 
 # ─── Otros ────────────────────────────────────────────────
-.env  # variables de entorno con claves
-/media/charts/  # gráficos generados
+.env  
+/media/charts/ 
+/media/reports/ 

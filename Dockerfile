@@ -22,7 +22,7 @@ WORKDIR /app
 # ─────────────────────────────────────────────────────────────────
 COPY pyproject.toml ./
 
-RUN uv pip install . --system --no-cache-dir
+RUN uv pip install . --prerelease=allow --system --no-cache-dir
 
 # ─────────────────────────────────────────────────────────────────
 # 2) Copiamos el resto del código y ENT0NCES instalamos dependencias
