@@ -46,21 +46,25 @@ services:
     # ① = full bootstrap (players + embeddings + news)  
     # ② = news‑only mode (no touch on players)
     command: >
-      sh -c "
-        if [ \"$$INGEST_MODE\" = 'news' ]; then
-            python -m apps.ingestion.seed_and_ingest \
-                   --ingest-news --skip-players ;
+      sh -lc '
+        set -eu
+        echo "INGEST_MODE=$${INGEST_MODE:-<unset>}"
+        if [ "$${INGEST_MODE:-}" = "news" ]; then
+          echo "▶ News-only ingestion"
+          python -m apps.ingestion.seed_and_ingest --ingest-news --skip-players --verbose
         else
-            # default = full bootstrap
-            python -m apps.ingestion.seed_and_ingest \
-                   --players-csv data/all_players_cleaned.csv \
-                   --replace --refresh-embs --ingest-news ;
+          echo "▶ Full bootstrap (players + news)"
+          python -m apps.ingestion.seed_and_ingest \
+            --players-csv data/all_players_cleaned.csv \
+            --replace --refresh-embs --ingest-news --verbose
         fi
-      "
+      '
     volumes:
       - ./:/app
       - ./media:/app/media
       - ./media_data:/app/media_data
+    stdin_open: true 
+    tty: true
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_API_BASE: ${OPENAI_API_BASE}
@@ -68,6 +72,8 @@ services:
       PYTHONUNBUFFERED: 1
       PYTHONPATH: /app
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
+      TQDM_DISABLE: "0"
+      TERM: xterm-256color
     depends_on:
       - db
     <<: *default_networks

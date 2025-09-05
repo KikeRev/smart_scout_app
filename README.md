@@ -151,7 +151,7 @@ The Makefile wraps it with two handy targets:
 
 | Command | What it does |
 |---------|--------------|
-| `make ingest-full` | Runs the container with `INGEST_MODE=""` → full bootstrap (players + embeddings + news). |
+| `make ingest-full` | Build & Runs the container with `INGEST_MODE=""` → full bootstrap (players + embeddings + news). |
 | `make ingest-news` | Runs the container with `INGEST_MODE=news` → fetch & embed **only new** news items. |
 
 These targets automatically ensure `db` and `redis` are up, build the image if needed, execute the job and remove the temporary container.

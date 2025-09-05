@@ -20,10 +20,11 @@ up-db:
 
 ## Manual ingestion targets 
 ingest-full: up-db   ## Load CSV, refresh embeddings, ingest news (idempotent)
-	docker compose run --rm --build -e INGEST_MODE="" ingestion
+	docker compose run --rm --build -t -e INGEST_MODE="" ingestion
 
+## Only scrape & embed NEW football news (no rebuild)
 ingest-news: up-db   ## Only scrape & embed NEW football news
-	docker compose run --rm --build -e INGEST_MODE="news" ingestion
+	docker compose run --rm -t -e INGEST_MODE="news" ingestion
 
 ## Detiene contenedores (NO borra redes ni volúmenes)
 stop:

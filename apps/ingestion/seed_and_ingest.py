@@ -439,29 +439,32 @@ def parse_article(url: str) -> tuple[str, str] | None:
     return text, full_summary
 
 
-def embed_texts(texts: list[str]) -> list[list[float]]:
+def embed_texts(texts: list[str], verbose: bool = False) -> list[list[float]]:
     # Filtra nulos y vacíos
     valid_texts = [t for t in texts if t]
     if not valid_texts:
         return []
-
+    
+    print(f"🔎 Embedding {len(valid_texts)} documentos…", flush=True)
+    
     return embedder.encode(
         valid_texts,
         batch_size=32,
-        show_progress_bar=True,
+        show_progress_bar=verbose,
         convert_to_numpy=True,
     ).tolist()
 
 
-def ingest_news(engine: sa.Engine):
+def ingest_news(engine: sa.Engine, verbose: bool = False):
     items = sorted(fetch_rss_items(), key=lambda x: x["published_at"], reverse=True)
-    print(f"Fetched {len(items)} RSS items → processing …")
+    print(f"Fetched {len(items)} RSS items → processing …", flush=True)
 
     texts:      list[str]  = []   # artículo completo
     summaries:  list[str]  = []   # resumen
     metas:      list[dict] = []   # metadatos URL, título, fecha…
 
-    for meta in tqdm(items, desc="Parsing", unit="article"):
+    for meta in tqdm(items, desc="Parsing", unit="article",
+                     disable=not verbose, dynamic_ncols=True):
         try:
             # ── parsea el artículo y resume ───────────────────────────────
             parsed = parse_article(meta["url"])
@@ -483,7 +486,7 @@ def ingest_news(engine: sa.Engine):
         return
 
     # Usa RESÚMENES (o texts) para la embedding; los dos tienen la misma len
-    embeddings = embed_texts(texts)
+    embeddings = embed_texts(texts, verbose=verbose)
 
     with orm.Session(engine) as session:
         inserted = 0
@@ -491,7 +494,9 @@ def ingest_news(engine: sa.Engine):
             zip(texts, summaries, embeddings, metas),
             total=len(metas),
             desc="DB upsert",
-            unit="row"
+            unit="row", 
+            disable=not verbose, 
+            dynamic_ncols=True
         ):
             if session.query(FootballNews).filter_by(url=meta["url"]).first():
                 continue  # duplicado
@@ -692,6 +697,7 @@ def main():
     parser.add_argument("--ingest-news", action="store_true", help="Fetch & embed latest news")
     parser.add_argument("--echo-sql", action="store_true")
     parser.add_argument("--skip-players", action="store_true")
+    parser.add_argument("--verbose", action="store_true")
     parser.add_argument(
         "--refresh-embs",
         action="store_true",
@@ -708,7 +714,7 @@ def main():
             compute_and_store_player_vectors(engine, refresh=args.refresh_embs)
 
     if args.ingest_news:
-        ingest_news(engine)
+        ingest_news(engine, verbose=args.verbose)
         link_player_news(engine)
 
     print("✅ All done")
