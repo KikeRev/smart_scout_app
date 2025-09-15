@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from apps.agent_service.routers import players, news, chat
 import langchain
 
@@ -9,3 +10,7 @@ app = FastAPI(title="Smart-Scout API")
 app.include_router(players.router)
 app.include_router(news.router)
 app.include_router(chat.router)
+
+@app.get("/health", include_in_schema=False)
+def healthcheck() -> JSONResponse:
+    return JSONResponse({"status": "ok"})
