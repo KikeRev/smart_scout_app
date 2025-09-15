@@ -97,15 +97,19 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+_raw_db_url = os.getenv(
+    "DATABASE_URL",
+    # Default dev DB inside docker compose
+    "postgres://scout:scout@db:5432/scouting",
+)
+# dj-database-url no soporta esquemas estilo SQLAlchemy. Normalizamos.
+if _raw_db_url.startswith("postgresql+psycopg2://"):
+    _raw_db_url = _raw_db_url.replace("postgresql+psycopg2://", "postgres://", 1)
+elif _raw_db_url.startswith("postgresql://"):
+    _raw_db_url = _raw_db_url.replace("postgresql://", "postgres://", 1)
+
 DATABASES = {
-    "default": dj_database_url.parse(
-        os.getenv(
-            "DATABASE_URL",
-            # Default dev DB inside docker compose
-            "postgresql+psycopg2://scout:scout@db:5432/scouting",
-        ),
-        conn_max_age=600,
-    )
+    "default": dj_database_url.parse(_raw_db_url, conn_max_age=600)
 }
 
 

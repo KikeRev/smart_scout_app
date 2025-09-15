@@ -8,6 +8,7 @@ from pathlib import Path
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
 # URL →  usa la variable de entorno DATABASE_URL si existe
@@ -17,14 +18,23 @@ _raw_db_url = os.getenv(
     "postgresql+psycopg2://scout:scout@db:5432/scouting",
 )
 
-# SQLAlchemy espera "postgresql[+driver]://"; si recibimos "postgres://" (estilo Django),
-# convertirlo explícitamente a "postgresql+psycopg2://"
-if _raw_db_url.startswith("postgres://"):
-    _raw_db_url = _raw_db_url.replace("postgres://", "postgresql+psycopg2://", 1)
-elif _raw_db_url.startswith("postgresql://"):
-    _raw_db_url = _raw_db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
-
-DATABASE_URL = _raw_db_url
+# Normalizar de forma robusta usando make_url
+try:
+    _url = make_url(_raw_db_url)
+    # Mapear alias incorrecto "postgres" al dialecto correcto
+    if _url.drivername == "postgres":
+        _url = _url.set(drivername="postgresql+psycopg2")
+    # Asegurar driver psycopg2 si no está especificado
+    elif _url.drivername == "postgresql":
+        _url = _url.set(drivername="postgresql+psycopg2")
+    DATABASE_URL = str(_url)
+except Exception:
+    # Fallback a reemplazo por texto
+    if _raw_db_url.startswith("postgres://"):
+        _raw_db_url = _raw_db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif _raw_db_url.startswith("postgresql://"):
+        _raw_db_url = _raw_db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    DATABASE_URL = _raw_db_url
 
 # 1️⃣ motor y fábrica de sesiones
 engine = create_engine(DATABASE_URL, pool_pre_ping=True, future=True)
