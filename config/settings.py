@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +22,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-rdm_ikdm6o_l(-6t+uw1vo-#gfo(x^#hwc7f^_()+@+!5y(_-e'
+# Use env var DJANGO_SECRET_KEY; generate a strong key for production.
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    "dev-unsafe-secret-key-change-me",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() in {"1", "true", "yes"}
 
-ALLOWED_HOSTS = []
+# Comma-separated hostnames, e.g. "localhost,127.0.0.1,web"
+_allowed_hosts_value = os.getenv("DJANGO_ALLOWED_HOSTS", "")
+ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_value.split(",") if h.strip()]
+
+# CSRF trusted origins expect full scheme+host, e.g. "http://localhost:8000"
+_csrf_origins_value = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins_value.split(",") if o.strip()]
 
 
 # Application definition
@@ -86,14 +98,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "scouting",
-        "USER": "scout",
-        "PASSWORD": "scout",
-        "HOST": "db",
-        "PORT": "5432",
-    }
+    "default": dj_database_url.parse(
+        os.getenv(
+            "DATABASE_URL",
+            # Default dev DB inside docker compose
+            "postgresql+psycopg2://scout:scout@db:5432/scouting",
+        ),
+        conn_max_age=600,
+    )
 }
 
 
