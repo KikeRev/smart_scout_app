@@ -37,13 +37,18 @@ except Exception:
         _raw_db_url = _raw_db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
     DATABASE_URL = _raw_db_url
 
+# Debug: verificar la URL final
+print(f"DEBUG: DATABASE_URL final = {DATABASE_URL}")
+
 # 1️⃣ motor y fábrica de sesiones
 engine = create_engine(
     DATABASE_URL, 
     pool_pre_ping=True, 
     future=True,
     pool_recycle=300,  # Recrear conexiones cada 5 minutos
-    pool_reset_on_return='commit'  # Reset conexiones al devolverlas
+    pool_reset_on_return='commit',  # Reset conexiones al devolverlas
+    pool_size=0,  # Deshabilitar pool temporalmente para debug
+    max_overflow=0  # Sin conexiones adicionales
 )
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
