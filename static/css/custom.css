@@ -1019,6 +1019,11 @@ header + section {
   border-bottom: none !important;
 }
 
+/* Ocultar el contenedor main que causa el espacio extra */
+main.container.py-4 {
+  display: none !important;
+}
+
 .app-logo:hover {
   transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1.05);
   filter: drop-shadow(0 12px 24px rgba(11, 61, 11, 0.6)) 
