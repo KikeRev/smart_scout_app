@@ -37,16 +37,15 @@
     <div class="chat-main">
       <div class="chat-container">
         <div id="chat-log" class="chat-log">
-          <!-- Logo y mensaje de bienvenida dentro del chat log -->
-          <div class="chat-welcome-message">
-            <img src="{% static 'img/app_logo_6.png' %}" alt="Smart Scout logo" class="chat-logo">
-            <h2 class="typewriter-text">Bienvenido, ¿en qué te puedo ayudar?</h2>
-          </div>
           {% if messages %}
               {% for m in messages %}
                   {% include "chats/_message.html" with m=m %}
               {% endfor %}
           {% else %}
+              <!-- Mensaje de bienvenida solo para chats nuevos -->
+              <div class="chat-welcome-message">
+                <h2 class="typewriter-text">Bienvenido, ¿en qué te puedo ayudar?</h2>
+              </div>
               <div class="typewriter-wrapper text-center">
               <span class="typewriter-text">Bienvenido, ¿En qué te puedo ayudar? 🤖</span>
               <span class="typewriter-cursor">|</span>
