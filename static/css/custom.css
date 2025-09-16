@@ -813,17 +813,11 @@ select[multiple] { min-height: 150px; }
 .btn-send svg {
   width: 20px !important;
   height: 20px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: block !important;
-  position: relative !important;
-  top: 0 !important;
-  left: 0 !important;
-  transform: none !important;
   fill: white !important;
   color: white !important;
-  opacity: 1 !important;
-  visibility: visible !important;
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Botón de descarga de informe - separado del botón de envío */
@@ -1401,21 +1395,7 @@ textarea.chat-input {
   font-size: 1rem;        /* texto legible */
 }
 
-.btn-send {
-  margin-top: .75rem;
-  display: block;
-  margin-left: auto;            /* alineado a la derecha */
-  background:#0b3d0b;   /* verde oscuro permanente */
-  color:#fff !important;
-  border: none;
-  padding: .65rem 1.5rem;
-  border-radius: 6px;
-  font-weight: 700;
-  letter-spacing: .5px;
-  transition: background .15s;
-}
-
-.btn-send:hover { background: #007900; }
+/* .btn-send styles moved to chat section above */
 
 .btn-delete {
   background: none;
