@@ -1,25 +1,30 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-  <h2>Bienvenido, {{ user.username }} 👋</h2>
-
-  <div class="text-center mb-5">
-    <a class="btn btn-submit mb-3"
-       href="{% url 'chats:new' %}">
-      Nuevo Informe
-    </a>
+<div class="home-container">
+  <div class="home-header">
+    <h2 class="home-welcome">Bienvenido, {{ user.username }} 👋</h2>
   </div>
 
-  <div class="text-center mb-5">
-    <a class="btn btn-outline-primary"
-       href="{% url 'chats:list' %}">
-      Ver todos mis informes
-    </a>
+  <div class="home-actions">
+    <div class="text-center mb-4">
+      <a class="btn btn-submit btn-lg"
+         href="{% url 'chats:new' %}">
+        Nuevo Informe
+      </a>
+    </div>
+
+    <div class="text-center mb-5">
+      <a class="btn btn-outline-primary btn-lg"
+         href="{% url 'chats:list' %}">
+        Ver todos mis informes
+      </a>
+    </div>
   </div>
 
   {# — Carousel automático de fútbol — #}
   {% if gallery %}
-    <div class="container mb-5">
+    <div class="home-gallery">
       <div id="galleryCarousel"
            class="carousel slide carousel-fade"
            data-bs-ride="carousel"
@@ -30,8 +35,7 @@
             <div class="carousel-item {% if forloop.first %}active{% endif %}">
               <img
                 src="{% static 'img/soccer_pictures/' %}{{ pic }}"
-                class="d-block w-100"
-                style="max-height: 300px; object-fit: cover;"
+                class="d-block w-100 gallery-image"
                 alt="fútbol {{ forloop.counter }}"
               >
             </div>
@@ -43,22 +47,25 @@
 
   {# — Carousel automático de titulares (ticker) — #}
   {% if headlines %}
-  <div class="text-center mt-5 mb-4">
-        <h4>📰 Sport News</h4>
-  </div>
-  <div id="newsCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000" data-bs-pause="false">
-    <div class="carousel-inner">
-      {% for h in headlines %}
-        <div class="carousel-item {% if forloop.first %}active{% endif %}">
-          <div class="bg-dark text-light py-3">
-            <div class="container">
-              <p class="h5 text-center mb-0">{{ h }}</p>
+  <div class="home-news">
+    <div class="text-center mt-5 mb-4">
+      <h4 class="news-title">📰 Sport News</h4>
+    </div>
+    <div id="newsCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000" data-bs-pause="false">
+      <div class="carousel-inner">
+        {% for h in headlines %}
+          <div class="carousel-item {% if forloop.first %}active{% endif %}">
+            <div class="bg-dark text-light py-3">
+              <div class="news-content">
+                <p class="h5 text-center mb-0">{{ h }}</p>
+              </div>
             </div>
           </div>
-        </div>
-      {% endfor %}
+        {% endfor %}
+      </div>
     </div>
   </div>
-{% endif %}
+  {% endif %}
+</div>
   
 {% endblock %}
