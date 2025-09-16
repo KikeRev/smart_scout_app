@@ -688,10 +688,10 @@ select[multiple] { min-height: 150px; }
 /* ==========================================================================
    14) CHAT PAGE RESPONSIVE LAYOUT
    ========================================================================== */
-/* Wrapper principal de la página de chat con ancho del 90% */
+/* Wrapper principal de la página de chat con ancho del 95% */
 .chat-page-wrapper {
-  width: 90%;
-  max-width: 1400px;
+  width: 95%;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 0 1rem;
 }
@@ -717,6 +717,13 @@ select[multiple] { min-height: 150px; }
   min-height: 400px;
   max-height: 60vh;
   overflow-y: auto;
+  /* Ocultar scrollbar pero mantener funcionalidad */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.chat-log::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 /* Formulario de chat mejorado */
@@ -763,7 +770,8 @@ select[multiple] { min-height: 150px; }
 .btn-send {
   position: absolute;
   right: 0.5rem;
-  bottom: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
   width: 3rem;
   height: 3rem;
   padding: 0;
@@ -781,19 +789,19 @@ select[multiple] { min-height: 150px; }
 }
 
 .btn-send:hover {
-  transform: translateY(-2px) scale(1.05);
+  transform: translateY(-50%) translateY(-2px) scale(1.05);
   box-shadow: 0 4px 12px rgba(11, 61, 11, 0.4);
   background: #0d4d0d;
 }
 
 .btn-send:active {
-  transform: translateY(0) scale(0.95);
+  transform: translateY(-50%) scale(0.95);
 }
 
 /* Responsive para chat */
 @media (min-width: 768px) {
   .chat-page-wrapper {
-    width: 85%;
+    width: 95%;
     padding: 0 2rem;
   }
   
@@ -818,7 +826,7 @@ select[multiple] { min-height: 150px; }
 
 @media (min-width: 1200px) {
   .chat-page-wrapper {
-    width: 80%;
+    width: 95%;
     padding: 0 3rem;
   }
   
@@ -843,7 +851,7 @@ select[multiple] { min-height: 150px; }
 
 @media (min-width: 1400px) {
   .chat-page-wrapper {
-    width: 75%;
+    width: 95%;
     padding: 0 4rem;
   }
   
@@ -889,6 +897,14 @@ select[multiple] { min-height: 150px; }
 .page-wrapper-90 {
   width: 90%;
   max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Clase genérica para páginas con ancho del 95% */
+.page-wrapper-95 {
+  width: 95%;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 0 1rem;
 }
