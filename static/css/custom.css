@@ -952,7 +952,154 @@ select[multiple] { min-height: 150px; }
 }
 
 /* ==========================================================================
-   17) PROFILE PAGE STYLES
+   17) CHAT SIDEBAR LAYOUT
+   ========================================================================== */
+.chat-layout {
+  display: flex;
+  gap: 1rem;
+  min-height: 80vh;
+}
+
+.chat-sidebar {
+  width: 300px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #0b3d0b;
+}
+
+.sidebar-title {
+  color: #0b3d0b;
+  font-weight: 700;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar-content::-webkit-scrollbar {
+  display: none;
+}
+
+.chat-item {
+  display: block;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background: rgba(248, 249, 250, 0.8);
+  border-radius: 12px;
+  text-decoration: none;
+  color: #333;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.chat-item:hover {
+  background: rgba(11, 61, 11, 0.1);
+  transform: translateX(5px);
+  text-decoration: none;
+  color: #333;
+}
+
+.chat-item.active {
+  background: rgba(11, 61, 11, 0.15);
+  border-color: #0b3d0b;
+  color: #0b3d0b;
+  font-weight: 600;
+}
+
+.chat-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.chat-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: inherit;
+}
+
+.chat-date {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-weight: 400;
+}
+
+.chat-preview {
+  font-size: 0.85rem;
+  color: #6c757d;
+  line-height: 1.3;
+}
+
+.no-chats {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #6c757d;
+}
+
+.no-chats p {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.chat-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Responsive para chat con sidebar */
+@media (max-width: 768px) {
+  .chat-layout {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .chat-sidebar {
+    width: 100%;
+    max-height: 200px;
+    order: 2;
+  }
+  
+  .chat-main {
+    order: 1;
+  }
+  
+  .sidebar-content {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  
+  .chat-item {
+    min-width: 200px;
+    margin-bottom: 0;
+  }
+}
+
+/* ==========================================================================
+   18) PROFILE PAGE STYLES
    ========================================================================== */
 .profile-container {
   background: rgba(255, 255, 255, 0.95);
