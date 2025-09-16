@@ -696,7 +696,7 @@ select[multiple] { min-height: 150px; }
 /* Fullscreen chat wrapper - bypasses container but keeps navbar */
 .fullscreen-chat-wrapper {
   width: 100vw;
-  height: calc(100vh - 120px); /* Restar altura del navbar y logo */
+  height: calc(100vh - 60px); /* Solo restar altura del navbar */
   margin-left: calc(-50vw + 50%);
   background: url('/static/img/grass.jpg') center center / cover no-repeat;
   background-attachment: fixed;
@@ -712,6 +712,12 @@ select[multiple] { min-height: 150px; }
   border-radius: 1rem;
   margin: 2rem auto;
   max-width: 600px;
+}
+
+.chat-logo {
+  max-height: 100px;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
 .chat-welcome-message h2 {
@@ -1010,7 +1016,7 @@ select[multiple] { min-height: 150px; }
 .fullscreen-chat-wrapper .chat-layout {
   display: flex;
   gap: 0;
-  height: calc(100vh - 120px);
+  height: calc(100vh - 60px);
   width: 100vw;
   margin: 0;
   padding: 0;
@@ -1027,7 +1033,7 @@ select[multiple] { min-height: 150px; }
   border-right: 1px solid rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 120px);
+  height: calc(100vh - 60px);
   overflow: hidden;
 }
 
@@ -1123,7 +1129,7 @@ select[multiple] { min-height: 150px; }
 .fullscreen-chat-wrapper .chat-main {
   flex: 1;
   min-width: 0;
-  height: calc(100vh - 120px);
+  height: calc(100vh - 60px);
   overflow: hidden;
   display: flex;
   flex-direction: column;

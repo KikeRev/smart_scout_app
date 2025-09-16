@@ -42,8 +42,9 @@
                   {% include "chats/_message.html" with m=m %}
               {% endfor %}
           {% else %}
-              <!-- Mensaje de bienvenida solo para chats nuevos -->
+              <!-- Logo y mensaje de bienvenida solo para chats nuevos -->
               <div class="chat-welcome-message">
+                <img src="{% static 'img/app_logo_6.png' %}" alt="Smart Scout logo" class="chat-logo">
                 <h2 class="typewriter-text">Bienvenido, ¿en qué te puedo ayudar?</h2>
               </div>
               <div class="typewriter-wrapper text-center">
