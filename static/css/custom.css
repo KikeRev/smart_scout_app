@@ -994,8 +994,29 @@ select[multiple] { min-height: 150px; }
 
 /* Eliminar padding extra de la sección del logo */
 section.text-center.py-3 {
-  padding: 0.5rem 0 !important;
+  padding: 0 !important;
   margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Eliminar cualquier espacio extra debajo del navbar */
+.navbar + section {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Eliminar cualquier fondo o borde que cause la barra */
+header + section {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Asegurar que no hay separación visual */
+.navbar {
+  margin-bottom: 0 !important;
+  border-bottom: none !important;
 }
 
 .app-logo:hover {
