@@ -692,6 +692,18 @@ select[multiple] { min-height: 150px; }
 /* ==========================================================================
    14) CHAT PAGE RESPONSIVE LAYOUT
    ========================================================================== */
+
+/* Fullscreen chat wrapper - bypasses all base.html containers */
+.fullscreen-chat-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  background: linear-gradient(135deg, #0b3d0b 0%, #1a5f1a 100%);
+  overflow: hidden;
+}
 /* Wrapper principal de la página de chat con ancho del 95% */
 .chat-page-wrapper {
   width: 100%;
@@ -957,16 +969,16 @@ select[multiple] { min-height: 150px; }
 /* ==========================================================================
    17) CHAT SIDEBAR LAYOUT
    ========================================================================== */
-.chat-layout {
+.fullscreen-chat-wrapper .chat-layout {
   display: flex;
   gap: 0;
   height: 100vh;
-  min-height: 100vh;
+  width: 100vw;
   margin: 0;
   padding: 0;
 }
 
-.chat-sidebar {
+.fullscreen-chat-wrapper .chat-sidebar {
   width: 300px;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 0;
@@ -1070,7 +1082,7 @@ select[multiple] { min-height: 150px; }
   font-size: 0.9rem;
 }
 
-.chat-main {
+.fullscreen-chat-wrapper .chat-main {
   flex: 1;
   min-width: 0;
   height: 100vh;
