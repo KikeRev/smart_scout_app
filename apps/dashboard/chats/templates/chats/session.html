@@ -4,39 +4,6 @@
 {# Use fullscreen_content to bypass everything and create full-screen chat #}
 {% block fullscreen_content %}
 <div class="fullscreen-chat-wrapper">
-  <!-- Barra de navegación integrada -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm fullscreen-navbar">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="{% url 'dashboard:home' %}">Smart Scout App Home</a>
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav ms-auto align-items-center">
-          {% if user.is_authenticated %}
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Mi cuenta
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
-                <li><a class="dropdown-item" href="{% url 'users:profile' %}">Mi Perfil</a></li>
-                <li><a class="dropdown-item" href="{% url 'chats:new' %}">Nuevo Informe</a></li>
-                <li><a class="dropdown-item" href="{% url 'chats:list' %}">Mis Informes</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="{% url 'users:logout' %}">Salir</a></li>
-              </ul>
-            </li>
-          {% endif %}
-        </ul>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Logo y mensaje de bienvenida -->
-  <div class="fullscreen-header">
-    <img src="{% static 'img/app_logo_6.png' %}" alt="Smart Scout logo" class="img-fluid app-logo">
-    <div class="welcome-message">
-      <h2 class="typewriter-text">Bienvenido, ¿en qué te puedo ayudar?</h2>
-    </div>
-  </div>
-
   <div class="chat-layout">
     <!-- Barra lateral con lista de chats -->
     <div class="chat-sidebar">
@@ -69,6 +36,12 @@
     <!-- Área principal del chat -->
     <div class="chat-main">
       <div class="chat-container">
+        <!-- Logo y mensaje de bienvenida -->
+        <div class="chat-welcome-section">
+          <img src="{% static 'img/app_logo_6.png' %}" alt="Smart Scout logo" class="chat-logo">
+          <h2 class="chat-welcome-text typewriter-text">Bienvenido, ¿en qué te puedo ayudar?</h2>
+        </div>
+        
         <div id="chat-log" class="chat-log">
           {% if messages %}
               {% for m in messages %}
