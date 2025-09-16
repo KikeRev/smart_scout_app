@@ -672,7 +672,132 @@ select[multiple] { min-height: 150px; }
 }
 
 /* ==========================================================================
-   14) MISCELLANEOUS
+   14) CHAT PAGE RESPONSIVE LAYOUT
+   ========================================================================== */
+/* Wrapper principal de la página de chat */
+.chat-page-wrapper {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  position: relative;
+  left: 50%;
+  right: 50%;
+  transform: translateX(-50%);
+}
+
+/* Contenedor principal del chat */
+.chat-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 2rem 1rem;
+  min-height: 70vh;
+}
+
+/* Log de chat mejorado */
+.chat-log {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  backdrop-filter: blur(10px);
+  min-height: 400px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Formulario de chat mejorado */
+.chat-form {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  backdrop-filter: blur(10px);
+}
+
+/* Textarea del chat */
+.chat-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 6rem;
+  resize: vertical;
+  font-size: 1rem;
+  padding: 1rem;
+  border: 2px solid #0b3d0b;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.chat-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(11, 61, 11, 0.25);
+  border-color: #0b3d0b;
+}
+
+/* Botón de envío mejorado */
+.btn-send {
+  align-self: flex-end;
+  min-width: 120px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-send:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(11, 61, 11, 0.3);
+}
+
+/* Responsive para chat */
+@media (min-width: 768px) {
+  .chat-container {
+    padding: 2rem 3rem;
+  }
+  
+  .chat-log {
+    padding: 2rem;
+    min-height: 500px;
+  }
+  
+  .chat-form {
+    padding: 2rem;
+  }
+  
+  .chat-input {
+    font-size: 1.1rem;
+    padding: 1.25rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .chat-container {
+    padding: 3rem 4rem;
+  }
+  
+  .chat-log {
+    padding: 3rem;
+    min-height: 600px;
+  }
+  
+  .chat-form {
+    padding: 3rem;
+  }
+  
+  .chat-input {
+    font-size: 1.2rem;
+    padding: 1.5rem;
+  }
+}
+
+/* ==========================================================================
+   15) MISCELLANEOUS
    ========================================================================== */
 
 form.chat-form {
