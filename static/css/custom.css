@@ -938,10 +938,35 @@ select[multiple] { min-height: 150px; }
   border: 4px solid #0b3d0b;
   box-shadow: 0 8px 20px rgba(11, 61, 11, 0.3);
   transition: transform 0.3s ease;
+  display: block;
+  margin: 0 auto;
+  background: #f8f9fa;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23e9ecef"/><path d="M50 30c-11.046 0-20 8.954-20 20s8.954 20 20 20 20-8.954 20-20-8.954-20-20-20zm0 6c7.732 0 14 6.268 14 14s-6.268 14-14 14-14-6.268-14-14 6.268-14 14-14zm0 4c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10z" fill="%236c757d"/></svg>');
+  background-size: 80px 80px;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .profile-image:hover {
   transform: scale(1.05);
+}
+
+.profile-image-fallback {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 4px solid #0b3d0b;
+  box-shadow: 0 8px 20px rgba(11, 61, 11, 0.3);
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  margin: 0 auto;
+}
+
+.profile-image-placeholder {
+  text-align: center;
 }
 
 .profile-info {
@@ -977,6 +1002,17 @@ select[multiple] { min-height: 150px; }
 
 .profile-table tr:nth-child(even) td {
   background: rgba(248, 249, 250, 0.9);
+}
+
+.profile-table {
+  margin-bottom: 2rem;
+}
+
+.btn-submit {
+  margin-top: 1rem !important;
+  padding: 0.75rem 2rem !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
 }
 
 /* Responsive para perfil */
