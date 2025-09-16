@@ -1,31 +1,33 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block content %}
-<div class="container my-4">
-  <h2 class="mb-4">Mi cuenta</h2>
-  <div class="row">
-    <div class="col-md-4 text-center">
-      {% if user_obj.avatar %}
-        <img src="{{ user_obj.avatar.url }}" class="img-thumbnail rounded-circle" style="width: 220px;">
-      {% else %}
-        <img src="{% static 'img/avatar-placeholder.png' %}" class="img-thumbnail rounded-circle" style="width: 220px;">
-      {% endif %}
-    </div>
+{% block fullwidth_content %}
+<div class="page-wrapper-80">
+  <div class="profile-container">
+    <h2 class="profile-title mb-4">Mi cuenta</h2>
+    <div class="profile-content">
+      <div class="profile-avatar">
+        {% if user_obj.avatar %}
+          <img src="{{ user_obj.avatar.url }}" class="profile-image" alt="Avatar del usuario">
+        {% else %}
+          <img src="{% static 'img/avatar-placeholder.png' %}" class="profile-image" alt="Avatar por defecto">
+        {% endif %}
+      </div>
 
-    <div class="col-md-8">
-      <table class="table table-sm">
-        <tbody>
-          <tr><th>Email</th><td>{{ user_obj.email }}</td></tr>
-          <tr><th>Nombre</th><td>{{ user_obj.name }} {{ user_obj.surname }}</td></tr>
-          <tr><th>Puesto</th><td>{{ user_obj.job_title|default:"—" }}</td></tr>
-          <tr><th>Club favorito</th><td>{{ user_obj.favourite_club|default:"—" }}</td></tr>
-          <tr><th>Ciudad / País</th><td>{{ user_obj.city }}, {{ user_obj.country }}</td></tr>
-          <tr><th>Fecha de nacimiento</th><td>{{ user_obj.birth_date|date:"d M Y" }}</td></tr>
-        </tbody>
-      </table>
+      <div class="profile-info">
+        <table class="profile-table">
+          <tbody>
+            <tr><th>Email</th><td>{{ user_obj.email }}</td></tr>
+            <tr><th>Nombre</th><td>{{ user_obj.name }} {{ user_obj.surname }}</td></tr>
+            <tr><th>Puesto</th><td>{{ user_obj.job_title|default:"—" }}</td></tr>
+            <tr><th>Club favorito</th><td>{{ user_obj.favourite_club|default:"—" }}</td></tr>
+            <tr><th>Ciudad / País</th><td>{{ user_obj.city }}, {{ user_obj.country }}</td></tr>
+            <tr><th>Fecha de nacimiento</th><td>{{ user_obj.birth_date|date:"d M Y" }}</td></tr>
+          </tbody>
+        </table>
 
-      <a href="{% url 'users:profile_edit' %}" class="btn btn-submit mb-3">Editar perfil</a>
+        <a href="{% url 'users:profile_edit' %}" class="btn btn-submit mb-3">Editar perfil</a>
+      </div>
     </div>
   </div>
 </div>
