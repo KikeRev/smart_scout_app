@@ -798,6 +798,87 @@ select[multiple] { min-height: 150px; }
   transform: translateY(-50%) scale(0.95);
 }
 
+/* Botón de descarga de informe - separado del botón de envío */
+.btn-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #0b3d0b;
+  color: white;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  margin: 0.5rem 0;
+}
+
+.btn-download:hover {
+  background: #0d4d0d;
+  color: white;
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(11, 61, 11, 0.3);
+}
+
+.btn-download:active {
+  transform: translateY(0);
+}
+
+/* Estilos para las burbujas de chat */
+.chat-row {
+  display: flex;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.chat-user {
+  justify-content: flex-start;
+}
+
+.chat-bot {
+  justify-content: flex-end;
+}
+
+.bubble {
+  max-width: 70%;
+  padding: 1rem 1.5rem;
+  border-radius: 1.5rem;
+  word-wrap: break-word;
+  position: relative;
+}
+
+.bubble-user {
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  margin-right: auto;
+}
+
+.bubble-bot {
+  background: rgba(11, 61, 11, 0.9);
+  color: white;
+  border: 1px solid rgba(11, 61, 11, 0.3);
+  margin-left: auto;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Responsive para chat */
 @media (min-width: 768px) {
   .chat-page-wrapper {
