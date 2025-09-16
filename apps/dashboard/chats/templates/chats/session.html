@@ -2,7 +2,7 @@
 
 {# Use fullwidth_content to bypass the container #}
 {% block fullwidth_content %}
-<div class="page-wrapper-80">
+<div class="page-wrapper-90">
   <div class="chat-container">
     <div id="chat-log" class="chat-log">
       {% if messages %}
@@ -29,18 +29,19 @@
           class="chat-form">
       {% csrf_token %}
 
-      <textarea name="text"
-              class="form-control chat-input"
-              rows="4"
-              style="min-height:6rem; width:100%; max-width:100%; resize:vertical;"
-              placeholder="Escribe tu pregunta…" required></textarea>
-
-      <button type="submit" class="btn btn-submit btn-send mu-3 mb-3 align-self-end">
-            <span>Enviar</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                 viewBox="0 0 16 16"><path
-                 d="M15.854 0.146a.5.5 0 0 0-.527-.112l-15 6a.5.5 0 0 0 .014.94L5.5 9.418l2.444 5.158a.5.5 0 0 0 .918-.09l6-15a.5.5 0 0 0-.008-.34z"/></svg>
-      </button>
+      <div class="chat-input-container">
+        <textarea name="text"
+                class="form-control chat-input"
+                rows="4"
+                style="min-height:6rem; width:100%; max-width:100%; resize:vertical;"
+                placeholder="Escribe tu pregunta…" required></textarea>
+        
+        <button type="submit" class="btn btn-submit btn-send">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+               viewBox="0 0 16 16"><path
+               d="M15.854 0.146a.5.5 0 0 0-.527-.112l-15 6a.5.5 0 0 0 .014.94L5.5 9.418l2.444 5.158a.5.5 0 0 0 .918-.09l6-15a.5.5 0 0 0-.008-.34z"/></svg>
+        </button>
+      </div>
 
       <div id="thinking-indicator" class="thinking-indicator">
             <div class="spinner"></div>

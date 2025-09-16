@@ -688,10 +688,10 @@ select[multiple] { min-height: 150px; }
 /* ==========================================================================
    14) CHAT PAGE RESPONSIVE LAYOUT
    ========================================================================== */
-/* Wrapper principal de la página de chat con ancho del 80% */
+/* Wrapper principal de la página de chat con ancho del 90% */
 .chat-page-wrapper {
-  width: 80%;
-  max-width: 1200px;
+  width: 90%;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 1rem;
 }
@@ -732,6 +732,14 @@ select[multiple] { min-height: 150px; }
   backdrop-filter: blur(10px);
 }
 
+/* Contenedor del textarea con botón integrado */
+.chat-input-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
 /* Textarea del chat */
 .chat-input {
   width: 100% !important;
@@ -739,7 +747,7 @@ select[multiple] { min-height: 150px; }
   min-height: 6rem;
   resize: vertical;
   font-size: 1rem;
-  padding: 1rem;
+  padding: 1rem 4rem 1rem 1rem; /* Espacio para el botón */
   border: 2px solid #0b3d0b;
   border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.9);
@@ -748,22 +756,38 @@ select[multiple] { min-height: 150px; }
 .chat-input:focus {
   box-shadow: 0 0 0 0.2rem rgba(11, 61, 11, 0.25);
   border-color: #0b3d0b;
+  outline: none;
 }
 
-/* Botón de envío mejorado */
+/* Botón de envío integrado */
 .btn-send {
-  align-self: flex-end;
-  min-width: 120px;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  font-size: 1.2rem;
   font-weight: 700;
-  border-radius: 0.5rem;
+  border-radius: 50%;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0b3d0b;
+  color: white;
+  border: none;
+  cursor: pointer;
 }
 
 .btn-send:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(11, 61, 11, 0.3);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(11, 61, 11, 0.4);
+  background: #0d4d0d;
+}
+
+.btn-send:active {
+  transform: translateY(0) scale(0.95);
 }
 
 /* Responsive para chat */
@@ -856,7 +880,15 @@ select[multiple] { min-height: 150px; }
 /* Clase genérica para páginas con ancho del 85% */
 .page-wrapper-85 {
   width: 85%;
-  max-width: 1200px;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Clase genérica para páginas con ancho del 90% */
+.page-wrapper-90 {
+  width: 90%;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 1rem;
 }
