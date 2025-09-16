@@ -11,6 +11,14 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from typing import Optional, Annotated
 from apps.agent_service.llm_provider import get_llm
+from apps.agent_service.validation import (
+    validate_player_data, 
+    validate_similar_players_data, 
+    validate_news_data,
+    validate_stats_data,
+    validate_parameters,
+    sanitize_text
+)
 
 
 # --------------------------- 1) Similar Players ----------------------------- #
@@ -52,7 +60,9 @@ similar_players_tool = StructuredTool.from_function(
     name="similar_players",
     description=(
         "Devuelve una lista de jugadores similares al jugador base "
-        "según vector de características y filtros (posición, minutos, edad, etc.)."
+        "según vector de características y filtros (posición, minutos, edad, etc.). "
+        "REQUISITOS: player_id debe existir en la base de datos, position debe ser válida ('GK'|'DF'|'MF'|'FW'). "
+        "Siempre valida que el player_id existe antes de usar esta herramienta."
     ),
     func=_similar_players,
     args_schema=SimilarPlayersInput,
@@ -77,7 +87,10 @@ player_lookup_tool = StructuredTool.from_function(
     name="player_lookup",
     description=(
         "Busca en la base de datos interna a partir del nombre (y posicion) y "
-        "devuelve los posibles jugadores con su id, nombre y club."
+        "devuelve los posibles jugadores con su id, nombre y club. "
+        "REQUISITO: El nombre debe ser exacto o muy similar al nombre en la base de datos. "
+        "Si no encuentra el jugador, devuelve lista vacía. "
+        "Siempre valida que el jugador existe antes de usar su ID en otras herramientas."
     ),
     func=_player_lookup,
     args_schema=PlayerLookupInput,
@@ -129,13 +142,31 @@ class SummarizePlayerNewsInput(BaseModel):
 
 def _summarize_player_news(player_id: int, k: int = 5) -> str:
     try:
+        # Validar parámetros de entrada
+        if not validate_parameters({"player_id": player_id, "k": k}, ["player_id", "k"]):
+            return "Error: Parámetros de entrada inválidos."
+        
+        if not isinstance(player_id, int) or player_id <= 0:
+            return "Error: ID de jugador inválido."
+        
+        if not isinstance(k, int) or k <= 0 or k > 20:
+            return "Error: Número de noticias inválido (debe ser entre 1 y 20)."
+
         # Paso 1: Recuperar noticias
         news = _player_news(player_id=player_id, k=k)
-        if not news or len(news) == 0:
+        
+        # Validar datos de noticias
+        if not validate_news_data(news):
             return "No hay noticias relevantes sobre este jugador en los últimos meses."
 
-        # Paso 2: Extraer contenido completo
-        contents = [n.get("content", "").strip() for n in news if n.get("content")]
+        # Paso 2: Extraer contenido completo y sanitizar
+        contents = []
+        for n in news:
+            if n.get("content"):
+                sanitized_content = sanitize_text(n["content"])
+                if sanitized_content:
+                    contents.append(sanitized_content)
+        
         if not contents:
             return "No hay contenido detallado disponible en las noticias recientes de este jugador."
 
@@ -144,11 +175,27 @@ def _summarize_player_news(player_id: int, k: int = 5) -> str:
 
         prompt = PromptTemplate.from_template(
             """
-            Eres un analista de scouting. A continuación tienes varias noticias sobre un jugador.
-            Resume los aspectos clave (traspasos, rumores, interés de clubes, lesiones, declaraciones, etc.).
-            Usa un estilo técnico, conciso y profesional. No repitas información redundante.
-            Usa el idioma en que se te ha hecho la petición.
-
+            Eres un analista de scouting especializado en evaluar noticias futbolísticas.
+            
+            **INSTRUCCIONES CRÍTICAS:**
+            - Solo resume información que esté EXPLÍCITAMENTE mencionada en las noticias.
+            - NO inventes datos, fechas, clubes o cifras que no aparezcan en el texto.
+            - Si una noticia no contiene información relevante para scouting, omítela del resumen.
+            - Usa el idioma en que se te ha hecho la petición.
+            
+            **ASPECTOS A INCLUIR (solo si están en las noticias):**
+            - Traspasos confirmados o rumores específicos con clubes mencionados
+            - Interés de clubes concretos con nombres específicos
+            - Lesiones con detalles médicos mencionados
+            - Declaraciones del jugador, entrenador o directivos
+            - Rendimiento reciente con estadísticas específicas
+            - Situación contractual con fechas o cifras mencionadas
+            
+            **FORMATO:**
+            - Máximo 3 párrafos concisos
+            - Estilo técnico y profesional
+            - Solo información verificable en el texto original
+            
             Noticias:
             {text}
 
@@ -169,7 +216,10 @@ def _summarize_player_news(player_id: int, k: int = 5) -> str:
 summarize_player_news_tool = StructuredTool.from_function(
     func=_summarize_player_news,
     name="summarize_player_news",
-    description="Resume en lenguaje técnico las noticias recientes relacionadas con un jugador.",
+    description="Resume en lenguaje técnico las noticias recientes relacionadas con un jugador. "
+    "REQUISITOS: player_id debe existir en la base de datos. "
+    "Solo resume información explícitamente mencionada en las noticias. "
+    "Si no hay noticias relevantes, devuelve mensaje indicando ausencia de información.",
     args_schema=SummarizePlayerNewsInput,
 )
 
@@ -192,29 +242,76 @@ def generate_recommendation_with_news(
     pros: List[str],
     cons: List[str],
 ) -> str:
+    # Validar parámetros de entrada
+    if not validate_parameters({
+        "chosen_id": chosen_id, 
+        "player_name": player_name, 
+        "objective": objective,
+        "base_id": base_id,
+        "candidate_ids": candidate_ids,
+        "pros": pros,
+        "cons": cons
+    }, ["chosen_id", "player_name", "objective", "base_id", "candidate_ids", "pros", "cons"]):
+        return "Error: Parámetros de entrada inválidos para generar recomendación."
+    
+    # Validar que los IDs sean enteros positivos
+    if not isinstance(chosen_id, int) or chosen_id <= 0:
+        return "Error: ID del jugador elegido inválido."
+    
+    if not isinstance(base_id, int) or base_id <= 0:
+        return "Error: ID del jugador base inválido."
+    
+    if not isinstance(candidate_ids, list) or not all(isinstance(id, int) and id > 0 for id in candidate_ids):
+        return "Error: Lista de IDs de candidatos inválida."
+    
+    # Sanitizar texto de entrada
+    player_name = sanitize_text(player_name)
+    objective = sanitize_text(objective)
+    
+    if not player_name or not objective:
+        return "Error: Nombre del jugador u objetivo no válidos."
+    
     # Paso 1: Obtener resumen de noticias
     summary = summarize_player_news_tool.run({"player_id": chosen_id, "k": 5})
 
     # Paso 2: Crear prompt con contexto
     prompt = PromptTemplate.from_template(
         """
-        Eres un analista profesional de scouting.
-        Tu objetivo es redactar un informe técnico para recomendar un fichaje. 
-        Usa el idioma que se te ha hecho la petición, si la petición es en inglés usa inglés, si es en español
-        usa español, etc.
-        Usa datos estadísticos, pros y contras, y contexto de mercado (noticias recientes).
-        Geera un texto fluido, coherente y profesional.
-
-        Objetivo: {objective}
-
-        Jugador recomendado: {player_name}
-        Resumen de noticias recientes (si existen):
-        {news}
-
-        Genera un informe profesional que incluya, en el idioma de la petición, que incluya:
-        - Al menos tres párrafos sobre virtudes, defectos, estilo de juego.
-        - Un párrafo final con justificación del fichaje y encaje en el equipo.
-        - Referencias a las noticias si son relevantes. Si el texto de las noticas no aporta nada, ignóralo.
+        Eres un analista profesional de scouting con experiencia en fichajes de fútbol.
+        
+        **INSTRUCCIONES CRÍTICAS:**
+        - Solo usa información que esté EXPLÍCITAMENTE proporcionada en los datos de entrada.
+        - NO inventes estadísticas, fechas, clubes o detalles que no estén en los datos.
+        - Si no tienes información suficiente sobre algún aspecto, reconócelo claramente.
+        - Usa el idioma en que se te ha hecho la petición.
+        
+        **OBJETIVO DEL INFORME:**
+        Redactar un informe técnico profesional para recomendar un fichaje basado ÚNICAMENTE en los datos proporcionados.
+        
+        **DATOS DISPONIBLES:**
+        - Objetivo del fichaje: {objective}
+        - Jugador recomendado: {player_name}
+        - Resumen de noticias (si existen): {news}
+        
+        **ESTRUCTURA DEL INFORME:**
+        1. **Análisis Técnico** (2-3 párrafos):
+           - Virtudes del jugador basadas en datos reales
+           - Áreas de mejora identificadas
+           - Estilo de juego y características técnicas
+        
+        2. **Contexto de Mercado** (1 párrafo):
+           - Solo si las noticias contienen información relevante y verificable
+           - Si no hay noticias relevantes, omite esta sección
+        
+        3. **Justificación del Fichaje** (1 párrafo):
+           - Por qué este jugador encaja en el objetivo planteado
+           - Coherencia con las necesidades del equipo
+        
+        **REGLAS DE ESCRITURA:**
+        - Máximo 4 párrafos en total
+        - Estilo técnico y profesional
+        - Solo información verificable
+        - Si no tienes datos suficientes, indícalo claramente
 
         Informe:
         """
