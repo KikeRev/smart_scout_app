@@ -711,36 +711,49 @@ select[multiple] { min-height: 150px; }
 }
 
 .chat-logo {
-  max-height: 100px;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  max-height: 150px;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4)) 
+          drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))
+          drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transform: perspective(1000px) rotateX(5deg) rotateY(-5deg);
+  animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0%, 100% { transform: perspective(1000px) rotateX(5deg) rotateY(-5deg) translateY(0px); }
+  50% { transform: perspective(1000px) rotateX(5deg) rotateY(-5deg) translateY(-10px); }
 }
 
 /* Mensaje de bienvenida solo para chats nuevos */
 .chat-welcome-message {
   text-align: center;
   padding: 2rem;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(5px);
+  background: transparent;
   border-radius: 1rem;
   margin: 1rem auto;
-  max-width: 600px;
+  max-width: 800px;
+  width: 100%;
 }
 
 .typewriter-wrapper {
   color: white;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-  font-size: 1.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  font-size: 1.8rem;
   font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: visible;
 }
 
 /* Animación de máquina de escribir */
 .typewriter-text {
-  overflow: hidden;
+  overflow: visible;
   border-right: 0.15em solid #00ff00;
   white-space: nowrap;
   margin: 0 auto;
-  letter-spacing: 0.15em;
-  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+  letter-spacing: 0.1em;
+  animation: typing 4s steps(50, end), blink-caret 0.75s step-end infinite;
+  display: inline-block;
 }
 
 @keyframes typing {
