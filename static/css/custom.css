@@ -809,15 +809,14 @@ select[multiple] { min-height: 150px; }
   transform: translateY(-50%) scale(0.95) !important;
 }
 
-/* Estilos específicos para el SVG dentro del botón de envío */
-.btn-send svg {
-  width: 20px !important;
-  height: 20px !important;
-  fill: white !important;
+/* Estilos específicos para el ícono de envío */
+.btn-send .send-icon {
+  font-size: 18px !important;
   color: white !important;
   display: block !important;
   margin: 0 !important;
   padding: 0 !important;
+  line-height: 1 !important;
 }
 
 /* Botón de descarga de informe - separado del botón de envío */
