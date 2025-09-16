@@ -811,12 +811,13 @@ select[multiple] { min-height: 150px; }
 
 /* Estilos específicos para el ícono de envío */
 .btn-send .send-icon {
-  font-size: 18px !important;
+  font-size: 20px !important;
   color: white !important;
   display: block !important;
   margin: 0 !important;
   padding: 0 !important;
   line-height: 1 !important;
+  font-weight: bold !important;
 }
 
 /* Botón de descarga de informe - separado del botón de envío */
