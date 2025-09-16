@@ -992,6 +992,12 @@ select[multiple] { min-height: 150px; }
   animation: logoFloat 3s ease-in-out infinite;
 }
 
+/* Eliminar padding extra de la sección del logo */
+section.text-center.py-3 {
+  padding: 0.5rem 0 !important;
+  margin: 0 !important;
+}
+
 .app-logo:hover {
   transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1.05);
   filter: drop-shadow(0 12px 24px rgba(11, 61, 11, 0.6)) 
