@@ -1019,8 +1019,8 @@ header + section {
   border-bottom: none !important;
 }
 
-/* Ocultar el contenedor main que causa el espacio extra */
-main.container.py-4 {
+/* Ocultar el contenedor main que causa el espacio extra solo en el chat */
+.fullscreen-chat-wrapper main.container.py-4 {
   display: none !important;
 }
 
