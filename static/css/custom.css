@@ -899,7 +899,56 @@ select[multiple] { min-height: 150px; }
 }
 
 /* ==========================================================================
-   16) PROFILE PAGE STYLES
+   16) LOGO 3D EFFECTS
+   ========================================================================== */
+.app-logo {
+  max-height: 500px !important;
+  width: auto;
+  filter: drop-shadow(0 8px 16px rgba(11, 61, 11, 0.4)) 
+          drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))
+          drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: all 0.3s ease;
+  transform: perspective(1000px) rotateX(5deg) rotateY(-2deg);
+  animation: logoFloat 3s ease-in-out infinite;
+}
+
+.app-logo:hover {
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1.05);
+  filter: drop-shadow(0 12px 24px rgba(11, 61, 11, 0.6)) 
+          drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3))
+          drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes logoFloat {
+  0%, 100% {
+    transform: perspective(1000px) rotateX(5deg) rotateY(-2deg) translateY(0px);
+  }
+  50% {
+    transform: perspective(1000px) rotateX(5deg) rotateY(-2deg) translateY(-5px);
+  }
+}
+
+/* Responsive logo sizing */
+@media (max-width: 768px) {
+  .app-logo {
+    max-height: 350px !important;
+    transform: perspective(1000px) rotateX(2deg) rotateY(-1deg);
+  }
+  
+  .app-logo:hover {
+    transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1.03);
+  }
+}
+
+@media (max-width: 480px) {
+  .app-logo {
+    max-height: 280px !important;
+    transform: perspective(1000px) rotateX(1deg) rotateY(-0.5deg);
+  }
+}
+
+/* ==========================================================================
+   17) PROFILE PAGE STYLES
    ========================================================================== */
 .profile-container {
   background: rgba(255, 255, 255, 0.95);
