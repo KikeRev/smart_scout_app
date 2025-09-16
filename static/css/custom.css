@@ -703,30 +703,34 @@ select[multiple] { min-height: 150px; }
   overflow: hidden;
 }
 
-/* Mensaje de bienvenida solo para chats nuevos */
-.chat-welcome-message {
+/* Logo siempre visible en el chat */
+.chat-logo-section {
   text-align: center;
-  padding: 3rem 2rem;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(5px);
-  border-radius: 1rem;
-  margin: 2rem auto;
-  max-width: 600px;
+  padding: 2rem 1rem;
+  margin-bottom: 1rem;
 }
 
 .chat-logo {
   max-height: 100px;
-  margin-bottom: 1.5rem;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
-.chat-welcome-message h2 {
+/* Mensaje de bienvenida solo para chats nuevos */
+.chat-welcome-message {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(5px);
+  border-radius: 1rem;
+  margin: 1rem auto;
+  max-width: 600px;
+}
+
+.typewriter-wrapper {
   color: white;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-  margin: 0;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  text-align: center;
 }
 
 /* Animación de máquina de escribir */
