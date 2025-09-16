@@ -694,10 +694,12 @@ select[multiple] { min-height: 150px; }
    ========================================================================== */
 /* Wrapper principal de la página de chat con ancho del 95% */
 .chat-page-wrapper {
-  width: 95%;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 0 1rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* Contenedor principal del chat */
@@ -705,21 +707,23 @@ select[multiple] { min-height: 150px; }
   width: 100%;
   max-width: 100%;
   margin: 0;
-  padding: 2rem 1rem;
-  min-height: 70vh;
+  padding: 1rem;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Log de chat mejorado */
 .chat-log {
   width: 100%;
   max-width: 100%;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   padding: 1rem;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 1rem;
   backdrop-filter: blur(10px);
-  min-height: 400px;
-  max-height: 60vh;
+  flex: 1;
   overflow-y: auto;
   /* Ocultar scrollbar pero mantener funcionalidad */
   scrollbar-width: none; /* Firefox */
@@ -955,21 +959,25 @@ select[multiple] { min-height: 150px; }
    ========================================================================== */
 .chat-layout {
   display: flex;
-  gap: 1rem;
-  min-height: 80vh;
+  gap: 0;
+  height: 100vh;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
 .chat-sidebar {
   width: 300px;
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
+  border-radius: 0;
   padding: 1.5rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: none;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  max-height: 80vh;
+  height: 100vh;
   overflow: hidden;
 }
 
@@ -1065,6 +1073,10 @@ select[multiple] { min-height: 150px; }
 .chat-main {
   flex: 1;
   min-width: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Responsive para chat con sidebar */
