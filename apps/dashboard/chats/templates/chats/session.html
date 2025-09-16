@@ -1,49 +1,95 @@
 {% extends "base.html" %}
-{% block content %}
-<div id="chat-log" class="chat-log">
-  {% if messages %}
-      {% for m in messages %}
-          {% include "chats/_message.html" with m=m %}
-      {% endfor %}
-  {% else %}
-      <div class="typewriter-wrapper text-center">
-      <span class="typewriter-text">Bienvenido, ¿En qué te puedo ayudar? 🤖</span>
-      <span class="typewriter-cursor">|</span>
-      <span class="bot-icon">🤖</span>
+{% load static %}
+
+{# Use fullwidth_content to bypass container but keep navbar #}
+{% block fullwidth_content %}
+<div class="fullscreen-chat-wrapper">
+  <div class="chat-layout">
+    <!-- Barra lateral con lista de chats -->
+    <div class="chat-sidebar">
+      <div class="sidebar-header">
+        <h5 class="sidebar-title">Mis Chats</h5>
+        <a href="{% url 'chats:new' %}" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-plus"></i> Nuevo
+        </a>
+      </div>
+      
+      <div class="sidebar-content">
+        {% for chat in user_chats %}
+          <a href="{% url 'chats:session' chat.id %}" 
+             class="chat-item {% if chat.id == session.id %}active{% endif %}">
+            <div class="chat-item-header">
+              <span class="chat-title">{{ chat.title|truncatechars:30 }}</span>
+              <span class="chat-date">{{ chat.updated_at|date:"d/m H:i" }}</span>
+            </div>
+            <div class="chat-preview">{{ chat.preview|truncatechars:50 }}</div>
+          </a>
+        {% empty %}
+          <div class="no-chats">
+            <p>No tienes chats aún</p>
+            <a href="{% url 'chats:new' %}" class="btn btn-sm btn-primary">Crear primer chat</a>
+          </div>
+        {% endfor %}
+      </div>
     </div>
-  {% endif %}
-</div>
 
-<form id="chat-form"
-      hx-post="{% url 'chats:message' session.id %}"
-      hx-target="#chat-log"
-      hx-swap="beforeend"       
-      hx-trigger="submit"
-      hx-include="#chat-input"
-      hx-vals='{"hx-skip-ci":true}'
-      hx-indicator="#thinking-indicator"
-      class="chat-form">
-  {% csrf_token %}
+    <!-- Área principal del chat -->
+    <div class="chat-main">
+      <div class="chat-container">
+        <div id="chat-log" class="chat-log">
+          <!-- Logo siempre visible -->
+          <div class="chat-logo-section">
+            <img src="{% static 'img/app_logo_6.png' %}" alt="Smart Scout logo" class="chat-logo">
+          </div>
+          
+          {% if messages %}
+              {% for m in messages %}
+                  {% include "chats/_message.html" with m=m %}
+              {% endfor %}
+          {% else %}
+              <!-- Mensaje de bienvenida solo para chats nuevos -->
+              <div class="chat-welcome-message">
+                <div class="typewriter-wrapper text-center">
+                  <span class="typewriter-text">Bienvenido, ¿En qué te puedo ayudar? 🤖</span>
+                  <span class="typewriter-cursor">|</span>
+                </div>
+              </div>
+          {% endif %}
+        </div>
 
-  <textarea name="text"
-          class="form-control chat-input"
-          rows="4"
-          style="min-height:6rem; width:100%; max-width:800px; resize:vertical;"
-          placeholder="Escribe tu pregunta…" required></textarea>
+        <form id="chat-form"
+              hx-post="{% url 'chats:message' session.id %}"
+              hx-target="#chat-log"
+              hx-swap="beforeend"       
+              hx-trigger="submit"
+              hx-include="#chat-input"
+              hx-vals='{"hx-skip-ci":true}'
+              hx-indicator="#thinking-indicator"
+              class="chat-form">
+          {% csrf_token %}
 
-  <button type="submit" class="btn btn-submit btn-send mu-3 mb-3 align-self-end">
-        <span>Enviar</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-             viewBox="0 0 16 16"><path
-             d="M15.854 0.146a.5.5 0 0 0-.527-.112l-15 6a.5.5 0 0 0 .014.94L5.5 9.418l2.444 5.158a.5.5 0 0 0 .918-.09l6-15a.5.5 0 0 0-.008-.34z"/></svg>
-  </button>
+          <div class="chat-input-container">
+            <textarea name="text"
+                    class="form-control chat-input"
+                    rows="4"
+                    style="min-height:6rem; width:100%; max-width:100%; resize:vertical;"
+                    placeholder="Escribe tu pregunta…" required></textarea>
+            
+            <button type="submit" class="btn btn-submit btn-send">
+              <span class="send-icon">➤</span>
+            </button>
+          </div>
 
-  <div id="thinking-indicator" class="thinking-indicator">
-        <div class="spinner"></div>
-        <span>Pensando…</span>
+          <div id="thinking-indicator" class="thinking-indicator">
+                <div class="spinner"></div>
+                <span>Pensando…</span>
+          </div>
+
+        </form>
+      </div>
+    </div>
   </div>
-
-</form>
+</div>
 
 <script>
   /* Limpia textarea tras enviar */

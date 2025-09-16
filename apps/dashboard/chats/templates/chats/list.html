@@ -1,7 +1,15 @@
 {% extends "base.html" %}
 {% load static %}
-{% block content %}
-<div class="container py-5">
+{% block fullwidth_content %}
+<div class="page-wrapper-80">
+  <!-- Logo de la aplicación -->
+  <section class="text-center py-3">
+    <img src="{% static 'img/app_logo_6.png' %}"    
+         alt="Smart Scout logo"
+         class="img-fluid app-logo">
+  </section>
+  
+  <div class="py-5">
 
   <h2 class="section-title mb-4">Mis informes</h2>
   <a href="{% url 'chats:new' %}" class="btn btn-submit mb-3">
@@ -50,6 +58,7 @@
     <p class="section-paragraph">Todavía no hay informes.</p>
   {% endif %}
 
+  </div>
 </div>
 {% endblock %}
 

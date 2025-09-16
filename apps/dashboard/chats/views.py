@@ -56,6 +56,8 @@ class ChatSessionView(DetailView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["messages"] = self.object.messages.order_by("created_at")
+        # Agregar lista de chats del usuario para la barra lateral
+        ctx["user_chats"] = ChatSession.objects.filter(user=self.request.user).order_by("-updated_at")[:20]
         return ctx
 
 @method_decorator(login_required, name="dispatch")

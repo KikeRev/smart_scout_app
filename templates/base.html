@@ -13,15 +13,15 @@
       rel="stylesheet">
     
     <!-- Estilos propios -->
-    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
-    <link rel="stylesheet" href="{% static 'chats/chat.css' %}">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v=2.0">
+    <link rel="stylesheet" href="{% static 'chats/chat.css' %}?v=2.0">
 
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 </head>
 <body class="bg-light">
 
 <header class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-  <div class="container">
+  <div class="container-fluid">
     <a class="navbar-brand fw-bold" href="{% url 'dashboard:home' %}">Smart Scout App Home</a>
 
     <div class="collapse navbar-collapse">
@@ -89,16 +89,17 @@
   </div>
 </header>
 
-<section class="text-center py-3">
-    <img src="{% static 'img/app_logo_6.png' %}"    
-         alt="Smart Scout logo"
-         class="img-fluid"
-         style="max-height:400px;">
-</section>
+{# Logo section - will be added individually to each template #}
 
 <main class="container py-4">
   {% block content %}{% endblock %}
 </main>
+
+{# Special full-width content for home page #}
+{% block fullwidth_content %}{% endblock %}
+
+{# Special full-screen content for chat page #}
+{% block fullscreen_content %}{% endblock %}
 
 <footer class="site-footer text-light text-center py-4 mt-5">
     <div class="container">
