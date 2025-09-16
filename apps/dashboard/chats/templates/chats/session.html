@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 
-{# Use fullscreen_content to bypass everything and create full-screen chat #}
-{% block fullscreen_content %}
+{# Use fullwidth_content to bypass container but keep navbar #}
+{% block fullwidth_content %}
 <div class="fullscreen-chat-wrapper">
   <div class="chat-layout">
     <!-- Barra lateral con lista de chats -->
@@ -36,13 +36,12 @@
     <!-- Área principal del chat -->
     <div class="chat-main">
       <div class="chat-container">
-        <!-- Logo y mensaje de bienvenida -->
-        <div class="chat-welcome-section">
-          <img src="{% static 'img/app_logo_6.png' %}" alt="Smart Scout logo" class="chat-logo">
-          <h2 class="chat-welcome-text typewriter-text">Bienvenido, ¿en qué te puedo ayudar?</h2>
-        </div>
-        
         <div id="chat-log" class="chat-log">
+          <!-- Logo y mensaje de bienvenida dentro del chat log -->
+          <div class="chat-welcome-message">
+            <img src="{% static 'img/app_logo_6.png' %}" alt="Smart Scout logo" class="chat-logo">
+            <h2 class="typewriter-text">Bienvenido, ¿en qué te puedo ayudar?</h2>
+          </div>
           {% if messages %}
               {% for m in messages %}
                   {% include "chats/_message.html" with m=m %}
