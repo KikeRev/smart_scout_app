@@ -1,71 +1,74 @@
 {% extends "base.html" %}
 {% load static %}
-{% block content %}
-<div class="home-container">
-  <div class="home-header">
-    <h2 class="home-welcome">Bienvenido, {{ user.username }} 👋</h2>
-  </div>
 
-  <div class="home-actions">
-    <div class="text-center mb-4">
-      <a class="btn btn-submit btn-lg"
-         href="{% url 'chats:new' %}">
-        Nuevo Informe
-      </a>
+{# Use fullwidth_content to bypass the container #}
+{% block fullwidth_content %}
+<div class="home-page-wrapper">
+  <div class="home-container">
+    <div class="home-header">
+      <h2 class="home-welcome">Bienvenido, {{ user.username }} 👋</h2>
     </div>
 
-    <div class="text-center mb-5">
-      <a class="btn btn-outline-primary btn-lg"
-         href="{% url 'chats:list' %}">
-        Ver todos mis informes
-      </a>
-    </div>
-  </div>
+    <div class="home-actions">
+      <div class="text-center mb-4">
+        <a class="btn btn-submit btn-lg"
+           href="{% url 'chats:new' %}">
+          Nuevo Informe
+        </a>
+      </div>
 
-  {# — Carousel automático de fútbol — #}
-  {% if gallery %}
-    <div class="home-gallery">
-      <div id="galleryCarousel"
-           class="carousel slide carousel-fade"
-           data-bs-ride="carousel"
-           data-bs-interval="15000"
-           data-bs-pause="false">
+      <div class="text-center mb-5">
+        <a class="btn btn-outline-primary btn-lg"
+           href="{% url 'chats:list' %}">
+          Ver todos mis informes
+        </a>
+      </div>
+    </div>
+
+    {# — Carousel automático de fútbol — #}
+    {% if gallery %}
+      <div class="home-gallery">
+        <div id="galleryCarousel"
+             class="carousel slide carousel-fade"
+             data-bs-ride="carousel"
+             data-bs-interval="15000"
+             data-bs-pause="false">
+          <div class="carousel-inner">
+            {% for pic in gallery %}
+              <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <img
+                  src="{% static 'img/soccer_pictures/' %}{{ pic }}"
+                  class="d-block w-100 gallery-image"
+                  alt="fútbol {{ forloop.counter }}"
+                >
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    {# — Carousel automático de titulares (ticker) — #}
+    {% if headlines %}
+    <div class="home-news">
+      <div class="text-center mt-5 mb-4">
+        <h4 class="news-title">📰 Sport News</h4>
+      </div>
+      <div id="newsCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000" data-bs-pause="false">
         <div class="carousel-inner">
-          {% for pic in gallery %}
+          {% for h in headlines %}
             <div class="carousel-item {% if forloop.first %}active{% endif %}">
-              <img
-                src="{% static 'img/soccer_pictures/' %}{{ pic }}"
-                class="d-block w-100 gallery-image"
-                alt="fútbol {{ forloop.counter }}"
-              >
+              <div class="bg-dark text-light py-3">
+                <div class="news-content">
+                  <p class="h5 text-center mb-0">{{ h }}</p>
+                </div>
+              </div>
             </div>
           {% endfor %}
         </div>
       </div>
     </div>
-  {% endif %}
-
-  {# — Carousel automático de titulares (ticker) — #}
-  {% if headlines %}
-  <div class="home-news">
-    <div class="text-center mt-5 mb-4">
-      <h4 class="news-title">📰 Sport News</h4>
-    </div>
-    <div id="newsCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000" data-bs-pause="false">
-      <div class="carousel-inner">
-        {% for h in headlines %}
-          <div class="carousel-item {% if forloop.first %}active{% endif %}">
-            <div class="bg-dark text-light py-3">
-              <div class="news-content">
-                <p class="h5 text-center mb-0">{{ h }}</p>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    </div>
+    {% endif %}
   </div>
-  {% endif %}
 </div>
-  
 {% endblock %}

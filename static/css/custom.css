@@ -518,12 +518,23 @@ select[multiple] { min-height: 150px; }
 /* ==========================================================================
    13) HOME PAGE RESPONSIVE LAYOUT
    ========================================================================== */
+/* Wrapper principal que ocupa toda la pantalla */
+.home-page-wrapper {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  position: relative;
+  left: 50%;
+  right: 50%;
+  transform: translateX(-50%);
+}
+
 /* Contenedor principal de la página de inicio */
 .home-container {
   width: 100%;
   max-width: 100%;
   margin: 0;
-  padding: 0 1rem;
+  padding: 2rem 1rem;
 }
 
 /* Header de bienvenida */
@@ -545,26 +556,33 @@ select[multiple] { min-height: 150px; }
 .home-actions {
   text-align: center;
   margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
 
 .home-actions .btn {
-  min-width: 200px;
-  padding: 0.75rem 2rem;
-  font-size: 1.1rem;
+  min-width: 300px;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
   margin: 0.5rem;
+  display: inline-block;
 }
 
 /* Galería de imágenes */
 .home-gallery {
   width: 100%;
   margin-bottom: 3rem;
+  padding: 0 2rem;
 }
 
 .gallery-image {
-  height: 400px;
+  height: 500px;
   object-fit: cover;
-  border-radius: 0.5rem;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  border-radius: 1rem;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+  width: 100%;
 }
 
 /* Sección de noticias */
@@ -589,7 +607,7 @@ select[multiple] { min-height: 150px; }
 /* Responsive design */
 @media (min-width: 768px) {
   .home-container {
-    padding: 0 2rem;
+    padding: 2rem 3rem;
   }
   
   .home-welcome {
@@ -597,7 +615,13 @@ select[multiple] { min-height: 150px; }
   }
   
   .gallery-image {
-    height: 500px;
+    height: 600px;
+  }
+  
+  .home-actions {
+    flex-direction: row;
+    justify-content: center;
+    gap: 2rem;
   }
   
   .home-actions .btn {
@@ -609,7 +633,7 @@ select[multiple] { min-height: 150px; }
 
 @media (min-width: 1200px) {
   .home-container {
-    padding: 0 3rem;
+    padding: 3rem 4rem;
   }
   
   .home-welcome {
@@ -617,7 +641,7 @@ select[multiple] { min-height: 150px; }
   }
   
   .gallery-image {
-    height: 600px;
+    height: 700px;
   }
   
   .home-actions .btn {
@@ -629,7 +653,7 @@ select[multiple] { min-height: 150px; }
 
 @media (min-width: 1400px) {
   .home-container {
-    padding: 0 4rem;
+    padding: 4rem 5rem;
   }
   
   .home-welcome {
@@ -637,7 +661,13 @@ select[multiple] { min-height: 150px; }
   }
   
   .gallery-image {
-    height: 700px;
+    height: 800px;
+  }
+  
+  .home-actions .btn {
+    min-width: 350px;
+    padding: 1.5rem 3.5rem;
+    font-size: 1.4rem;
   }
 }
 
