@@ -711,11 +711,11 @@ select[multiple] { min-height: 150px; }
 }
 
 .chat-logo {
-  max-height: 150px;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4)) 
+  max-height: 350px;
+  filter: drop-shadow(0 8px 16px rgba(11, 61, 11, 0.4)) 
           drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))
           drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  transform: perspective(1000px) rotateX(5deg) rotateY(-5deg);
+  transform: perspective(1000px) rotateX(5deg) rotateY(-2deg);
   animation: logoFloat 3s ease-in-out infinite;
 }
 
@@ -982,7 +982,7 @@ select[multiple] { min-height: 150px; }
    16) LOGO 3D EFFECTS
    ========================================================================== */
 .app-logo {
-  max-height: 500px !important;
+  max-height: 350px !important;
   width: auto;
   filter: drop-shadow(0 8px 16px rgba(11, 61, 11, 0.4)) 
           drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))
