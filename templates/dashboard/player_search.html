@@ -139,8 +139,8 @@
         <div id="searchResults" class="results-container">
           <div class="text-center text-muted py-5">
             <i class="fas fa-search fa-3x mb-3"></i>
-            <h5>Aplica al menos 2 filtros para ver jugadores</h5>
-            <p>Usa los filtros de la izquierda para buscar jugadores específicos</p>
+            <h5>Apply at least 2 filters to see players</h5>
+            <p>Use the filters on the left to search for specific players</p>
           </div>
         </div>
         
@@ -257,18 +257,18 @@
 </style>
 
 <script>
-// Variables globales
-let selectedPlayers = []; // Array para mantener jugadores seleccionados
-let selectedMetrics = []; // Array para mantener métricas seleccionadas
+// Global variables
+let selectedPlayers = []; // Array to maintain selected players
+let selectedMetrics = []; // Array to maintain selected metrics
 let currentPage = 1;
 let totalPages = 0;
 let allPlayers = [];
 let filteredPlayers = [];
 let availableMetrics = [];
 
-// Inicializar
+// Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    // Solo cargar opciones de filtros, NO todos los jugadores
+    // Only load filter options, NOT all players
     loadFilterOptions();
     loadAvailableMetrics();
     loadSavedSearches();
@@ -351,7 +351,7 @@ function loadAllPlayers() {
     })
     .catch(error => {
         console.error('Error:', error);
-        document.getElementById('searchResults').innerHTML = '<p class="text-danger">Error al cargar jugadores</p>';
+        document.getElementById('searchResults').innerHTML = '<p class="text-danger">Error loading players</p>';
         throw error;
     });
 }
@@ -372,7 +372,7 @@ function loadFilterOptions() {
             populateFilterOptions(data);
         })
         .catch(error => {
-            console.error('Error cargando opciones de filtros:', error);
+            console.error('Error loading filter options:', error);
         });
     });
 }
@@ -490,7 +490,7 @@ function filterPlayers() {
             applyFilters();
         }).catch(error => {
             console.error('Error cargando jugadores:', error);
-            document.getElementById('searchResults').innerHTML = '<p class="text-danger">Error al cargar jugadores</p>';
+            document.getElementById('searchResults').innerHTML = '<p class="text-danger">Error loading players</p>';
         });
         return;
     }
@@ -600,7 +600,7 @@ function togglePlayer(playerId) {
         selectedPlayers = selectedPlayers.filter(id => id !== playerId);
     } else {
         if (selectedPlayers.length >= 3) {
-            alert('Máximo 3 jugadores seleccionados');
+            alert('Maximum 3 players selected');
             document.querySelector(`input[value="${playerId}"]`).checked = false;
             return;
         }
@@ -813,14 +813,14 @@ function handleSearch(e) {
 // Crear dashboard
 function createDashboard() {
     if (selectedPlayers.length === 0) {
-        alert('Selecciona al menos un jugador');
+        alert('Select at least one player');
         return;
     }
     
     selectedMetrics = Array.from(document.querySelectorAll('input[name="metrics"]:checked')).map(cb => cb.value);
     
     if (selectedMetrics.length === 0) {
-        alert('Selecciona al menos una métrica');
+        alert('Select at least one metric');
         return;
     }
     
