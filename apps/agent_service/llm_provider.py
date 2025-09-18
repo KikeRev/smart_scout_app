@@ -1,11 +1,11 @@
 # apps/agent_service/llm_provider.py
 """
-Devuelve un objeto Chat LLM (OpenAI u Ollama) listo para usar.
+Returns a ready-to-use Chat LLM object (OpenAI or Ollama).
 
-  • Si existe OPENAI_API_KEY → usa OpenAI.
-  • En caso contrario → usa Ollama/Mistral local.
+  • If OPENAI_API_KEY exists → uses OpenAI.
+  • Otherwise → uses local Ollama/Mistral.
 
-Admite:
+Supports:
   stream      – bool, activar streaming token-a-token.
   callbacks   – lista de handlers para proceso de streaming/logging.
 """
@@ -32,12 +32,12 @@ def get_llm(
     Parameters
     ----------
     stream : bool
-        Si True el modelo devolverá los tokens en streaming.
+        If True the model will return tokens in streaming.
     callbacks : list[BaseCallbackHandler] | None
-        Callbacks que procesarán los tokens (streaming, tracing, logging…).
+        Callbacks that will process the tokens (streaming, tracing, logging…).
     """
-    # --- OpenAI remoto ---------------------------------------------------- #
-    api_key = os.environ["OPENAI_API_KEY"]          # ❶ fail-fast si no existe
+    # --- Remote OpenAI ---------------------------------------------------- #
+    api_key = os.environ["OPENAI_API_KEY"]          # ❶ fail-fast if it doesn't exist
 
     return ChatOpenAI(
         api_key=api_key,

@@ -8,22 +8,22 @@
     <!-- Sidebar con filtros -->
     <div class="search-sidebar">
       <div class="sidebar-header">
-        <h5 class="sidebar-title">🔍 Filtros de Búsqueda</h5>
+        <h5 class="sidebar-title">🔍 Search Filters</h5>
         <a href="{% url 'dashboard:home' %}" class="btn btn-sm btn-outline-secondary"
-           role="button" aria-label="Volver al inicio">
-          <i class="fas fa-home" aria-hidden="true"></i> Inicio
+           role="button" aria-label="Return to home">
+          <i class="fas fa-home" aria-hidden="true"></i> Home
         </a>
       </div>
       
       <div class="sidebar-content">
         <form id="searchForm">
-          <!-- Búsqueda por texto -->
+          <!-- Text search -->
           <div class="mb-3">
-            <label for="query" class="form-label">Nombre del jugador</label>
+            <label for="query" class="form-label">Player Name</label>
             <div class="position-relative">
-              <input type="text" class="form-control" id="query" name="query" placeholder="Ej: Messi" autocomplete="off">
+              <input type="text" class="form-control" id="query" name="query" placeholder="e.g: Messi" autocomplete="off">
               <div id="autocompleteDropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1000; background: white; border: 1px solid #dee2e6; border-radius: 0.375rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);">
-                <!-- Se llenará dinámicamente -->
+                <!-- Will be filled dynamically -->
               </div>
             </div>
           </div>
