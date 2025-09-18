@@ -9,7 +9,7 @@ urlpatterns = [
     path("refresh/",     refresh_dash,      name="refresh"),   # HTMX
     path("inline/", csrf_exempt(inline_view), name="dashboard_inline"),
     
-    # Nuevas rutas del dashboard de búsqueda manual
+    # New manual search dashboard routes
     path("search/",      player_search,     name="player_search"),
     path("compare/",     comparison_dashboard, name="comparison"),
     path("api/search/",  csrf_exempt(search_api), name="search_api"),

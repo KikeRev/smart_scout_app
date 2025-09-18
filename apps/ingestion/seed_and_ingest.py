@@ -55,7 +55,7 @@ _SUMMARIZER = pipeline(
     model="facebook/bart-large-cnn",   # or t5-small / pegasus
     device=0 if torch.cuda.is_available() else -1,
 )
-# tokenizer para contar tokens (opcional, si quieres trocear artículos muy largos)
+# tokenizer to count tokens (optional, if you want to chunk very long articles)
 _TOKENIZER = AutoTokenizer.from_pretrained("facebook/bart-large-cnn")
 
 MAX_TOKENS = 1024 
