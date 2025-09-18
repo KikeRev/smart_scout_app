@@ -3,7 +3,7 @@ import json
 import requests
 from django.http import StreamingHttpResponse, JsonResponse
 from django.db import transaction
-from django.views.decorators.csrf import csrf_exempt  # si usas CSRF token, no lo quites
+from django.views.decorators.csrf import csrf_exempt  # if you use CSRF token, don't remove it
 
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
@@ -27,7 +27,7 @@ import pandas as pd
 
 
 
-FASTAPI = "http://api:8001"   # ajusta si tienes otra URL
+FASTAPI = "http://api:8001"   # adjust if you have another URL
 
 @method_decorator(login_required, name="dispatch")
 class ChatListView(ListView):
@@ -44,34 +44,34 @@ def new_chat_redirect(request):
 
 @method_decorator(login_required, name="dispatch")
 class ChatSessionView(DetailView):
-    """Pantalla de una conversación concreta"""
+    """Screen of a specific conversation"""
     model = ChatSession
-    template_name = "chats/session.html"      # tu template
+    template_name = "chats/session.html"      # your template
     context_object_name = "session"
 
     def get_queryset(self):
-        # cada usuario sólo ve sus sesiones
+        # each user only sees their sessions
         return super().get_queryset().filter(user=self.request.user)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["messages"] = self.object.messages.order_by("created_at")
-        # Agregar lista de chats del usuario para la barra lateral
+        # Add user's chat list for the sidebar
         ctx["user_chats"] = ChatSession.objects.filter(user=self.request.user).order_by("-updated_at")[:20]
         return ctx
 
 @method_decorator(login_required, name="dispatch")
 class ChatDetailView(LoginRequiredMixin, DetailView):
     model = ChatSession
-    template_name = "chats/session.html"   # o el que prefieras
+    template_name = "chats/session.html"   # or whichever you prefer
     context_object_name = "session"
 
     def get_queryset(self):
-        # filtra por usuario → nadie ve las sesiones de otros
+        # filter by user → no one sees other people's sessions
         return super().get_queryset().filter(user=self.request.user)
 
 # --------------------------------------------------------------------------- #
-#  1)  /chat  – respuesta completa JSON
+#  1)  /chat  – complete JSON response
 # --------------------------------------------------------------------------- #
 @login_required
 @transaction.atomic
@@ -80,14 +80,14 @@ def chat_api(request):
     text  = data["message"].strip()
     user  = request.user
 
-    # 1. sesión (crea o recupera)
+    # 1. session (create or retrieve)
     session_id = data.get("session_id")
     if session_id:
         session = ChatSession.objects.select_for_update().get(id=session_id, user=user)
     else:
         session = ChatSession.objects.create(user=user)
 
-    # 2. guarda el turno del usuario  (✔ una sola vez)
+    # 2. save user's turn (✔ only once)
     Message.objects.create(session=session, role="user", content=text)
 
     # 3. prepara histórico (k = 20 últimos)
@@ -130,7 +130,7 @@ def chat_stream(request):
     text  = data["message"].strip()
     user  = request.user
 
-    # 1. sesión (crea o recupera)
+    # 1. session (create or retrieve)
     session_id = data.get("session_id")
     if session_id:
         session = ChatSession.objects.select_for_update().get(id=session_id, user=user)
