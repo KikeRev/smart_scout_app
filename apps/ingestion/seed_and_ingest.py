@@ -47,12 +47,12 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 hf_logging.set_verbosity_error()
 
-DIM = 42  # Dimensión del vector de características (ajustar según el modelo)
+DIM = 42  # Feature vector dimension (adjust according to model)
 
-# fuera de las funciones, para que se cargue una vez
+# outside functions, so it loads once
 _SUMMARIZER = pipeline(
     task="summarization",
-    model="facebook/bart-large-cnn",   # o t5-small / pegasus
+    model="facebook/bart-large-cnn",   # or t5-small / pegasus
     device=0 if torch.cuda.is_available() else -1,
 )
 # tokenizer para contar tokens (opcional, si quieres trocear artículos muy largos)
