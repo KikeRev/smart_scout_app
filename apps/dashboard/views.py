@@ -219,9 +219,6 @@ def comparison_dashboard(request):
     player_ids = request.GET.getlist('player_ids')
     selected_metrics = request.GET.getlist('metrics')
     
-    print(f"DEBUG: player_ids = {player_ids}")
-    print(f"DEBUG: selected_metrics = {selected_metrics}")
-    
     if not player_ids:
         return render(request, "dashboard/comparison.html", {
             'error': 'No se han seleccionado jugadores'
@@ -230,16 +227,13 @@ def comparison_dashboard(request):
     # Convertir a enteros
     try:
         player_ids = [int(pid) for pid in player_ids]
-        print(f"DEBUG: player_ids convertidos = {player_ids}")
     except ValueError:
         return render(request, "dashboard/comparison.html", {
             'error': 'IDs de jugadores inválidos'
         })
     
     # Obtener datos de jugadores
-    print("DEBUG: Obteniendo datos de jugadores...")
     players_data = get_player_details(player_ids)
-    print(f"DEBUG: players_data = {players_data}")
     
     if not players_data:
         return render(request, "dashboard/comparison.html", {
@@ -250,20 +244,14 @@ def comparison_dashboard(request):
     comparison_data = get_comparison_data(players_data, selected_metrics)
     
     # Generar gráfico
-    print("DEBUG: Generando gráfico...")
     if len(players_data) == 1:
         chart_result = dashboard_radar_single(players_data[0], selected_metrics)
     else:
         chart_result = dashboard_radar_comparison(players_data, selected_metrics)
     
-    print(f"DEBUG: Resultado del gráfico: {chart_result}")
-    
     chart_url = None
     if chart_result.get('attachments') and len(chart_result['attachments']) > 0:
         chart_url = chart_result['attachments'][0]['url']
-        print(f"DEBUG: URL del gráfico: {chart_url}")
-    else:
-        print("DEBUG: No se generó el gráfico")
     
     context = {
         'players': players_data,
@@ -346,8 +334,6 @@ def saved_searches_api(request):
         # Guardar nueva búsqueda
         try:
             data = json.loads(request.body)
-            print(f"DEBUG: Datos recibidos: {data}")
-            print(f"DEBUG: Usuario: {request.user}")
             
             search = SavedSearch.objects.create(
                 user=request.user,
@@ -356,12 +342,10 @@ def saved_searches_api(request):
                 selected_players=data['selected_players'],
                 selected_metrics=data['selected_metrics']
             )
-            print(f"DEBUG: Búsqueda creada con ID: {search.id}")
             
             from .search_services import serialize_saved_search
             return JsonResponse(serialize_saved_search(search))
         except Exception as e:
-            print(f"DEBUG: Error al guardar búsqueda: {e}")
             return JsonResponse({'error': str(e)}, status=400)
     
     elif request.method == 'DELETE':

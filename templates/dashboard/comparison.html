@@ -190,12 +190,8 @@ function confirmSaveSearch() {
         },
         body: JSON.stringify(searchData)
     })
-    .then(response => {
-        console.log('Response status:', response.status);
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        console.log('Response data:', data);
         if (data.error) {
             alert('Error al guardar: ' + data.error);
         } else {

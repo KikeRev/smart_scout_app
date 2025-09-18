@@ -341,7 +341,6 @@ function loadAllPlayers() {
         allPlayers = data.players || [];
         window.allPlayers = allPlayers; // Hacer disponible globalmente para autocompletado
         filteredPlayers = [...allPlayers];
-        console.log('Jugadores cargados:', allPlayers.length);
         
         // Reconfigurar autocompletado con los nuevos datos
         if (typeof setupAutocomplete === 'function') {
@@ -359,34 +358,21 @@ function loadAllPlayers() {
 
 // Cargar opciones de filtros
 function loadFilterOptions() {
-    console.log('Cargando opciones de filtros...');
-    
     // Intentar primero el endpoint de Django
     fetch('{% url "dashboard:search_api" %}?action=filter_options')
-    .then(response => {
-        console.log('Django response status:', response.status);
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        console.log('Datos Django recibidos:', data);
-        console.log('Ligas Django:', data.leagues?.length, 'Equipos:', data.clubs?.length);
         populateFilterOptions(data);
     })
     .catch(error => {
-        console.error('Error con Django, intentando FastAPI:', error);
         // Fallback al endpoint de FastAPI
         fetch('http://api:8001/players/filter-options')
-        .then(response => {
-            console.log('FastAPI response status:', response.status);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Datos FastAPI recibidos:', data);
-            console.log('Ligas FastAPI:', data.leagues?.length, 'Equipos:', data.clubs?.length);
             populateFilterOptions(data);
         })
         .catch(error => {
-            console.error('Error con ambos endpoints:', error);
+            console.error('Error cargando opciones de filtros:', error);
         });
     });
 }
@@ -408,7 +394,6 @@ function populateFilterOptions(options) {
 
 // Función genérica para poblar dropdowns
 function populateDropdown(dropdownId, options, name, type) {
-    console.log(`Poblando ${type}:`, options?.length, 'opciones');
     const dropdown = document.getElementById(dropdownId);
     let html = '';
     
@@ -432,7 +417,6 @@ function populateDropdown(dropdownId, options, name, type) {
     });
     
     dropdown.innerHTML = html;
-    console.log(`${type} poblado con ${options.length} opciones`);
 }
 
 // Actualizar texto del dropdown
@@ -670,7 +654,6 @@ function loadAvailableMetrics() {
     .then(response => response.json())
     .then(data => {
         availableMetrics = data.metrics || [];
-        console.log('Métricas cargadas:', availableMetrics.length);
     })
     .catch(error => {
         console.error('Error:', error);
@@ -753,15 +736,9 @@ function loadSavedSearches() {
 
 // Cargar una búsqueda guardada
 function loadSearch(searchId) {
-    console.log('Cargando búsqueda con ID:', searchId);
-    
     fetch(`{% url "dashboard:saved_searches_api" %}?id=${searchId}`)
-        .then(response => {
-            console.log('Response status:', response.status);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Datos recibidos:', data);
             
             if (data.error) {
                 alert('Error al cargar la búsqueda: ' + data.error);
@@ -779,16 +756,12 @@ function loadSearch(searchId) {
                 return;
             }
             
-            console.log('Cargando jugadores:', data.selected_players);
-            console.log('Cargando métricas:', data.selected_metrics);
-            
             // Redirigir directamente al dashboard con los parámetros
             const params = new URLSearchParams();
             data.selected_players.forEach(id => params.append('player_ids', id));
             data.selected_metrics.forEach(metric => params.append('metrics', metric));
             
             const url = `{% url 'dashboard:comparison' %}?${params.toString()}`;
-            console.log('Redirigiendo a:', url);
             
             // Mostrar mensaje de carga
             alert(`Cargando búsqueda "${data.name}" con ${data.selected_players.length} jugador(es) y ${data.selected_metrics.length} métrica(s)...`);
@@ -839,16 +812,12 @@ function handleSearch(e) {
 
 // Crear dashboard
 function createDashboard() {
-    console.log('Creando dashboard...');
-    console.log('Jugadores seleccionados:', selectedPlayers);
-    
     if (selectedPlayers.length === 0) {
         alert('Selecciona al menos un jugador');
         return;
     }
     
     selectedMetrics = Array.from(document.querySelectorAll('input[name="metrics"]:checked')).map(cb => cb.value);
-    console.log('Métricas seleccionadas:', selectedMetrics);
     
     if (selectedMetrics.length === 0) {
         alert('Selecciona al menos una métrica');
@@ -860,7 +829,6 @@ function createDashboard() {
     selectedMetrics.forEach(metric => params.append('metrics', metric));
     
     const url = `{% url 'dashboard:comparison' %}?${params.toString()}`;
-    console.log('URL generada:', url);
     
     window.location.href = url;
 }

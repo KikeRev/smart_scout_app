@@ -125,9 +125,6 @@ def get_player_details(player_ids: List[int]) -> List[Dict[str, Any]]:
         # Filtrar solo los jugadores que necesitamos
         filtered_players = [p for p in all_players if p.get('id') in player_ids]
         
-        print(f"DEBUG: Buscando jugadores con IDs {player_ids}")
-        print(f"DEBUG: Encontrados {len(filtered_players)} jugadores")
-        
         return filtered_players
         
     except requests.exceptions.RequestException as e:
@@ -174,11 +171,9 @@ def get_filter_options() -> Dict[str, List[str]]:
         if response.status_code == 200:
             return response.json()
         else:
-            print(f"Error en FastAPI: {response.status_code}")
             return get_filter_options_fallback()
         
     except Exception as e:
-        print(f"Error obteniendo opciones de filtros desde FastAPI: {e}")
         return get_filter_options_fallback()
 
 def get_filter_options_fallback() -> Dict[str, List[str]]:
