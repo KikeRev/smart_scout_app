@@ -43,39 +43,39 @@
             {# Solo un <ul>; con ms-auto empujamos todo a la derecha #}
             <ul class="navbar-nav ms-auto align-items-lg-center">
 
-                {# — Luego el dropdown Mi cuenta — #}
+                {# — Then the My Account dropdown — #}
                 <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle" href="#" id="accountDropdown"
                     role="button" data-bs-toggle="dropdown"
                     aria-expanded="false">
-                    Mi cuenta
+                    My Account
                   </a>
                   <ul class="dropdown-menu dropdown-menu-end"
                       aria-labelledby="accountDropdown">
                     <li>
                       <a class="dropdown-item" href="{% url 'users:profile' %}">
-                        Mi Perfil
+                        My Profile
                       </a>
                     </li>
                       <li>
                       <a class="dropdown-item" href="{% url 'chats:new' %}">
-                        Nuevo Informe
+                        New Report
                       </a>
                     </li>
                     <li>
                       <a class="dropdown-item" href="{% url 'chats:list' %}">
-                        Mis Informes
+                        My Reports
                       </a>
                     </li>
                     <li>
                       <a class="dropdown-item" href="{% url 'dashboard:player_search' %}">
-                        🔍 Buscar Jugadores
+                        🔍 Search Players
                       </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
                       <a class="dropdown-item" href="{% url 'users:logout' %}">
-                        Salir
+                        Logout
                       </a>
                     </li>
                   </ul>
