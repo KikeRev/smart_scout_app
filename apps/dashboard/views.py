@@ -79,7 +79,7 @@ def _context(base_id: int, cand_id: int, cand_ids: list[int], metrics: list[str]
     base_stats = stats_map.get(base_id)
     cand_stats = stats_map.get(cand_id)
     if not (base_stats and cand_stats):
-        raise ValueError("IDs no encontrados en la API")
+        raise ValueError("IDs not found in API")
 
     # ── 2) gráficos usando stats directamente ─────────────
     radar_base = radar_chart(
@@ -221,7 +221,7 @@ def comparison_dashboard(request):
     
     if not player_ids:
         return render(request, "dashboard/comparison.html", {
-            'error': 'No se han seleccionado jugadores'
+            'error': 'No players selected'
         })
     
     # Convertir a enteros
@@ -229,7 +229,7 @@ def comparison_dashboard(request):
         player_ids = [int(pid) for pid in player_ids]
     except ValueError:
         return render(request, "dashboard/comparison.html", {
-            'error': 'IDs de jugadores inválidos'
+            'error': 'Invalid player IDs'
         })
     
     # Obtener datos de jugadores
@@ -237,7 +237,7 @@ def comparison_dashboard(request):
     
     if not players_data:
         return render(request, "dashboard/comparison.html", {
-            'error': 'No se pudieron cargar los datos de los jugadores'
+            'error': 'Could not load player data'
         })
     
     # Preparar datos para la comparación
@@ -305,7 +305,7 @@ def search_api(request):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 @login_required
 def saved_searches_api(request):
@@ -322,7 +322,7 @@ def saved_searches_api(request):
                 from .search_services import serialize_saved_search
                 return JsonResponse(serialize_saved_search(search))
             except SavedSearch.DoesNotExist:
-                return JsonResponse({'error': 'Búsqueda no encontrada'}, status=404)
+                return JsonResponse({'error': 'Search not found'}, status=404)
         else:
             # Obtener todas las búsquedas guardadas del usuario
             searches = SavedSearch.objects.filter(user=request.user)
@@ -359,4 +359,4 @@ def saved_searches_api(request):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
