@@ -77,8 +77,8 @@ class PlayerLookupInput(BaseModel):
     limit: int = Field(5, description="Cuántos resultados devolver")
 
 def _player_lookup(name: str, position: str = "MF", limit: int = 5) -> List[dict]:
-    """Llama a /players/players/search y devuelve los candidatos encontrados."""
-    url = "http://api:8001/players/players/search"
+    """Llama a /players/search y devuelve los candidatos encontrados."""
+    url = "http://api:8001/players/search"
     resp = requests.get(url, params=dict(query=name, position=position, limit=limit), timeout=30)
     resp.raise_for_status()
     return resp.json()

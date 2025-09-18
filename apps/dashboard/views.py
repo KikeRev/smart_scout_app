@@ -6,11 +6,11 @@ from django.contrib.staticfiles import finders
 import os, random
 
 from .chats.models import ChatSession
-from .models import FootballNews     
+from .models import FootballNews, SavedSearch     
 
 from django.views.decorators.csrf import csrf_exempt
 
-from django.http import HttpResponseBadRequest, HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed
+from django.http import HttpResponseBadRequest, HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed, JsonResponse
 
 from apps.agent_service.viz_tools import (
     radar_chart,
@@ -191,3 +191,188 @@ def refresh_dash(request):
     cand_ids = [int(v) for v in request.POST.getlist("cand_ids[]") if v.isdigit()]
     ctx = _context(base, cand, cand_ids, metrics)
     return render(request, "dashboard/_dash_body.html", ctx)
+
+
+# ───────────────── NUEVAS VISTAS DEL DASHBOARD DE BÚSQUEDA MANUAL ──────────────────
+
+@login_required
+def player_search(request):
+    """Vista principal de búsqueda de jugadores"""
+    from .search_services import get_filter_options
+    
+    # Obtener opciones de filtros
+    filter_options = get_filter_options()
+    
+    context = {
+        'filter_options': filter_options,
+    }
+    
+    return render(request, "dashboard/player_search.html", context)
+
+@login_required
+def comparison_dashboard(request):
+    """Dashboard de comparación de jugadores"""
+    from .search_services import get_player_details, get_comparison_data
+    from apps.agent_service.dashboard_viz_tools import dashboard_radar_single, dashboard_radar_comparison
+    
+    # Obtener IDs de jugadores seleccionados
+    player_ids = request.GET.getlist('player_ids')
+    selected_metrics = request.GET.getlist('metrics')
+    
+    print(f"DEBUG: player_ids = {player_ids}")
+    print(f"DEBUG: selected_metrics = {selected_metrics}")
+    
+    if not player_ids:
+        return render(request, "dashboard/comparison.html", {
+            'error': 'No se han seleccionado jugadores'
+        })
+    
+    # Convertir a enteros
+    try:
+        player_ids = [int(pid) for pid in player_ids]
+        print(f"DEBUG: player_ids convertidos = {player_ids}")
+    except ValueError:
+        return render(request, "dashboard/comparison.html", {
+            'error': 'IDs de jugadores inválidos'
+        })
+    
+    # Obtener datos de jugadores
+    print("DEBUG: Obteniendo datos de jugadores...")
+    players_data = get_player_details(player_ids)
+    print(f"DEBUG: players_data = {players_data}")
+    
+    if not players_data:
+        return render(request, "dashboard/comparison.html", {
+            'error': 'No se pudieron cargar los datos de los jugadores'
+        })
+    
+    # Preparar datos para la comparación
+    comparison_data = get_comparison_data(players_data, selected_metrics)
+    
+    # Generar gráfico
+    print("DEBUG: Generando gráfico...")
+    if len(players_data) == 1:
+        chart_result = dashboard_radar_single(players_data[0], selected_metrics)
+    else:
+        chart_result = dashboard_radar_comparison(players_data, selected_metrics)
+    
+    print(f"DEBUG: Resultado del gráfico: {chart_result}")
+    
+    chart_url = None
+    if chart_result.get('attachments') and len(chart_result['attachments']) > 0:
+        chart_url = chart_result['attachments'][0]['url']
+        print(f"DEBUG: URL del gráfico: {chart_url}")
+    else:
+        print("DEBUG: No se generó el gráfico")
+    
+    context = {
+        'players': players_data,
+        'chart_url': chart_url,
+        'selected_metrics': selected_metrics,
+        'player_count': len(players_data)
+    }
+    
+    return render(request, "dashboard/comparison.html", context)
+
+@login_required
+def search_api(request):
+    """API para búsqueda de jugadores"""
+    from .search_services import search_players, build_search_filters, get_all_players, get_filter_options, get_available_metrics
+    import json
+    
+    if request.method == 'GET':
+        action = request.GET.get('action')
+        
+        if action == 'filter_options':
+            # Devolver opciones de filtros
+            try:
+                results = get_filter_options()
+                return JsonResponse(results)
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=400)
+        
+        elif action == 'metrics':
+            # Devolver métricas disponibles
+            try:
+                results = get_available_metrics()
+                return JsonResponse({'metrics': results})
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=400)
+        
+        else:
+            # Devolver todos los jugadores para el filtrado dinámico
+            try:
+                results = get_all_players()
+                return JsonResponse(results)
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=400)
+    
+    elif request.method == 'POST':
+        # Búsqueda con filtros
+        try:
+            data = json.loads(request.body)
+            filters = build_search_filters(data)
+            results = search_players(**filters)
+            return JsonResponse(results)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+@login_required
+def saved_searches_api(request):
+    """API para gestionar búsquedas guardadas"""
+    import json
+    
+    if request.method == 'GET':
+        search_id = request.GET.get('id')
+        
+        if search_id:
+            # Obtener una búsqueda específica
+            try:
+                search = SavedSearch.objects.get(id=search_id, user=request.user)
+                from .search_services import serialize_saved_search
+                return JsonResponse(serialize_saved_search(search))
+            except SavedSearch.DoesNotExist:
+                return JsonResponse({'error': 'Búsqueda no encontrada'}, status=404)
+        else:
+            # Obtener todas las búsquedas guardadas del usuario
+            searches = SavedSearch.objects.filter(user=request.user)
+            from .search_services import serialize_saved_search
+            data = [serialize_saved_search(search) for search in searches]
+            return JsonResponse({'searches': data})
+    
+    elif request.method == 'POST':
+        # Guardar nueva búsqueda
+        try:
+            data = json.loads(request.body)
+            print(f"DEBUG: Datos recibidos: {data}")
+            print(f"DEBUG: Usuario: {request.user}")
+            
+            search = SavedSearch.objects.create(
+                user=request.user,
+                name=data['name'],
+                search_params=data['search_params'],
+                selected_players=data['selected_players'],
+                selected_metrics=data['selected_metrics']
+            )
+            print(f"DEBUG: Búsqueda creada con ID: {search.id}")
+            
+            from .search_services import serialize_saved_search
+            return JsonResponse(serialize_saved_search(search))
+        except Exception as e:
+            print(f"DEBUG: Error al guardar búsqueda: {e}")
+            return JsonResponse({'error': str(e)}, status=400)
+    
+    elif request.method == 'DELETE':
+        # Eliminar búsqueda
+        try:
+            data = json.loads(request.body)
+            search_id = data['id']
+            search = SavedSearch.objects.get(id=search_id, user=request.user)
+            search.delete()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    
+    return JsonResponse({'error': 'Método no permitido'}, status=405)

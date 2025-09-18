@@ -9,8 +9,9 @@
     <div class="chat-sidebar">
       <div class="sidebar-header">
         <h5 class="sidebar-title">Mis Chats</h5>
-        <a href="{% url 'chats:new' %}" class="btn btn-sm btn-outline-primary">
-          <i class="bi bi-plus"></i> Nuevo
+        <a href="{% url 'chats:new' %}" class="btn btn-sm btn-outline-primary"
+           role="button" aria-label="Crear un nuevo chat con el agente">
+          <i class="bi bi-plus" aria-hidden="true"></i> Nuevo
         </a>
       </div>
       
@@ -27,7 +28,8 @@
         {% empty %}
           <div class="no-chats">
             <p>No tienes chats aún</p>
-            <a href="{% url 'chats:new' %}" class="btn btn-sm btn-primary">Crear primer chat</a>
+            <a href="{% url 'chats:new' %}" class="btn btn-sm btn-primary"
+               role="button" aria-label="Crear tu primer chat con el agente de inteligencia artificial">Crear primer chat</a>
           </div>
         {% endfor %}
       </div>
@@ -75,8 +77,9 @@
                     style="min-height:6rem; width:100%; max-width:100%; resize:vertical;"
                     placeholder="Escribe tu pregunta…" required></textarea>
             
-            <button type="submit" class="btn btn-submit btn-send">
-              <span class="send-icon">➤</span>
+            <button type="submit" class="btn btn-submit btn-send"
+                    role="button" aria-label="Enviar mensaje al agente">
+              <span class="send-icon" aria-hidden="true">➤</span>
             </button>
           </div>
 

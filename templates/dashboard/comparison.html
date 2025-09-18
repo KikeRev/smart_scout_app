@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block fullwidth_content %}
+<div class="page-wrapper-80">
+{% csrf_token %}
+  <!-- Logo de la aplicación -->
+  <section class="text-center py-3">
+    <img src="{% static 'img/app_logo_6.png' %}"    
+         alt="Smart Scout logo"
+         class="img-fluid app-logo">
+  </section>
+  
+  {% if error %}
+  <div class="alert alert-danger" role="alert">
+    {{ error }}
+  </div>
+  {% else %}
+  
+  <!-- Tarjetas de jugadores -->
+  <div class="row mb-4">
+    {% for player in players %}
+    <div class="col-md-{% if player_count == 1 %}12{% elif player_count == 2 %}6{% else %}4{% endif %}">
+      <div class="card h-100">
+        <div class="card-body text-center">
+          <!-- Logo del equipo -->
+          {% if player.team_logo %}
+          <div class="mb-3">
+            <img src="{{ player.team_logo }}" 
+                 alt="{{ player.club }} logo" 
+                 class="img-fluid" 
+                 style="max-height: 60px; max-width: 60px;"
+                 onerror="this.style.display='none'">
+          </div>
+          {% endif %}
+          
+          <!-- Información del jugador -->
+          <h5 class="card-title">{{ player.full_name|default:"N/A" }}</h5>
+          <p class="card-text">
+            <strong>Equipo:</strong> {{ player.club|default:"N/A" }}<br>
+            <strong>Nacionalidad:</strong> {{ player.nationality|default:"N/A" }}<br>
+            <strong>Edad:</strong> {{ player.age|default:"N/A" }} años<br>
+            <strong>Posición:</strong> {{ player.position|default:"N/A" }}
+          </p>
+          
+          <!-- Estadísticas básicas -->
+          <div class="row text-center">
+            <div class="col-4">
+              <small class="text-muted">Minutos</small><br>
+              <strong>{{ player.minutes|default:"0" }}</strong>
+            </div>
+            <div class="col-4">
+              <small class="text-muted">Goles</small><br>
+              <strong>{{ player.goals|default:"0" }}</strong>
+            </div>
+            <div class="col-4">
+              <small class="text-muted">Asistencias</small><br>
+              <strong>{{ player.assists|default:"0" }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  
+  <!-- Gráfico de comparación -->
+  {% if chart_url %}
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">
+        {% if player_count == 1 %}
+        📊 Análisis Individual
+        {% else %}
+        📊 Comparación de Jugadores
+        {% endif %}
+      </h5>
+    </div>
+    <div class="card-body text-center">
+      <img src="{{ chart_url }}" 
+           alt="Gráfico de comparación" 
+           class="img-fluid"
+           style="max-width: 100%; height: auto;">
+    </div>
+  </div>
+  {% endif %}
+  
+  <!-- Información de métricas seleccionadas -->
+  {% if selected_metrics %}
+  <div class="card mt-4">
+    <div class="card-header">
+      <h6 class="mb-0">Métricas mostradas</h6>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        {% for metric in selected_metrics %}
+        <div class="col-md-3 col-sm-6 mb-2">
+          <span class="badge bg-secondary">{{ metric|format_metric }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  
+  <!-- Botones de acción -->
+  <div class="text-center mt-4">
+    <a href="{% url 'dashboard:home' %}" class="btn btn-outline-secondary"
+       role="button" aria-label="Volver al inicio">
+      <span aria-hidden="true">🏠</span> Inicio
+    </a>
+    <a href="{% url 'dashboard:player_search' %}" class="btn btn-outline-primary ms-2"
+       role="button" aria-label="Realizar una nueva búsqueda de jugadores">
+      <span aria-hidden="true">←</span> Nueva Búsqueda
+    </a>
+    <button class="btn btn-success ms-2" onclick="saveSearch()"
+            role="button" aria-label="Guardar la búsqueda actual en mi perfil">
+      <span aria-hidden="true">💾</span> Guardar Búsqueda
+    </button>
+  </div>
+  
+  {% endif %}
+</div>
+
+<!-- Modal para guardar búsqueda -->
+<div class="modal fade" id="saveSearchModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Guardar Búsqueda</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="saveSearchForm">
+          <div class="mb-3">
+            <label for="searchName" class="form-label">Nombre de la búsqueda</label>
+            <input type="text" class="form-control" id="searchName" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                role="button" aria-label="Cancelar el guardado de la búsqueda">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="confirmSaveSearch()"
+                role="button" aria-label="Confirmar el guardado de la búsqueda">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Guardar búsqueda
+function saveSearch() {
+    const modal = new bootstrap.Modal(document.getElementById('saveSearchModal'));
+    modal.show();
+}
+
+// Confirmar guardado
+function confirmSaveSearch() {
+    const searchName = document.getElementById('searchName').value;
+    
+    if (!searchName.trim()) {
+        alert('Por favor, ingresa un nombre para la búsqueda');
+        return;
+    }
+    
+    // Obtener datos de la búsqueda actual
+    const urlParams = new URLSearchParams(window.location.search);
+    const playerIds = urlParams.getAll('player_ids');
+    const metrics = urlParams.getAll('metrics');
+    
+    const searchData = {
+        name: searchName,
+        search_params: {
+            // Aquí podrías incluir los filtros originales si los tienes
+        },
+        selected_players: playerIds.map(id => parseInt(id)),
+        selected_metrics: metrics
+    };
+    
+    // Obtener el token CSRF
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch('{% url "dashboard:saved_searches_api" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(searchData)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.error) {
+            alert('Error al guardar: ' + data.error);
+        } else {
+            alert('Búsqueda guardada exitosamente');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('saveSearchModal'));
+            modal.hide();
+            // Limpiar el campo de nombre
+            document.getElementById('searchName').value = '';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al guardar la búsqueda: ' + error.message);
+    });
+}
+</script>
+{% endblock %}

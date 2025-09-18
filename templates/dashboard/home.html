@@ -5,32 +5,65 @@
 {% block fullwidth_content %}
 <div class="page-wrapper-80">
   <!-- Logo de la aplicación -->
-  <section class="text-center py-3">
-    <img src="{% static 'img/app_logo_6.png' %}"    
-         alt="Smart Scout logo"
-         class="img-fluid app-logo">
+  <section class="text-center py-3" role="banner">
+    <div class="logo-container">
+      <img src="{% static 'img/app_logo_6.png' %}"    
+           alt="Smart Scout - Aplicación de análisis de fútbol con inteligencia artificial"
+           class="img-fluid app-logo glass-logo"
+           role="img">
+    </div>
   </section>
   
   <div class="home-container">
     <div class="home-header">
-      <h2 class="home-welcome">Bienvenido, {{ user.username }} 👋</h2>
+      <h1 class="home-welcome" role="heading" aria-level="1">
+        Bienvenido, {{ user.username }} 
+        <span aria-label="saludo con mano saludando" role="img">👋</span>
+      </h1>
     </div>
 
-    <div class="home-actions">
-      <div class="text-center mb-4">
-        <a class="btn btn-submit btn-lg"
-           href="{% url 'chats:new' %}">
-          Nuevo Informe
+    <nav class="home-actions" role="navigation" aria-label="Navegación principal de la aplicación">
+      <div class="action-buttons" role="group" aria-label="Opciones principales de la aplicación">
+        <a class="action-btn btn-primary" href="{% url 'chats:new' %}" 
+           data-bs-toggle="tooltip" data-bs-placement="top" 
+           title="Crea un informe personalizado con el agente de inteligencia artificial"
+           role="button" 
+           aria-label="Crear nuevo informe de análisis de jugadores con inteligencia artificial"
+           aria-describedby="nuevo-informe-desc">
+          <div class="btn-icon" aria-hidden="true">📊</div>
+          <div class="btn-content">
+            <h4 class="btn-title">Nuevo Informe</h4>
+          </div>
+          <span id="nuevo-informe-desc" class="sr-only">Botón para crear un nuevo informe personalizado utilizando inteligencia artificial. Al hacer clic se abrirá el chat con el agente para generar análisis detallados de jugadores.</span>
         </a>
-      </div>
 
-      <div class="text-center mb-5">
-        <a class="btn btn-outline-primary btn-lg"
-           href="{% url 'chats:list' %}">
-          Ver todos mis informes
+        <a class="action-btn btn-success" href="{% url 'dashboard:player_search' %}"
+           data-bs-toggle="tooltip" data-bs-placement="top" 
+           title="Compara jugadores y analiza métricas de rendimiento"
+           role="button"
+           aria-label="Buscar y comparar jugadores con análisis de métricas detalladas"
+           aria-describedby="buscar-jugadores-desc">
+          <div class="btn-icon" aria-hidden="true">🔍</div>
+          <div class="btn-content">
+            <h4 class="btn-title">Buscar Jugadores</h4>
+          </div>
+          <span id="buscar-jugadores-desc" class="sr-only">Botón para buscar y comparar jugadores. Permite filtrar por liga, equipo, posición y nacionalidad, seleccionar hasta 3 jugadores y generar gráficos de comparación con métricas personalizables.</span>
+        </a>
+
+        <a class="action-btn btn-info" href="{% url 'chats:list' %}"
+           data-bs-toggle="tooltip" data-bs-placement="top" 
+           title="Revisa todos tus informes anteriores y guardados"
+           role="button"
+           aria-label="Ver todos los informes creados anteriormente"
+           aria-describedby="mis-informes-desc">
+          <div class="btn-icon" aria-hidden="true">📋</div>
+          <div class="btn-content">
+            <h4 class="btn-title">Mis Informes</h4>
+          </div>
+          <span id="mis-informes-desc" class="sr-only">Botón para acceder a todos los informes guardados anteriormente. Permite revisar, editar y descargar informes de análisis de jugadores creados previamente.</span>
         </a>
       </div>
-    </div>
+    </nav>
 
     {# — Carousel automático de fútbol — #}
     {% if gallery %}
@@ -78,4 +111,61 @@
     {% endif %}
   </div>
 </div>
+
+<script>
+// Inicializar tooltips de Bootstrap
+document.addEventListener('DOMContentLoaded', function() {
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl, {
+      delay: { show: 500, hide: 100 },
+      customClass: 'glass-tooltip'
+    });
+  });
+
+  // Mejorar navegación por teclado
+  const actionButtons = document.querySelectorAll('.action-btn');
+  
+  actionButtons.forEach(button => {
+    // Añadir soporte para tecla Enter y Espacio
+    button.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.click();
+      }
+    });
+    
+    // Añadir indicador visual de foco
+    button.addEventListener('focus', function() {
+      this.style.transform = 'scale(1.02)';
+    });
+    
+    button.addEventListener('blur', function() {
+      this.style.transform = '';
+    });
+  });
+
+  // Anunciar cambios de estado para lectores de pantalla
+  const announceToScreenReader = (message) => {
+    const announcement = document.createElement('div');
+    announcement.setAttribute('aria-live', 'polite');
+    announcement.setAttribute('aria-atomic', 'true');
+    announcement.className = 'sr-only';
+    announcement.textContent = message;
+    document.body.appendChild(announcement);
+    
+    setTimeout(() => {
+      document.body.removeChild(announcement);
+    }, 1000);
+  };
+
+  // Añadir anuncios para interacciones importantes
+  actionButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const buttonText = this.querySelector('.btn-title').textContent;
+      announceToScreenReader(`Navegando a ${buttonText}`);
+    });
+  });
+});
+</script>
 {% endblock %}

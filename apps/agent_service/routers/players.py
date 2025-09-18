@@ -8,6 +8,11 @@ from apps.agent_service.db import get_session
 from typing import List
 from decimal import Decimal
 from pgvector.sqlalchemy import Vector as PGVector
+from pydantic import BaseModel
+
+
+class PlayerBatchRequest(BaseModel):
+    player_ids: List[int]
 
 
 def _serialize(v):
@@ -120,7 +125,7 @@ def players_batch(
 
     return [player_to_dict(p) for p in rows]
 
-@router.get("/players/search")
+@router.get("/search")
 def search_players(query: str, limit: int = 5, db: Session = Depends(get_session)):
     rows = (
         db.query(Player.id, Player.full_name, Player.club, Player.position)
@@ -129,3 +134,53 @@ def search_players(query: str, limit: int = 5, db: Session = Depends(get_session
           .all()
     )
     return [dict(r._mapping) for r in rows]
+
+@router.get("/all")
+def get_all_players(limit: int = 20000, db: Session = Depends(get_session)):
+    """Obtiene todos los jugadores para filtrado dinámico"""
+    rows = (
+        db.query(Player)
+          .limit(limit)
+          .all()
+    )
+    return {"players": [player_to_dict(p) for p in rows]}
+
+@router.get("/filter-options")
+def get_filter_options(db: Session = Depends(get_session)):
+    """Obtiene opciones únicas para filtros sin límite de jugadores"""
+    # Obtener ligas únicas
+    leagues = db.query(Player.league).filter(Player.league.isnot(None)).distinct().all()
+    leagues = [league[0] for league in leagues if league[0]]
+    
+    # Obtener equipos únicos
+    clubs = db.query(Player.club).filter(Player.club.isnot(None)).distinct().all()
+    clubs = [club[0] for club in clubs if club[0]]
+    
+    # Obtener posiciones únicas
+    positions = db.query(Player.position).filter(Player.position.isnot(None)).distinct().all()
+    positions = [position[0] for position in positions if position[0]]
+    
+    # Obtener nacionalidades únicas
+    nationalities = db.query(Player.nationality).filter(Player.nationality.isnot(None)).distinct().all()
+    nationalities = [nationality[0] for nationality in nationalities if nationality[0]]
+    
+    return {
+        "leagues": sorted(leagues),
+        "clubs": sorted(clubs),
+        "positions": sorted(positions),
+        "nationalities": sorted(nationalities)
+    }
+
+@router.post("/details")
+def get_players_details(request: PlayerBatchRequest, db: Session = Depends(get_session)):
+    """Obtiene detalles de jugadores por sus IDs para el dashboard"""
+    player_ids = request.player_ids
+    if not player_ids:
+        return []
+    
+    players = (
+        db.query(Player)
+          .filter(Player.id.in_(player_ids))
+          .all()
+    )
+    return [player_to_dict(p) for p in players]

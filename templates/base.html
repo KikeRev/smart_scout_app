@@ -67,6 +67,11 @@
                         Mis Informes
                       </a>
                     </li>
+                    <li>
+                      <a class="dropdown-item" href="{% url 'dashboard:player_search' %}">
+                        🔍 Buscar Jugadores
+                      </a>
+                    </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
                       <a class="dropdown-item" href="{% url 'users:logout' %}">
@@ -119,6 +124,7 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/accessibility.js' %}"></script>
 </body>
 </html>
 
