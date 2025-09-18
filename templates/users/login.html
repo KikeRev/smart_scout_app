@@ -5,11 +5,11 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-6 col-lg-4">
-    <h2 class="mb-4 text-center">Iniciar sesión</h2>
+    <h2 class="mb-4 text-center">Login</h2>
 
     {% if form.errors %}
       <div class="alert alert-danger">
-        Usuario o contraseña incorrectos
+        Incorrect username or password
       </div>
     {% endif %}
 
@@ -20,7 +20,7 @@
         {{ form.username|add_class:"form-control" }}
       </div>
       <div>
-        <label class="form-label" for="id_password">Contraseña</label>
+        <label class="form-label" for="id_password">Password</label>
         {{ form.password|add_class:"form-control" }}
       </div>
 
@@ -31,12 +31,12 @@
       {% endif %}
 
       <button class="btn btn-success w-100"
-              role="button" aria-label="Iniciar sesión en la aplicación">Entrar</button>
+              role="button" aria-label="Login to the application">Login</button>
     </form>
 
     <p class="mt-3 text-center">
-      ¿No tienes cuenta?
-      <a href="{% url 'users:signup' %}">Regístrate</a>
+      Don't have an account?
+      <a href="{% url 'users:signup' %}">Sign up</a>
     </p>
   </div>
 </div>
