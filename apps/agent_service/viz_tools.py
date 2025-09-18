@@ -224,10 +224,10 @@ def radar_chart(
 
     # plot the radar
     radar.setup_axis(ax=axs['radar'])
-    rings_inner = radar.draw_circles(ax=axs['radar'], facecolor='#ffb2b2', edgecolor='#fc5f5f')
+    rings_inner = radar.draw_circles(ax=axs['radar'], facecolor='#f0f0f0', edgecolor='#d0d0d0')
     radar_output = radar.draw_radar(vals_arr, ax=axs['radar'],
-                                    kwargs_radar={'facecolor': '#aa65b2'},
-                                    kwargs_rings={'facecolor': '#66d8ba'})
+                                    kwargs_radar={'facecolor': '#aa65b2', 'alpha': 0.8},
+                                    kwargs_rings={'facecolor': '#e0e0e0', 'alpha': 0.4})
     radar_poly, rings_outer, vertices = radar_output
     range_labels = radar.draw_range_labels(ax=axs['radar'], fontsize=25,
                                         fontproperties=robotto_thin.prop)
@@ -313,10 +313,10 @@ def radar_comparison_chart(
 
     # plot radar
     radar.setup_axis(ax=axs['radar'])  # format axis as a radar
-    rings_inner = radar.draw_circles(ax=axs['radar'], facecolor='#ffb2b2', edgecolor='#fc5f5f')
+    rings_inner = radar.draw_circles(ax=axs['radar'], facecolor='#f0f0f0', edgecolor='#d0d0d0')
     radar_output = radar.draw_radar_compare(vals_arr, vals_arr2, ax=axs['radar'],
-                                            kwargs_radar={'facecolor': '#00f2c1', 'alpha': 0.6},
-                                            kwargs_compare={'facecolor': '#d80499', 'alpha': 0.6})
+                                            kwargs_radar={'facecolor': '#00f2c1', 'alpha': 0.8},
+                                            kwargs_compare={'facecolor': '#d80499', 'alpha': 0.8})
     radar_poly, radar_poly2, vertices1, vertices2 = radar_output
     range_labels = radar.draw_range_labels(ax=axs['radar'], fontsize=25,
                                         fontproperties=robotto_thin.prop)

@@ -7,8 +7,10 @@
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {% bootstrap_form form %}
-    <button type="submit" class="btn btn-submit mb-3">Guardar</button>
-    <a href="{% url 'users:profile' %}" class="btn btn-link">Cancelar</a>
+    <button type="submit" class="btn btn-submit mb-3"
+            role="button" aria-label="Guardar los cambios del perfil">Guardar</button>
+    <a href="{% url 'users:profile' %}" class="btn btn-link"
+       role="button" aria-label="Cancelar la edición y volver al perfil">Cancelar</a>
   </form>
 </div>
 {% endblock %}

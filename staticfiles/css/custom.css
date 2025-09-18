@@ -78,7 +78,432 @@ body::before {
 
 
 /* ==========================================================================
-   4) FOOTER
+   4) LOGO CON EFECTO CRISTAL LÍQUIDO
+   ========================================================================== */
+.logo-container {
+  position: relative;
+  display: inline-block;
+  padding: 1rem;
+  border-radius: 20px;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  overflow: hidden;
+}
+
+.logo-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.1) 0%, 
+    rgba(40, 167, 69, 0.1) 50%, 
+    rgba(11, 61, 11, 0.1) 100%);
+  border-radius: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.logo-container:hover {
+  transform: scale(1.05) translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.logo-container:hover::before {
+  opacity: 1;
+}
+
+.glass-logo {
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.logo-container:hover .glass-logo {
+  transform: scale(1.02);
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+}
+
+/* Efecto de brillo en el logo */
+.logo-container::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    transparent 70%);
+  transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  transition: transform 0.6s ease;
+  z-index: 0;
+}
+
+.logo-container:hover::after {
+  transform: translateX(100%) translateY(100%) rotate(45deg);
+}
+
+/* ==========================================================================
+   5) TOOLTIPS CON EFECTO CRISTAL LÍQUIDO
+   ========================================================================== */
+.glass-tooltip .tooltip-inner {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.95) 0%, 
+    rgba(20, 90, 20, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.75rem 1rem;
+  max-width: 300px;
+  text-align: center;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.glass-tooltip .tooltip-arrow::before {
+  border-top-color: rgba(11, 61, 11, 0.95);
+}
+
+/* ==========================================================================
+   6) BOTONES GLOBALES CON EFECTO CRISTAL LÍQUIDO
+   ========================================================================== */
+/* Estilos base para todos los botones */
+.btn {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn:hover {
+  transform: scale(1.02) translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.btn:hover::before {
+  opacity: 1;
+}
+
+.btn:focus {
+  outline: 3px solid #ffd700;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.5);
+}
+
+.btn:focus-visible {
+  outline: 3px solid #ffd700;
+  outline-offset: 2px;
+}
+
+/* Botones primarios - Verde oscuro */
+.btn-primary {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.9) 0%, 
+    rgba(20, 90, 20, 0.8) 50%, 
+    rgba(11, 61, 11, 0.9) 100%);
+  border: 1px solid rgba(11, 61, 11, 0.3);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, 
+    rgba(15, 80, 15, 0.95) 0%, 
+    rgba(25, 110, 25, 0.9) 50%, 
+    rgba(15, 80, 15, 0.95) 100%);
+  border: 1px solid rgba(15, 80, 15, 0.4);
+  color: white;
+}
+
+/* Botones de éxito - Verde medio */
+.btn-success {
+  background: linear-gradient(135deg, 
+    rgba(20, 90, 20, 0.9) 0%, 
+    rgba(32, 140, 32, 0.8) 50%, 
+    rgba(20, 90, 20, 0.9) 100%);
+  border: 1px solid rgba(20, 90, 20, 0.3);
+  color: white;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, 
+    rgba(25, 110, 25, 0.95) 0%, 
+    rgba(40, 160, 40, 0.9) 50%, 
+    rgba(25, 110, 25, 0.95) 100%);
+  border: 1px solid rgba(25, 110, 25, 0.4);
+  color: white;
+}
+
+/* Botones de información - Verde azulado */
+.btn-info {
+  background: linear-gradient(135deg, 
+    rgba(13, 202, 240, 0.9) 0%, 
+    rgba(32, 201, 151, 0.8) 50%, 
+    rgba(13, 202, 240, 0.9) 100%);
+  border: 1px solid rgba(13, 202, 240, 0.3);
+  color: white;
+}
+
+.btn-info:hover {
+  background: linear-gradient(135deg, 
+    rgba(20, 220, 255, 0.95) 0%, 
+    rgba(40, 220, 170, 0.9) 50%, 
+    rgba(20, 220, 255, 0.95) 100%);
+  border: 1px solid rgba(20, 220, 255, 0.4);
+  color: white;
+}
+
+/* Botones outline - Verde claro */
+.btn-outline-primary {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.1) 0%, 
+    rgba(20, 90, 20, 0.05) 100%);
+  border: 1px solid rgba(11, 61, 11, 0.3);
+  color: #0b3d0b;
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline-primary:hover {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.2) 0%, 
+    rgba(20, 90, 20, 0.1) 100%);
+  border: 1px solid rgba(11, 61, 11, 0.5);
+  color: #0b3d0b;
+}
+
+.btn-outline-secondary {
+  background: linear-gradient(135deg, 
+    rgba(108, 117, 125, 0.1) 0%, 
+    rgba(108, 117, 125, 0.05) 100%);
+  border: 1px solid rgba(108, 117, 125, 0.3);
+  color: #6c757d;
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline-secondary:hover {
+  background: linear-gradient(135deg, 
+    rgba(108, 117, 125, 0.2) 0%, 
+    rgba(108, 117, 125, 0.1) 100%);
+  border: 1px solid rgba(108, 117, 125, 0.5);
+  color: #6c757d;
+}
+
+/* Botones de enlace */
+.btn-link {
+  background: transparent;
+  border: none;
+  color: #0b3d0b;
+  text-decoration: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.btn-link:hover {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.1) 0%, 
+    rgba(20, 90, 20, 0.05) 100%);
+  color: #0b3d0b;
+  text-decoration: underline;
+  transform: none;
+}
+
+/* Botones de envío personalizados */
+.btn-submit {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.9) 0%, 
+    rgba(20, 90, 20, 0.8) 50%, 
+    rgba(11, 61, 11, 0.9) 100%);
+  border: 1px solid rgba(11, 61, 11, 0.3);
+  color: white;
+}
+
+.btn-submit:hover {
+  background: linear-gradient(135deg, 
+    rgba(15, 80, 15, 0.95) 0%, 
+    rgba(25, 110, 25, 0.9) 50%, 
+    rgba(15, 80, 15, 0.95) 100%);
+  border: 1px solid rgba(15, 80, 15, 0.4);
+  color: white;
+}
+
+/* Botones pequeños */
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 0.375rem;
+}
+
+/* Botones de cierre */
+.btn-close {
+  background: linear-gradient(135deg, 
+    rgba(108, 117, 125, 0.1) 0%, 
+    rgba(108, 117, 125, 0.05) 100%);
+  border: 1px solid rgba(108, 117, 125, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.btn-close:hover {
+  background: linear-gradient(135deg, 
+    rgba(108, 117, 125, 0.2) 0%, 
+    rgba(108, 117, 125, 0.1) 100%);
+  border: 1px solid rgba(108, 117, 125, 0.5);
+}
+
+/* ==========================================================================
+   7) BÚSQUEDAS GUARDADAS
+   ========================================================================== */
+.saved-search-item {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.05) 0%, 
+    rgba(20, 90, 20, 0.02) 100%);
+  border: 1px solid rgba(11, 61, 11, 0.1) !important;
+  transition: all 0.3s ease;
+}
+
+.saved-search-item:hover {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.1) 0%, 
+    rgba(20, 90, 20, 0.05) 100%);
+  border-color: rgba(11, 61, 11, 0.2) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.saved-search-item h6 {
+  color: #0b3d0b;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.saved-search-item small {
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+
+.saved-search-item .btn-outline-danger {
+  border: 2px solid #dc3545 !important;
+  color: #dc3545 !important;
+  background-color: #ffebee !important;
+  min-width: 48px;
+  height: 36px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 4px 8px !important;
+  margin: 0 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  gap: 4px;
+}
+
+.saved-search-item .btn-outline-danger i {
+  font-size: 14px;
+}
+
+.saved-search-item .btn-outline-danger span {
+  font-size: 14px;
+}
+
+.saved-search-item .btn-outline-danger:hover {
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+  color: white !important;
+  transform: scale(1.05);
+}
+
+.saved-search-item .btn-outline-primary {
+  min-width: 80px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #0b3d0b !important;
+  color: #0b3d0b !important;
+  background-color: white !important;
+}
+
+/* ==========================================================================
+   8) ACCESIBILIDAD
+   ========================================================================== */
+/* Clase para contenido solo para lectores de pantalla */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Mejorar el foco para navegación por teclado */
+.action-btn:focus {
+  outline: 3px solid #ffd700;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.5);
+}
+
+.action-btn:focus-visible {
+  outline: 3px solid #ffd700;
+  outline-offset: 2px;
+}
+
+/* Mejorar contraste para mejor legibilidad */
+.btn-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+}
+
+/* Asegurar que los iconos no interfieran con lectores de pantalla */
+.btn-icon[aria-hidden="true"] {
+  pointer-events: none;
+}
+
+/* Mejorar la navegación por teclado */
+.action-btn:focus .btn-icon {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* ==========================================================================
+   7) FOOTER
    ========================================================================== */
 footer.site-footer {
   background-color: #0b3d0b !important;
@@ -411,9 +836,6 @@ a.report-link:hover {
   font-family: 'Montserrat', sans-serif;
   padding: 0.5rem;
 }
-.form-card .btn-submit {
-  /* coincide con .btn-submit genérico */
-}
 
 /* -------------- Finder form box -------------- */
 .finder-wrapper {
@@ -500,18 +922,1467 @@ select[multiple] { min-height: 150px; }
   margin-left: 1rem;
 }
 
- /*  Logo */
-.logo-app {
-    width: 15px;         /* ⇦ cámbialo a tu gusto */
-    height: auto;
-    margin: 0.5rem auto;
-    display: block;
+/* limita el form de logout dentro de la navbar a comportarse como un enlace */
+.navbar .logout-form {
+    display: inline-flex;          /* se comporta como <a> */
+    margin: 0;    
+}
+.navbar .logout-form button {
+    padding: 0;                    /* que parezca texto */
+    color: var(--bs-navbar-color); /* mismo color que nav-link */
+    background: none;
+    border: none;
+    line-height: 1;
+}
+.navbar .logout-form button:hover,
+.navbar .logout-form button:focus {
+    color: var(--bs-navbar-hover-color);
+    text-decoration: underline;    /* imita a <a> al pasar el ratón */
 }
 
-/*  Radar / Pizza */
-.plot-img {
-    max-width: 15px;     /* ⇦ ancho máx. */
-    height: auto;         /* mantiene el ratio */
-    display: block;
-    margin: 0.5rem auto;
+/* ==========================================================================
+   SEARCH DASHBOARD FULLSCREEN LAYOUT
+   ========================================================================== */
+
+.fullscreen-search-wrapper {
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0;
+  margin: 0;
 }
+
+.search-layout {
+  display: flex;
+  height: 100vh;
+  background: white;
+  margin: 0;
+}
+
+.search-sidebar {
+  width: 350px;
+  background: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.sidebar-content {
+  padding: 1rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.search-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+.main-header {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.main-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.main-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.results-container {
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .search-layout {
+    flex-direction: column;
+  }
+  
+  .search-sidebar {
+    width: 100%;
+    height: 300px;
+  }
+  
+  .search-main {
+    height: calc(100vh - 300px);
+  }
+}
+
+/* ==========================================================================
+   13) HOME PAGE RESPONSIVE LAYOUT
+   ========================================================================== */
+/* Wrapper principal con ancho del 80% */
+.home-page-wrapper {
+  width: 80%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Contenedor principal de la página de inicio */
+.home-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 2rem 1rem;
+}
+
+/* Header de bienvenida */
+.home-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+}
+
+.home-welcome {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #0b3d0b;
+  text-transform: uppercase;
+  margin-bottom: 0;
+}
+
+/* Sección de acciones */
+.home-actions {
+  margin-bottom: 4rem;
+  padding: 0 1rem;
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 2rem;
+  border-radius: 20px;
+  text-decoration: none;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  height: 160px;
+  min-height: 160px;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.action-btn:hover {
+  transform: scale(1.05) translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn:hover::before {
+  opacity: 1;
+}
+
+/* Tonalidades verdes */
+.action-btn.btn-primary {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.9) 0%, 
+    rgba(20, 90, 20, 0.8) 50%, 
+    rgba(11, 61, 11, 0.9) 100%);
+  border: 1px solid rgba(11, 61, 11, 0.3);
+}
+
+.action-btn.btn-success {
+  background: linear-gradient(135deg, 
+    rgba(40, 167, 69, 0.9) 0%, 
+    rgba(32, 201, 151, 0.8) 50%, 
+    rgba(40, 167, 69, 0.9) 100%);
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.action-btn.btn-info {
+  background: linear-gradient(135deg, 
+    rgba(13, 202, 240, 0.9) 0%, 
+    rgba(32, 201, 151, 0.8) 50%, 
+    rgba(13, 202, 240, 0.9) 100%);
+  border: 1px solid rgba(13, 202, 240, 0.3);
+}
+
+.btn-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.action-btn:hover .btn-icon {
+  transform: scale(1.1) rotate(5deg);
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-content {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.5px;
+}
+
+/* Efecto de brillo al hover */
+.action-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    transparent 70%);
+  transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  transition: transform 0.6s ease;
+}
+
+.action-btn:hover::after {
+  transform: translateX(100%) translateY(100%) rotate(45deg);
+}
+
+/* Galería de imágenes */
+.home-gallery {
+  width: 100%;
+  margin-bottom: 3rem;
+  padding: 0 2rem;
+}
+
+.gallery-image {
+  height: 350px;
+  object-fit: cover;
+  border-radius: 1rem;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+  width: 100%;
+  aspect-ratio: 16/9;
+}
+
+/* Sección de noticias */
+.home-news {
+  width: 100%;
+}
+
+.news-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0b3d0b;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.news-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Responsive design */
+@media (max-width: 767px) {
+  .action-buttons {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .action-btn {
+    padding: 1.2rem 1.5rem;
+    height: 90px;
+    min-height: 90px;
+  }
+  
+  .btn-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 2rem;
+    margin-right: 1rem;
+  }
+  
+  .btn-title {
+    font-size: 1.4rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .home-page-wrapper {
+    width: 85%;
+    padding: 0 2rem;
+  }
+  
+  .home-container {
+    padding: 2rem 0;
+  }
+  
+  .home-welcome {
+    font-size: 3rem;
+  }
+  
+  .gallery-image {
+    height: 400px;
+    aspect-ratio: 16/9;
+  }
+  
+  .action-buttons {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    max-width: 1200px;
+  }
+  
+  .action-btn {
+    padding: 2rem 2rem;
+    height: 160px;
+    min-height: 160px;
+  }
+  
+  .btn-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 2.2rem;
+    margin-bottom: 0.8rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .home-page-wrapper {
+    width: 80%;
+    padding: 0 3rem;
+  }
+  
+  .home-container {
+    padding: 3rem 0;
+  }
+  
+  .home-welcome {
+    font-size: 3.5rem;
+  }
+  
+  .gallery-image {
+    height: 450px;
+    aspect-ratio: 16/9;
+  }
+  
+  .action-btn {
+    padding: 2rem 2rem;
+    height: 160px;
+    min-height: 160px;
+  }
+  
+  .btn-icon {
+    width: 55px;
+    height: 55px;
+    font-size: 2.4rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .btn-title {
+    font-size: 1.7rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .home-page-wrapper {
+    width: 75%;
+    padding: 0 4rem;
+  }
+  
+  .home-container {
+    padding: 4rem 0;
+  }
+  
+  .home-welcome {
+    font-size: 4rem;
+  }
+  
+  .gallery-image {
+    height: 500px;
+    aspect-ratio: 16/9;
+  }
+  
+  .action-btn {
+    padding: 2rem 2rem;
+    height: 160px;
+    min-height: 160px;
+  }
+  
+  .btn-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 2.6rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .btn-title {
+    font-size: 1.8rem;
+  }
+}
+
+/* ==========================================================================
+   14) CHAT PAGE RESPONSIVE LAYOUT
+   ========================================================================== */
+
+/* Fullscreen chat wrapper - bypasses container but keeps navbar */
+.fullscreen-chat-wrapper {
+  width: 100vw;
+  height: calc(100vh - 60px); /* Solo restar altura del navbar */
+  margin-left: calc(-50vw + 50%);
+  background: url('/static/img/grass.jpg') center center / cover no-repeat;
+  background-attachment: fixed;
+  overflow: hidden;
+}
+
+/* Logo siempre visible en el chat */
+.chat-logo-section {
+  text-align: center;
+  padding: 2rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.chat-logo {
+  max-height: 350px;
+  filter: drop-shadow(0 8px 16px rgba(11, 61, 11, 0.4)) 
+          drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))
+          drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transform: perspective(1000px) rotateX(5deg) rotateY(-2deg);
+  animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0%, 100% { transform: perspective(1000px) rotateX(5deg) rotateY(-5deg) translateY(0px); }
+  50% { transform: perspective(1000px) rotateX(5deg) rotateY(-5deg) translateY(-10px); }
+}
+
+/* Mensaje de bienvenida solo para chats nuevos */
+.chat-welcome-message {
+  text-align: center;
+  padding: 2rem;
+  background: transparent;
+  border-radius: 1rem;
+  margin: 1rem auto;
+  max-width: 800px;
+  width: 100%;
+}
+
+.typewriter-wrapper {
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  font-size: 1.8rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* Animación de máquina de escribir */
+.typewriter-text {
+  overflow: visible;
+  border-right: 0.15em solid #00ff00;
+  white-space: nowrap;
+  margin: 0 auto;
+  letter-spacing: 0.1em;
+  animation: typing 4s steps(50, end), blink-caret 0.75s step-end infinite;
+  display: inline-block;
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: #00ff00; }
+}
+/* Wrapper principal de la página de chat con ancho del 95% */
+.chat-page-wrapper {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Contenedor principal del chat */
+.chat-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 1rem;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Log de chat mejorado */
+.chat-log {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  backdrop-filter: blur(10px);
+  flex: 1;
+  overflow-y: auto;
+  /* Ocultar scrollbar pero mantener funcionalidad */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.chat-log::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Formulario de chat mejorado */
+.chat-form {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  backdrop-filter: blur(10px);
+}
+
+/* Contenedor del textarea con botón integrado */
+.chat-input-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+/* Textarea del chat */
+.chat-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 6rem;
+  resize: vertical;
+  font-size: 1rem;
+  padding: 1rem 4rem 1rem 1rem; /* Espacio para el botón */
+  border: 2px solid #0b3d0b;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.chat-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(11, 61, 11, 0.25);
+  border-color: #0b3d0b;
+  outline: none;
+}
+
+/* Botón de envío integrado */
+.btn-send {
+  position: absolute !important;
+  right: 0.5rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 3rem !important;
+  height: 3rem !important;
+  padding: 0 !important;
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  border-radius: 50% !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #0b3d0b !important;
+  color: white !important;
+  border: none !important;
+  cursor: pointer !important;
+  min-width: 3rem !important;
+  min-height: 3rem !important;
+  max-width: 3rem !important;
+  max-height: 3rem !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  z-index: 10 !important;
+}
+
+.btn-send:hover {
+  transform: translateY(-50%) translateY(-2px) scale(1.05) !important;
+  box-shadow: 0 4px 12px rgba(11, 61, 11, 0.4) !important;
+  background: #0d4d0d !important;
+}
+
+.btn-send:active {
+  transform: translateY(-50%) scale(0.95) !important;
+}
+
+/* Estilos específicos para el ícono de envío */
+.btn-send .send-icon {
+  font-size: 20px !important;
+  color: white !important;
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  font-weight: bold !important;
+}
+
+/* Botón de descarga de informe - separado del botón de envío */
+.btn-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #0b3d0b;
+  color: white;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  margin: 0.5rem 0;
+}
+
+.btn-download:hover {
+  background: #0d4d0d;
+  color: white;
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(11, 61, 11, 0.3);
+}
+
+.btn-download:active {
+  transform: translateY(0);
+}
+
+/* Estilos para las burbujas de chat */
+.chat-row {
+  display: flex;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.chat-user {
+  justify-content: flex-start;
+}
+
+.chat-bot {
+  justify-content: flex-end;
+}
+
+.bubble {
+  max-width: 70%;
+  padding: 1rem 1.5rem;
+  border-radius: 1.5rem;
+  word-wrap: break-word;
+  position: relative;
+}
+
+.bubble-user {
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  margin-right: auto;
+}
+
+.bubble-bot {
+  background: rgba(11, 61, 11, 0.9);
+  color: white;
+  border: 1px solid rgba(11, 61, 11, 0.3);
+  margin-left: auto;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   16) LOGO 3D EFFECTS
+   ========================================================================== */
+.app-logo {
+  max-height: 350px !important;
+  width: auto;
+  filter: drop-shadow(0 8px 16px rgba(11, 61, 11, 0.4)) 
+          drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))
+          drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: all 0.3s ease;
+  transform: perspective(1000px) rotateX(5deg) rotateY(-2deg);
+  animation: logoFloat 3s ease-in-out infinite;
+}
+
+/* Eliminar padding extra de la sección del logo */
+section.text-center.py-3 {
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Eliminar cualquier espacio extra debajo del navbar */
+.navbar + section {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Eliminar cualquier fondo o borde que cause la barra */
+header + section {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Asegurar que no hay separación visual */
+.navbar {
+  margin-bottom: 0 !important;
+  border-bottom: none !important;
+}
+
+/* Ocultar el contenedor main que causa el espacio extra solo en el chat */
+.fullscreen-chat-wrapper main.container.py-4 {
+  display: none !important;
+}
+
+.app-logo:hover {
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1.05);
+  filter: drop-shadow(0 12px 24px rgba(11, 61, 11, 0.6)) 
+          drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3))
+          drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes logoFloat {
+  0%, 100% {
+    transform: perspective(1000px) rotateX(5deg) rotateY(-2deg) translateY(0px);
+  }
+  50% {
+    transform: perspective(1000px) rotateX(5deg) rotateY(-2deg) translateY(-5px);
+  }
+}
+
+/* Responsive logo sizing */
+@media (max-width: 768px) {
+  .app-logo {
+    max-height: 350px !important;
+    transform: perspective(1000px) rotateX(2deg) rotateY(-1deg);
+  }
+  
+  .app-logo:hover {
+    transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1.03);
+  }
+}
+
+@media (max-width: 480px) {
+  .app-logo {
+    max-height: 280px !important;
+    transform: perspective(1000px) rotateX(1deg) rotateY(-0.5deg);
+  }
+}
+
+/* ==========================================================================
+   17) CHAT SIDEBAR LAYOUT
+   ========================================================================== */
+.fullscreen-chat-wrapper .chat-layout {
+  display: flex;
+  gap: 0;
+  height: calc(100vh - 60px);
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+}
+
+.fullscreen-chat-wrapper .chat-sidebar {
+  width: 300px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 0;
+  padding: 1.5rem;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: none;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #0b3d0b;
+}
+
+.sidebar-title {
+  color: #0b3d0b;
+  font-weight: 700;
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar-content::-webkit-scrollbar {
+  display: none;
+}
+
+.chat-item {
+  display: block;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background: rgba(248, 249, 250, 0.8);
+  border-radius: 12px;
+  text-decoration: none;
+  color: #333;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.chat-item:hover {
+  background: rgba(11, 61, 11, 0.1);
+  transform: translateX(5px);
+  text-decoration: none;
+  color: #333;
+}
+
+.chat-item.active {
+  background: rgba(11, 61, 11, 0.15);
+  border-color: #0b3d0b;
+  color: #0b3d0b;
+  font-weight: 600;
+}
+
+.chat-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.chat-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: inherit;
+}
+
+.chat-date {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-weight: 400;
+}
+
+.chat-preview {
+  font-size: 0.85rem;
+  color: #6c757d;
+  line-height: 1.3;
+}
+
+.no-chats {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #6c757d;
+}
+
+.no-chats p {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.fullscreen-chat-wrapper .chat-main {
+  flex: 1;
+  min-width: 0;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive para chat con sidebar */
+@media (max-width: 768px) {
+  .chat-layout {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .chat-sidebar {
+    width: 100%;
+    max-height: 200px;
+    order: 2;
+  }
+  
+  .chat-main {
+    order: 1;
+  }
+  
+  .sidebar-content {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  
+  .chat-item {
+    min-width: 200px;
+    margin-bottom: 0;
+  }
+}
+
+/* ==========================================================================
+   18) PROFILE PAGE STYLES
+   ========================================================================== */
+.profile-container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin: 2rem 0;
+}
+
+.profile-title {
+  color: #0b3d0b;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.profile-avatar {
+  text-align: center;
+}
+
+.profile-image {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #0b3d0b;
+  box-shadow: 0 8px 20px rgba(11, 61, 11, 0.3);
+  transition: transform 0.3s ease;
+  display: block;
+  margin: 0 auto;
+  background: #f8f9fa;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23e9ecef"/><path d="M50 30c-11.046 0-20 8.954-20 20s8.954 20 20 20 20-8.954 20-20-8.954-20-20-20zm0 6c7.732 0 14 6.268 14 14s-6.268 14-14 14-14-6.268-14-14 6.268-14 14-14zm0 4c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10z" fill="%236c757d"/></svg>');
+  background-size: 80px 80px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.profile-image:hover {
+  transform: scale(1.05);
+}
+
+.profile-image-fallback {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 4px solid #0b3d0b;
+  box-shadow: 0 8px 20px rgba(11, 61, 11, 0.3);
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  margin: 0 auto;
+}
+
+.profile-image-placeholder {
+  text-align: center;
+}
+
+.profile-info {
+  width: 100%;
+  max-width: 600px;
+}
+
+.profile-table {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.profile-table th {
+  background: #0b3d0b;
+  color: white;
+  padding: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  width: 30%;
+}
+
+.profile-table td {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  font-weight: 500;
+}
+
+.profile-table tr:nth-child(even) td {
+  background: rgba(248, 249, 250, 0.9);
+}
+
+.profile-table {
+  margin-bottom: 2rem;
+}
+
+.btn-submit {
+  margin-top: 1rem !important;
+  padding: 0.75rem 2rem !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+}
+
+/* Responsive para perfil */
+@media (min-width: 768px) {
+  .profile-content {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 3rem;
+  }
+  
+  .profile-avatar {
+    flex-shrink: 0;
+  }
+  
+  .profile-info {
+    flex: 1;
+  }
+}
+
+/* Responsive para chat */
+@media (min-width: 768px) {
+  .chat-page-wrapper {
+    width: 95%;
+    padding: 0 2rem;
+  }
+  
+  .chat-container {
+    padding: 2rem 0;
+  }
+  
+  .chat-log {
+    padding: 2rem;
+    min-height: 500px;
+  }
+  
+  .chat-form {
+    padding: 2rem;
+  }
+  
+  .chat-input {
+    font-size: 1.4rem;
+    padding: 1.25rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .chat-page-wrapper {
+    width: 95%;
+    padding: 0 3rem;
+  }
+  
+  .chat-container {
+    padding: 3rem 0;
+  }
+  
+  .chat-log {
+    padding: 3rem;
+    min-height: 600px;
+  }
+  
+  .chat-form {
+    padding: 3rem;
+  }
+  
+  .chat-input {
+    font-size: 1.4rem;
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .chat-page-wrapper {
+    width: 95%;
+    padding: 0 4rem;
+  }
+  
+  .chat-container {
+    padding: 4rem 0;
+  }
+  
+  .chat-log {
+    padding: 4rem;
+    min-height: 700px;
+  }
+  
+  .chat-form {
+    padding: 4rem;
+  }
+  
+  .chat-input {
+    font-size: 1.4rem;
+    padding: 1.75rem;
+  }
+}
+
+/* ==========================================================================
+   15) GENERAL FULL-WIDTH LAYOUT CLASSES
+   ========================================================================== */
+/* Clase genérica para páginas con ancho del 80% */
+.page-wrapper-80 {
+  width: 80%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Clase genérica para páginas con ancho del 85% */
+.page-wrapper-85 {
+  width: 85%;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Clase genérica para páginas con ancho del 90% */
+.page-wrapper-90 {
+  width: 90%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Clase genérica para páginas con ancho del 95% */
+.page-wrapper-95 {
+  width: 95%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Clase genérica para páginas con ancho del 75% */
+.page-wrapper-75 {
+  width: 75%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Responsive para las clases genéricas */
+@media (min-width: 768px) {
+  .page-wrapper-80, .page-wrapper-85, .page-wrapper-75 {
+    padding: 0 2rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .page-wrapper-80, .page-wrapper-85, .page-wrapper-75 {
+    padding: 0 3rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .page-wrapper-80, .page-wrapper-85, .page-wrapper-75 {
+    padding: 0 4rem;
+  }
+}
+
+/* ==========================================================================
+   16) MISCELLANEOUS
+   ========================================================================== */
+
+form.chat-form {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+form.chat-form textarea.chat-input {
+  width: 100% !important;   /* llena todo el contenedor */
+  max-width: none !important;  /* sin límite horizontal */
+  min-height: 6rem;
+  resize: vertical;         /* sigue permitiendo estirar a lo alto */
+}
+
+textarea.chat-input {
+  width: 100%;
+  min-width: 6rem;            /* llena el padre */
+  max-width: 80%;       /* tope opcional */
+  min-height: 6rem;       /* altura cómoda */
+  resize: vertical;       /* solo estirar en vertical */
+  resize: horizontal;
+  font-size: 1rem;        /* texto legible */
+}
+
+/* .btn-send styles moved to chat section above */
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: #d33;
+  cursor: pointer;
+  font-size: 1.4rem;
+}
+.btn-delete:hover { color:#a00; }
+
+.msg-body img {
+    display: block !important;      /* anula posibles display:none  */
+    max-width: 100%;               /* que no se salga del bocadillo */
+    height: auto;                  /* mantiene proporción            */
+    margin: 0.75rem 0;             /* un poco de aire                */
+}
+
+/* -- Estilo de mensajes tipo WhatsApp -- */
+.chat-row {
+    display: flex;
+    margin: 0.5rem 1rem;
+    clear: both;
+}
+
+.chat-user {
+    justify-content: flex-end;
+}
+
+.chat-bot {
+    justify-content: flex-start;
+}
+
+.bubble {
+    position: relative;
+    max-width: 75%;
+    padding: 12px 16px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.25s ease-out forwards;
+}
+
+.bubble-user {
+    background-color: #d9fdd3;
+    color: #111;
+    border-bottom-left-radius: 2px;
+    margin-right: 25%;
+    text-align: left;
+}
+
+.bubble-bot {
+    background-color: #a9c2a1;
+    color: #111;
+    border-bottom-right-radius: 2px;
+    margin-left: 25%;
+    text-align: left;
+}
+
+/* -- Cola de burbuja tipo WhatsApp -- */
+.bubble-user::after {
+    content: "";
+    position: absolute;
+    left: -10px;
+    bottom: 0;
+    border: 10px solid transparent;
+    border-left-color: #aed4a8;
+    border-right: 0;
+    border-bottom: 0;
+    margin-bottom: -1px;
+    margin-right: -1px;
+}
+
+.bubble-bot::after {
+    content: "";
+    position: absolute;
+    right: -10px;
+    bottom: 0;
+    border: 10px solid transparent;
+    border-right-color: #a9c2a1;
+    border-left: 0;
+    border-bottom: 0;
+    margin-bottom: -1px;
+    margin-left: -1px;
+}
+
+/* -- Animación de entrada -- */
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Contenedor principal del efecto */
+.typewriter-wrapper {
+  display: inline-block;
+  font-size: clamp(1.3rem, 2.8vw, 1.6rem);
+  font-weight: 600;
+  color: #0b3d0b;
+  white-space: nowrap;
+  overflow-x: hidden;
+  overflow: hidden;
+  max-width: 100%;
+  text-align: center;
+  position: relative;
+}
+
+/* Texto animado */
+.typewriter-text {
+  display: inline-block;
+  animation: typing 3s steps(45, end) forwards;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Cursor independiente */
+.typewriter-cursor {
+  display: inline-block;
+  color: #0b3d0b;
+  animation: blink-caret 0.6s step-end 5 forwards;
+}
+
+/* Emoji aparece al final */
+.bot-icon {
+  display: inline-block;
+  opacity: 0;
+  margin-left: 0.5rem;
+  animation: show-bot 0.4s ease-out forwards;
+  animation-delay: 3.2s;
+}
+
+/* Animación de escritura */
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+/* Parpadeo del cursor (hasta que desaparece) */
+@keyframes blink-caret {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+  99% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Aparición suave del emoji */
+@keyframes show-bot {
+  from { opacity: 0; transform: scale(0.8) translateY(5px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* hidden by default */
+#thinking-indicator            { display: none; }
+#thinking-indicator.htmx-request { display: flex !important; }
+
+/* rest unchanged */
+.thinking-indicator {
+  align-items: center;
+  gap: .5rem;
+  font-size: .9rem;
+  color: var(--smart-green,#0b3d0b);
+}
+.thinking-indicator .spinner{
+  width:16px;height:16px;
+  border:2px solid #c3e6cb;
+  border-top-color:var(--smart-green,#0b3d0b);
+  border-radius:50%;
+  animation:spin .6s linear infinite
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+
+

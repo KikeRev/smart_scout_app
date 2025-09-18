@@ -1,0 +1,700 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block fullwidth_content %}
+<div class="fullscreen-search-wrapper">
+  <div class="search-layout">
+    <!-- Sidebar con filtros -->
+    <div class="search-sidebar">
+      <div class="sidebar-header">
+        <h5 class="sidebar-title">🔍 Filtros de Búsqueda</h5>
+        <a href="{% url 'dashboard:home' %}" class="btn btn-sm btn-outline-secondary">
+          <i class="fas fa-home"></i> Inicio
+        </a>
+      </div>
+      
+      <div class="sidebar-content">
+        <form id="searchForm">
+          <!-- Búsqueda por texto -->
+          <div class="mb-3">
+            <label for="query" class="form-label">Nombre del jugador</label>
+            <div class="position-relative">
+              <input type="text" class="form-control" id="query" name="query" placeholder="Ej: Messi" autocomplete="off">
+              <div id="autocompleteDropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1000; background: white; border: 1px solid #dee2e6; border-radius: 0.375rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);">
+                <!-- Se llenará dinámicamente -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- Filtro por posición -->
+          <div class="mb-3">
+            <label class="form-label">Posición</label>
+            <div class="dropdown">
+              <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="positionDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Seleccionar posiciones
+              </button>
+              <ul class="dropdown-menu w-100" id="positionDropdownMenu" style="max-height: 200px; overflow-y: auto;">
+                <li><p class="text-muted">Cargando...</p></li>
+              </ul>
+            </div>
+          </div>
+          
+          <!-- Filtro por liga -->
+          <div class="mb-3">
+            <label class="form-label">Liga</label>
+            <div class="dropdown">
+              <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="leagueDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Seleccionar ligas
+              </button>
+              <ul class="dropdown-menu w-100" id="leagueDropdownMenu" style="max-height: 200px; overflow-y: auto;">
+                <li><p class="text-muted">Cargando...</p></li>
+              </ul>
+            </div>
+          </div>
+          
+          <!-- Filtro por equipo -->
+          <div class="mb-3">
+            <label class="form-label">Equipo</label>
+            <div class="dropdown">
+              <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="clubDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Seleccionar equipos
+              </button>
+              <ul class="dropdown-menu w-100" id="clubDropdownMenu" style="max-height: 200px; overflow-y: auto;">
+                <li><p class="text-muted">Cargando...</p></li>
+              </ul>
+            </div>
+          </div>
+          
+          <!-- Filtro por nacionalidad -->
+          <div class="mb-3">
+            <label class="form-label">Nacionalidad</label>
+            <div class="dropdown">
+              <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="nationalityDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Seleccionar nacionalidades
+              </button>
+              <ul class="dropdown-menu w-100" id="nationalityDropdownMenu" style="max-height: 200px; overflow-y: auto;">
+                <li><p class="text-muted">Cargando...</p></li>
+              </ul>
+            </div>
+          </div>
+          
+          <!-- Filtro por edad -->
+          <div class="mb-3">
+            <label for="age_min" class="form-label">Edad mínima</label>
+            <input type="number" class="form-control" id="age_min" name="age_min" min="16" max="45" value="16">
+          </div>
+          
+          <div class="mb-3">
+            <label for="age_max" class="form-label">Edad máxima</label>
+            <input type="number" class="form-control" id="age_max" name="age_max" min="16" max="45" value="45">
+          </div>
+          
+          <!-- Filtro por minutos -->
+          <div class="mb-3">
+            <label for="min_minutes" class="form-label">Minutos mínimos</label>
+            <input type="number" class="form-control" id="min_minutes" name="min_minutes" min="0" value="0">
+          </div>
+          
+          <button type="submit" class="btn btn-primary w-100">Buscar</button>
+        </form>
+        
+        <!-- Métricas seleccionadas -->
+        <div class="mt-4">
+          <h6 class="text-muted">📊 Métricas</h6>
+          <div id="metricsSelector">
+            <p class="text-muted">Selecciona jugadores para ver métricas disponibles</p>
+          </div>
+        </div>
+        
+        <!-- Búsquedas guardadas -->
+        <div class="mt-4">
+          <h6 class="text-muted">🔖 Búsquedas Guardadas</h6>
+          <div id="savedSearches">
+            <p class="text-muted">No hay búsquedas guardadas</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Área principal de resultados -->
+    <div class="search-main">
+      <div class="main-header">
+        <h5 class="main-title">Jugadores</h5>
+        <div class="main-actions">
+          <span id="selectedCount" class="btn btn-outline-primary me-2">0 seleccionados</span>
+          <button id="createDashboard" class="btn btn-success" disabled>
+            Crear Dashboard
+          </button>
+        </div>
+      </div>
+      
+      <div class="main-content">
+        <!-- Lista de resultados con scroll -->
+        <div id="searchResults" class="results-container">
+          <div class="text-center text-muted py-5">
+            <i class="fas fa-search fa-3x mb-3"></i>
+            <h5>Aplica al menos 2 filtros para ver jugadores</h5>
+            <p>Usa los filtros de la izquierda para buscar jugadores específicos</p>
+          </div>
+        </div>
+        
+        <!-- Paginación -->
+        <nav id="pagination" class="mt-3" style="display: none;">
+          <ul class="pagination justify-content-center">
+            <!-- Se llenará dinámicamente -->
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.fullscreen-search-wrapper {
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0;
+  margin: 0;
+}
+
+.search-layout {
+  display: flex;
+  height: 100vh;
+  background: white;
+  margin: 0;
+}
+
+.search-sidebar {
+  width: 350px;
+  background: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.sidebar-content {
+  padding: 1rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.search-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+.main-header {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.main-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.main-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.results-container {
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .search-layout {
+    flex-direction: column;
+  }
+  
+  .search-sidebar {
+    width: 100%;
+    height: 300px;
+  }
+  
+  .search-main {
+    height: calc(100vh - 300px);
+  }
+}
+</style>
+
+<script>
+// Variables globales
+let selectedPlayers = []; // Array para mantener jugadores seleccionados
+let currentPage = 1;
+let totalPages = 0;
+let allPlayers = [];
+let filteredPlayers = [];
+let availableMetrics = [];
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    // Solo cargar opciones de filtros, NO todos los jugadores
+    loadFilterOptions();
+    loadAvailableMetrics();
+    loadSavedSearches();
+    setupAutocomplete();
+    
+    // Event listeners
+    document.getElementById('searchForm').addEventListener('submit', handleSearch);
+    document.getElementById('createDashboard').addEventListener('click', createDashboard);
+    
+    // Event listeners para filtros dinámicos
+    document.getElementById('query').addEventListener('input', filterPlayers);
+    document.getElementById('age_min').addEventListener('input', filterPlayers);
+    document.getElementById('age_max').addEventListener('input', filterPlayers);
+    document.getElementById('min_minutes').addEventListener('input', filterPlayers);
+});
+
+// Configurar autocompletado
+function setupAutocomplete() {
+    const queryInput = document.getElementById('query');
+    const autocompleteDropdown = document.getElementById('autocompleteDropdown');
+    let allPlayerNames = [];
+    
+    // Cargar nombres de jugadores para autocompletado
+    if (window.allPlayers) {
+        allPlayerNames = window.allPlayers.map(p => p.full_name).sort();
+    }
+    
+    queryInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        
+        if (query.length < 2) {
+            autocompleteDropdown.style.display = 'none';
+            return;
+        }
+        
+        const matches = allPlayerNames.filter(name => 
+            name.toLowerCase().includes(query)
+        ).slice(0, 10); // Máximo 10 sugerencias
+        
+        if (matches.length > 0) {
+            autocompleteDropdown.innerHTML = matches.map(name => 
+                `<div class="dropdown-item" style="cursor: pointer; padding: 0.5rem 1rem; border-bottom: 1px solid #f8f9fa;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='white'" onclick="selectPlayerName('${name}')">${name}</div>`
+            ).join('');
+            autocompleteDropdown.style.display = 'block';
+        } else {
+            autocompleteDropdown.style.display = 'none';
+        }
+    });
+    
+    // Ocultar dropdown al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!queryInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+            autocompleteDropdown.style.display = 'none';
+        }
+    });
+}
+
+// Seleccionar nombre del jugador desde autocompletado
+function selectPlayerName(name) {
+    document.getElementById('query').value = name;
+    document.getElementById('autocompleteDropdown').style.display = 'none';
+    filterPlayers(); // Aplicar filtro automáticamente
+}
+
+// Cargar todos los jugadores
+function loadAllPlayers() {
+    return fetch('{% url "dashboard:search_api" %}')
+    .then(response => response.json())
+    .then(data => {
+        allPlayers = data.players || [];
+        window.allPlayers = allPlayers; // Hacer disponible globalmente para autocompletado
+        filteredPlayers = [...allPlayers];
+        console.log('Jugadores cargados:', allPlayers.length);
+        
+        // Reconfigurar autocompletado con los nuevos datos
+        if (typeof setupAutocomplete === 'function') {
+            setupAutocomplete();
+        }
+        
+        return allPlayers;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('searchResults').innerHTML = '<p class="text-danger">Error al cargar jugadores</p>';
+        throw error;
+    });
+}
+
+// Cargar opciones de filtros
+function loadFilterOptions() {
+    console.log('Cargando opciones de filtros...');
+    
+    // Intentar primero el endpoint de Django
+    fetch('{% url "dashboard:search_api" %}?action=filter_options')
+    .then(response => {
+        console.log('Django response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Datos Django recibidos:', data);
+        console.log('Ligas Django:', data.leagues?.length, 'Equipos:', data.clubs?.length);
+        populateFilterOptions(data);
+    })
+    .catch(error => {
+        console.error('Error con Django, intentando FastAPI:', error);
+        // Fallback al endpoint de FastAPI
+        fetch('http://api:8001/players/filter-options')
+        .then(response => {
+            console.log('FastAPI response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Datos FastAPI recibidos:', data);
+            console.log('Ligas FastAPI:', data.leagues?.length, 'Equipos:', data.clubs?.length);
+            populateFilterOptions(data);
+        })
+        .catch(error => {
+            console.error('Error con ambos endpoints:', error);
+        });
+    });
+}
+
+// Poblar opciones de filtros
+function populateFilterOptions(options) {
+    // Poblar posiciones
+    populateDropdown('positionDropdownMenu', options.positions, 'positions', 'position');
+    
+    // Poblar ligas
+    populateDropdown('leagueDropdownMenu', options.leagues, 'leagues', 'league');
+    
+    // Poblar equipos
+    populateDropdown('clubDropdownMenu', options.clubs, 'clubs', 'club');
+    
+    // Poblar nacionalidades
+    populateDropdown('nationalityDropdownMenu', options.nationalities, 'nationalities', 'nationality');
+}
+
+// Función genérica para poblar dropdowns
+function populateDropdown(dropdownId, options, name, type) {
+    console.log(`Poblando ${type}:`, options?.length, 'opciones');
+    const dropdown = document.getElementById(dropdownId);
+    let html = '';
+    
+    if (!options || options.length === 0) {
+        console.warn(`No hay opciones para ${type}`);
+        dropdown.innerHTML = '<li><p class="text-muted">No hay opciones disponibles</p></li>';
+        return;
+    }
+    
+    options.forEach(option => {
+        html += `
+            <li>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="${name}" value="${option}" id="${type}_${option}" onchange="updateDropdownText('${type}Dropdown', '${name}'); filterPlayers();">
+                    <label class="form-check-label" for="${type}_${option}">
+                        ${option}
+                    </label>
+                </div>
+            </li>
+        `;
+    });
+    
+    dropdown.innerHTML = html;
+    console.log(`${type} poblado con ${options.length} opciones`);
+}
+
+// Actualizar texto del dropdown
+function updateDropdownText(dropdownId, name) {
+    const selected = Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
+    const button = document.getElementById(dropdownId);
+    
+    if (selected.length === 0) {
+        button.textContent = `Seleccionar ${name}`;
+    } else if (selected.length === 1) {
+        button.textContent = selected[0];
+    } else {
+        button.textContent = `${selected.length} seleccionados`;
+    }
+}
+
+// Filtrar jugadores dinámicamente
+function filterPlayers() {
+    const query = document.getElementById('query').value.toLowerCase();
+    const selectedLeagues = Array.from(document.querySelectorAll('input[name="leagues"]:checked')).map(cb => cb.value);
+    const selectedClubs = Array.from(document.querySelectorAll('input[name="clubs"]:checked')).map(cb => cb.value);
+    const selectedPositions = Array.from(document.querySelectorAll('input[name="positions"]:checked')).map(cb => cb.value);
+    const selectedNationalities = Array.from(document.querySelectorAll('input[name="nationalities"]:checked')).map(cb => cb.value);
+    const ageMin = parseInt(document.getElementById('age_min').value) || 16;
+    const ageMax = parseInt(document.getElementById('age_max').value) || 45;
+    const minMinutes = parseInt(document.getElementById('min_minutes').value) || 0;
+    
+    // Contar filtros activos (excluyendo valores por defecto)
+    const activeFilters = [
+        query.length > 0,
+        selectedLeagues.length > 0,
+        selectedClubs.length > 0,
+        selectedPositions.length > 0,
+        selectedNationalities.length > 0,
+        ageMin !== 16 || ageMax !== 45,
+        minMinutes > 0
+    ].filter(Boolean).length;
+    
+    // Si hay menos de 2 filtros activos, mostrar solo jugadores seleccionados
+    if (activeFilters < 2) {
+        if (selectedPlayers.length > 0 && allPlayers.length > 0) {
+            // Mostrar solo jugadores seleccionados
+            const selectedPlayersData = allPlayers.filter(p => selectedPlayers.includes(p.id));
+            displayResults({players: selectedPlayersData});
+        } else {
+            document.getElementById('searchResults').innerHTML = `
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-search fa-3x mb-3"></i>
+                    <h5>Aplica al menos 2 filtros para ver jugadores</h5>
+                    <p>Usa los filtros de la izquierda para buscar jugadores específicos</p>
+                </div>
+            `;
+        }
+        updateSelectedCount();
+        return;
+    }
+    
+    // Si no hemos cargado los jugadores aún, cargarlos ahora
+    if (allPlayers.length === 0) {
+        document.getElementById('searchResults').innerHTML = `
+            <div class="text-center text-muted py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando jugadores...</span>
+                </div>
+                <p class="mt-2">Cargando jugadores...</p>
+            </div>
+        `;
+        
+        loadAllPlayers().then(() => {
+            // Después de cargar, aplicar filtros
+            applyFilters();
+        }).catch(error => {
+            console.error('Error cargando jugadores:', error);
+            document.getElementById('searchResults').innerHTML = '<p class="text-danger">Error al cargar jugadores</p>';
+        });
+        return;
+    }
+    
+    // Aplicar filtros a los jugadores ya cargados
+    applyFilters();
+}
+
+// Función para aplicar filtros a los jugadores cargados
+function applyFilters() {
+    const query = document.getElementById('query').value.toLowerCase();
+    const selectedLeagues = Array.from(document.querySelectorAll('input[name="leagues"]:checked')).map(cb => cb.value);
+    const selectedClubs = Array.from(document.querySelectorAll('input[name="clubs"]:checked')).map(cb => cb.value);
+    const selectedPositions = Array.from(document.querySelectorAll('input[name="positions"]:checked')).map(cb => cb.value);
+    const selectedNationalities = Array.from(document.querySelectorAll('input[name="nationalities"]:checked')).map(cb => cb.value);
+    const ageMin = parseInt(document.getElementById('age_min').value) || 16;
+    const ageMax = parseInt(document.getElementById('age_max').value) || 45;
+    const minMinutes = parseInt(document.getElementById('min_minutes').value) || 0;
+    
+    filteredPlayers = allPlayers.filter(player => {
+        // Filtro por texto
+        if (query && !player.full_name?.toLowerCase().includes(query)) {
+            return false;
+        }
+        
+        // Filtro por liga
+        if (selectedLeagues.length > 0 && !selectedLeagues.includes(player.league)) {
+            return false;
+        }
+        
+        // Filtro por equipo
+        if (selectedClubs.length > 0 && !selectedClubs.includes(player.club)) {
+            return false;
+        }
+        
+        // Filtro por posición
+        if (selectedPositions.length > 0 && !selectedPositions.includes(player.position)) {
+            return false;
+        }
+        
+        // Filtro por nacionalidad
+        if (selectedNationalities.length > 0 && !selectedNationalities.includes(player.nationality)) {
+            return false;
+        }
+        
+        // Filtro por edad
+        if (player.age < ageMin || player.age > ageMax) {
+            return false;
+        }
+        
+        // Filtro por minutos
+        if (player.minutes < minMinutes) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    displayResults({players: filteredPlayers});
+    updateSelectedCount();
+}
+
+// Mostrar resultados
+function displayResults(data) {
+    const resultsDiv = document.getElementById('searchResults');
+    
+    if (!data.players || data.players.length === 0) {
+        resultsDiv.innerHTML = '<p class="text-center text-muted">No se encontraron jugadores</p>';
+        return;
+    }
+    
+    let html = '<div class="row">';
+    data.players.forEach(player => {
+        const isSelected = selectedPlayers.includes(player.id);
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100 ${isSelected ? 'border-primary' : ''}">
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" 
+                                   value="${player.id}" 
+                                   ${isSelected ? 'checked' : ''}
+                                   onchange="togglePlayer(${player.id})">
+                            <label class="form-check-label w-100">
+                                <h6 class="card-title">${player.full_name || 'N/A'}</h6>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        ${player.club || 'N/A'} • ${player.position || 'N/A'}<br>
+                                        ${player.nationality || 'N/A'} • ${player.age || 'N/A'} años
+                                    </small>
+                                </p>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    resultsDiv.innerHTML = html;
+}
+
+// Toggle jugador seleccionado
+function togglePlayer(playerId) {
+    if (selectedPlayers.includes(playerId)) {
+        selectedPlayers = selectedPlayers.filter(id => id !== playerId);
+    } else {
+        if (selectedPlayers.length >= 3) {
+            alert('Máximo 3 jugadores seleccionados');
+            document.querySelector(`input[value="${playerId}"]`).checked = false;
+            return;
+        }
+        selectedPlayers.push(playerId);
+    }
+    
+    updateSelectedCount();
+    updateMetricsSelector();
+}
+
+// Actualizar contador de seleccionados
+function updateSelectedCount() {
+    const count = selectedPlayers.length;
+    document.getElementById('selectedCount').textContent = `${count} seleccionados`;
+    document.getElementById('createDashboard').disabled = count === 0;
+}
+
+// Cargar métricas disponibles
+function loadAvailableMetrics() {
+    fetch('{% url "dashboard:search_api" %}?action=metrics')
+    .then(response => response.json())
+    .then(data => {
+        availableMetrics = data.metrics || [];
+        console.log('Métricas cargadas:', availableMetrics.length);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Actualizar selector de métricas
+function updateMetricsSelector() {
+    const metricsDiv = document.getElementById('metricsSelector');
+    
+    if (selectedPlayers.length === 0) {
+        metricsDiv.innerHTML = '<p class="text-muted">Selecciona jugadores para ver métricas disponibles</p>';
+        return;
+    }
+    
+    let html = '<div class="form-check">';
+    availableMetrics.forEach(metric => {
+        html += `
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="metrics" value="${metric}" id="metric_${metric}">
+                <label class="form-check-label" for="metric_${metric}">
+                    ${metric}
+                </label>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    metricsDiv.innerHTML = html;
+}
+
+// Cargar búsquedas guardadas
+function loadSavedSearches() {
+    // Implementar cuando esté listo
+}
+
+// Manejar búsqueda
+function handleSearch(e) {
+    e.preventDefault();
+    filterPlayers();
+}
+
+// Crear dashboard
+function createDashboard() {
+    if (selectedPlayers.length === 0) {
+        alert('Selecciona al menos un jugador');
+        return;
+    }
+    
+    const selectedMetrics = Array.from(document.querySelectorAll('input[name="metrics"]:checked')).map(cb => cb.value);
+    
+    if (selectedMetrics.length === 0) {
+        alert('Selecciona al menos una métrica');
+        return;
+    }
+    
+    const params = new URLSearchParams();
+    selectedPlayers.forEach(id => params.append('player_ids', id));
+    selectedMetrics.forEach(metric => params.append('metrics', metric));
+    
+    window.location.href = `{% url 'dashboard:comparison' %}?${params.toString()}`;
+}
+</script>
+{% endblock %}
