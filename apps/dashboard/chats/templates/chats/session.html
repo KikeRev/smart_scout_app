@@ -5,13 +5,13 @@
 {% block fullwidth_content %}
 <div class="fullscreen-chat-wrapper">
   <div class="chat-layout">
-    <!-- Barra lateral con lista de chats -->
+    <!-- Sidebar with chat list -->
     <div class="chat-sidebar">
       <div class="sidebar-header">
-        <h5 class="sidebar-title">Mis Chats</h5>
+        <h5 class="sidebar-title">My Chats</h5>
         <a href="{% url 'chats:new' %}" class="btn btn-sm btn-outline-primary"
-           role="button" aria-label="Crear un nuevo chat con el agente">
-          <i class="bi bi-plus" aria-hidden="true"></i> Nuevo
+           role="button" aria-label="Create a new chat with the agent">
+          <i class="bi bi-plus" aria-hidden="true"></i> New
         </a>
       </div>
       
@@ -27,19 +27,19 @@
           </a>
         {% empty %}
           <div class="no-chats">
-            <p>No tienes chats aún</p>
+            <p>You don't have any chats yet</p>
             <a href="{% url 'chats:new' %}" class="btn btn-sm btn-primary"
-               role="button" aria-label="Crear tu primer chat con el agente de inteligencia artificial">Crear primer chat</a>
+               role="button" aria-label="Create your first chat with the artificial intelligence agent">Create first chat</a>
           </div>
         {% endfor %}
       </div>
     </div>
 
-    <!-- Área principal del chat -->
+    <!-- Main chat area -->
     <div class="chat-main">
       <div class="chat-container">
         <div id="chat-log" class="chat-log">
-          <!-- Logo siempre visible -->
+          <!-- Always visible logo -->
           <div class="chat-logo-section">
             <img src="{% static 'img/app_logo_6.png' %}" alt="Smart Scout logo" class="chat-logo">
           </div>
@@ -49,10 +49,10 @@
                   {% include "chats/_message.html" with m=m %}
               {% endfor %}
           {% else %}
-              <!-- Mensaje de bienvenida solo para chats nuevos -->
+              <!-- Welcome message only for new chats -->
               <div class="chat-welcome-message">
                 <div class="typewriter-wrapper text-center">
-                  <span class="typewriter-text">Bienvenido, ¿En qué te puedo ayudar? 🤖</span>
+                  <span class="typewriter-text">Welcome, how can I help you? 🤖</span>
                   <span class="typewriter-cursor">|</span>
                 </div>
               </div>
@@ -75,17 +75,17 @@
                     class="form-control chat-input"
                     rows="4"
                     style="min-height:6rem; width:100%; max-width:100%; resize:vertical;"
-                    placeholder="Escribe tu pregunta…" required></textarea>
+                    placeholder="Write your question…" required></textarea>
             
             <button type="submit" class="btn btn-submit btn-send"
-                    role="button" aria-label="Enviar mensaje al agente">
+                    role="button" aria-label="Send message to agent">
               <span class="send-icon" aria-hidden="true">➤</span>
             </button>
           </div>
 
           <div id="thinking-indicator" class="thinking-indicator">
                 <div class="spinner"></div>
-                <span>Pensando…</span>
+                <span>Thinking…</span>
           </div>
 
         </form>
@@ -95,20 +95,20 @@
 </div>
 
 <script>
-  /* Limpia textarea tras enviar */
+  /* Clear textarea after sending */
   document.addEventListener('htmx:afterRequest', (e) => {
     if (e.target.id === 'chat-form') {
       e.target.querySelector('textarea').value = '';
     }
   });
 
-  /* Envía el formulario con Enter (Shift+Enter = salto de línea) */
+  /* Send form with Enter (Shift+Enter = line break) */
   document.addEventListener('keydown', (e) => {
     const ta = e.target;
     const inChat = ta.tagName === 'TEXTAREA' && ta.closest('#chat-form');
     if (inChat && e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();          // evita línea nueva
-      ta.form.requestSubmit();     // dispara el submit (HTMX lo intercepta)
+      e.preventDefault();          // avoid new line
+      ta.form.requestSubmit();     // trigger submit (HTMX intercepts it)
     }
   });
 </script>
