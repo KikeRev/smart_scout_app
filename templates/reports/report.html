@@ -5,7 +5,7 @@
 <html lang="es">
     <head>
         <meta charset="utf-8">
-        <title>Informe de Scouting</title>
+        <title>Scouting Report</title>
 
         <!-- Ajustes mínimos de colores/tamaños -->
         <style>
@@ -69,16 +69,16 @@
                 <img src="{{ logo_url }}" alt="SmartScoutLogo" class="img-fluid logo-center app-logo">
             </div>
 
-            <h1 class="text-center mb-2">Informe de Scouting</h1>
+            <h1 class="text-center mb-2">Scouting Report</h1>
 
-            <h2>1. Objetivo</h2>
+            <h2>1. Objective</h2>
             <p>{{ objective }}</p>
 
-            <h2>2. Jugadores alternativos propuestos</h2>
+            <h2>2. Proposed Alternative Players</h2>
             {{ candidates|safe }}
 
-            <h2>3. Recomendación</h2>
-            <p><strong>Jugador elegido:</strong> {{ chosen.full_name }} ({{ chosen.club }})</p>
+            <h2>3. Recommendation</h2>
+            <p><strong>Chosen player:</strong> {{ chosen.full_name }} ({{ chosen.club }})</p>
             <p>{{ summary }}</p>
 
             <div class="row g-4">
