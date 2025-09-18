@@ -5,8 +5,8 @@ register = template.Library()
 @register.filter
 def replace(value, arg):
     """
-    Reemplaza un carácter por otro en una cadena
-    Uso: {{ value|replace:"_":" " }}
+    Replaces one character with another in a string
+    Usage: {{ value|replace:"_":" " }}
     """
     if not value:
         return value
@@ -17,11 +17,11 @@ def replace(value, arg):
 @register.filter
 def format_metric(value):
     """
-    Formatea una métrica para mostrar en el dashboard
+    Formats a metric for display in the dashboard
     """
     if not value:
         return value
     
-    # Reemplazar guiones bajos por espacios y capitalizar
+    # Replace underscores with spaces and capitalize
     formatted = value.replace('_', ' ').title()
     return formatted
