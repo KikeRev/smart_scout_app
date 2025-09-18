@@ -1,5 +1,5 @@
 # apps/charts/views.py
-from urllib.parse import quote  # ⬅️  sustituye a urlquote
+from urllib.parse import quote  # ⬅️  replaces urlquote
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from apps.charts.models import TempChart
@@ -9,7 +9,7 @@ import pandas as pd
 
 
 def serve_chart(request, pk, download: bool = False):
-    """Stream PNG from /tmp; if *download* fuerza la descarga."""
+    """Stream PNG from /tmp; if *download* forces the download."""
     chart = get_object_or_404(TempChart, pk=pk)
     fname = Path(chart.filepath).name          # chart.png
 
