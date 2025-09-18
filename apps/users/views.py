@@ -11,40 +11,40 @@ from .models import User
 
 
 class LoginView(auth_views.LoginView):
-    template_name = "users/login.html"          # usa tu plantilla
-    authentication_form = AuthenticationForm    # (por defecto ya lo es)
-    redirect_authenticated_user = True          # equivale a tu if-authenticated
+    template_name = "users/login.html"          # use your template
+    authentication_form = AuthenticationForm    # (it's already the default)
+    redirect_authenticated_user = True          # equivalent to your if-authenticated
 
-    # Si quieres forzar un redirect fijo cuando no hay ?next=
-    next_page = reverse_lazy("dashboard:home")  # ó "/"
+    # If you want to force a fixed redirect when there's no ?next=
+    next_page = reverse_lazy("dashboard:home")  # or "/"
 
 
 class LogoutView(auth_views.LogoutView):
-    next_page = reverse_lazy("users:login")     # ¡ojo al namespace!
+    next_page = reverse_lazy("users:login")     # watch the namespace!
 
 
 class SignUpView(CreateView):
     form_class  = SignUpForm
     template_name = "users/signup.html"
-    success_url   = reverse_lazy("users:login") # idem
+    success_url   = reverse_lazy("users:login") # same
 
 
 
 class ProfileView(LoginRequiredMixin, DetailView):
-    """Muestra los datos de la cuenta del usuario autenticado."""
+    """Shows the authenticated user's account data."""
     model = User
     template_name = "users/profile.html"
     context_object_name = "user_obj"
 
-    # siempre devolvemos el objeto del request
+    # always return the request object
     def get_object(self, queryset=None):
         return self.request.user
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
-    """Formulario para que el propio usuario edite su perfil."""
+    """Form for the user to edit their own profile."""
     model = User
-    form_class = ProfileForm          # ya lo tenías definido :contentReference[oaicite:4]{index=4}
+    form_class = ProfileForm          # you already had it defined
     template_name = "users/profile_edit.html"
     success_url   = reverse_lazy("users:profile")
 
