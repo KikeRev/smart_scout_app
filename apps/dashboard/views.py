@@ -32,12 +32,12 @@ DEFAULT_METRICS = ["goals", "assists","goals_per90", "assists_per90",
 @login_required
 def home(request):
 
-    # 1) sesiones recientes
+    # 1) recent sessions
     recent_sessions = (ChatSession.objects
                        .filter(user=request.user)
                        .order_by('-created_at')[:6])
 
-    # 2) galería de fotos
+    # 2) photo gallery
     gallery = []
     pics_dir = finders.find("img/soccer_pictures")
     if pics_dir and os.path.isdir(pics_dir):
@@ -45,7 +45,7 @@ def home(request):
                     if os.path.isfile(os.path.join(pics_dir, f))]
         gallery = random.sample(all_pics, min(6, len(all_pics)))
 
-    # 3) titulares (PostgreSQL)
+    # 3) headlines (PostgreSQL)
     headlines_qs = (FootballNews.objects
                     .values_list("title", "published_at", "source_id")
                     .order_by("?")[:30])
@@ -60,10 +60,10 @@ def home(request):
 
 # ───────────────── build context ──────────────────
 ...
-API_HOST = os.getenv("API_HOST", "http://api:8001")  # si tu FastAPI sigue viva
+API_HOST = os.getenv("API_HOST", "http://api:8001")  # if your FastAPI is still alive
 
 def _fetch_stats(ids: list[int]) -> dict[int, dict]:
-    """Devuelve {id: stats_dict} usando /players/batch."""
+    """Returns {id: stats_dict} using /players/batch."""
     r = requests.post(
         f"{API_HOST}/players/batch",
         json={"ids": ids},
@@ -73,7 +73,7 @@ def _fetch_stats(ids: list[int]) -> dict[int, dict]:
     return {p["id"]: p for p in r.json()}
 
 def _context(base_id: int, cand_id: int, cand_ids: list[int], metrics: list[str]):
-    # ── 1) obtener stats una sola vez ─────────────────────
+    # ── 1) get stats only once ─────────────────────
     stats_map = _fetch_stats([base_id] + cand_ids)
 
     base_stats = stats_map.get(base_id)
@@ -81,7 +81,7 @@ def _context(base_id: int, cand_id: int, cand_ids: list[int], metrics: list[str]
     if not (base_stats and cand_stats):
         raise ValueError("IDs not found in API")
 
-    # ── 2) gráficos usando stats directamente ─────────────
+    # ── 2) charts using stats directly ─────────────
     radar_base = radar_chart(
         player_name=base_stats["full_name"],
         stats=base_stats,
@@ -101,7 +101,7 @@ def _context(base_id: int, cand_id: int, cand_ids: list[int], metrics: list[str]
     pizza_cmp = pizza_comparison_chart(
         player1_name=base_stats["full_name"],
         player2_name=cand_stats["full_name"],
-        role=None,           # la función lo detecta por position
+        role=None,           # the function detects it by position
     )
 
     table_html = compare_stats_to_html_table(base_stats, cand_stats)
@@ -121,14 +121,14 @@ def _context(base_id: int, cand_id: int, cand_ids: list[int], metrics: list[str]
     }
 
 
-# ───────── GET: navegación normal / tras el redirect ──────────
+# ───────── GET: normal navigation / after redirect ──────────
 @csrf_exempt
 def inline_view(request):
     """
-    • POST  → genera HX-Redirect   (sin cambios)
-    • GET   → renderiza el dashboard
+    • POST  → generates HX-Redirect   (no changes)
+    • GET   → renders the dashboard
     """
-    # ---------- BLOQUE POST (tal cual lo tenías) ----------
+    # ---------- POST BLOCK (as you had it) ----------
     if request.method == "POST":
         try:
             data      = json.loads(request.body.decode())
@@ -146,12 +146,12 @@ def inline_view(request):
         response["HX-Redirect"] = url
         return response
 
-    # ---------- BLOQUE GET (ajustes mínimos) -------------
+    # ---------- GET BLOCK (minimal adjustments) -------------
     if request.method == "GET":
         try:
             base_id   = int(request.GET["base_id"])
 
-            # ① cuando llega desde el agente
+            # ① when it comes from the agent
             raw = request.GET.getlist("candidate_ids")
             cand_ids = [int(v) for v in raw if v and v.isdigit()]
 
@@ -163,13 +163,13 @@ def inline_view(request):
         except (KeyError, ValueError):
             return HttpResponseBadRequest("IDs missing")
 
-        if not cand_ids:                                   # lista vacía → 400
+        if not cand_ids:                                   # empty list → 400
             return HttpResponseBadRequest("No candidate_ids given")
 
-        # Métricas: o las que vengan del formulario, o las de siempre
+        # Metrics: either from the form, or the usual ones
         metrics = request.GET.getlist("metrics") or DEFAULT_METRICS
 
-        ctx = _context(base_id, cand_ids[0], cand_ids, metrics)      # pasa la lista nueva
+        ctx = _context(base_id, cand_ids[0], cand_ids, metrics)      # pass the new list
         ctx["players_dict"] = {p["id"]: p for p in ctx["players"]}
         ctx["cand_players"] = [ctx["players_dict"][i]
                                 for i in cand_ids
@@ -184,7 +184,7 @@ def inline_view(request):
 # ───────────────── HTMX refresh ──────────────────
 @csrf_exempt
 def refresh_dash(request):
-    """Refresca tabla + gráficos al cambiar candidato o métricas (HTMX)."""
+    """Refreshes table + charts when changing candidate or metrics (HTMX)."""
     base = int(request.POST["base_id"])
     cand = int(request.POST["cand_id"])
     metrics = request.POST.getlist("metrics[]") or DEFAULT_METRICS
@@ -193,14 +193,14 @@ def refresh_dash(request):
     return render(request, "dashboard/_dash_body.html", ctx)
 
 
-# ───────────────── NUEVAS VISTAS DEL DASHBOARD DE BÚSQUEDA MANUAL ──────────────────
+# ───────────────── NEW MANUAL SEARCH DASHBOARD VIEWS ──────────────────
 
 @login_required
 def player_search(request):
-    """Vista principal de búsqueda de jugadores"""
+    """Main player search view"""
     from .search_services import get_filter_options
     
-    # Obtener opciones de filtros
+    # Get filter options
     filter_options = get_filter_options()
     
     context = {
@@ -211,11 +211,11 @@ def player_search(request):
 
 @login_required
 def comparison_dashboard(request):
-    """Dashboard de comparación de jugadores"""
+    """Player comparison dashboard"""
     from .search_services import get_player_details, get_comparison_data
     from apps.agent_service.dashboard_viz_tools import dashboard_radar_single, dashboard_radar_comparison
     
-    # Obtener IDs de jugadores seleccionados
+    # Get selected player IDs
     player_ids = request.GET.getlist('player_ids')
     selected_metrics = request.GET.getlist('metrics')
     
@@ -224,7 +224,7 @@ def comparison_dashboard(request):
             'error': 'No players selected'
         })
     
-    # Convertir a enteros
+    # Convert to integers
     try:
         player_ids = [int(pid) for pid in player_ids]
     except ValueError:
@@ -232,7 +232,7 @@ def comparison_dashboard(request):
             'error': 'Invalid player IDs'
         })
     
-    # Obtener datos de jugadores
+    # Get player data
     players_data = get_player_details(player_ids)
     
     if not players_data:
@@ -240,10 +240,10 @@ def comparison_dashboard(request):
             'error': 'Could not load player data'
         })
     
-    # Preparar datos para la comparación
+    # Prepare data for comparison
     comparison_data = get_comparison_data(players_data, selected_metrics)
     
-    # Generar gráfico
+    # Generate chart
     if len(players_data) == 1:
         chart_result = dashboard_radar_single(players_data[0], selected_metrics)
     else:
@@ -264,7 +264,7 @@ def comparison_dashboard(request):
 
 @login_required
 def search_api(request):
-    """API para búsqueda de jugadores"""
+    """API for player search"""
     from .search_services import search_players, build_search_filters, get_all_players, get_filter_options, get_available_metrics
     import json
     
@@ -272,7 +272,7 @@ def search_api(request):
         action = request.GET.get('action')
         
         if action == 'filter_options':
-            # Devolver opciones de filtros
+            # Return filter options
             try:
                 results = get_filter_options()
                 return JsonResponse(results)
@@ -280,7 +280,7 @@ def search_api(request):
                 return JsonResponse({'error': str(e)}, status=400)
         
         elif action == 'metrics':
-            # Devolver métricas disponibles
+            # Return available metrics
             try:
                 results = get_available_metrics()
                 return JsonResponse({'metrics': results})
@@ -288,7 +288,7 @@ def search_api(request):
                 return JsonResponse({'error': str(e)}, status=400)
         
         else:
-            # Devolver todos los jugadores para el filtrado dinámico
+            # Return all players for dynamic filtering
             try:
                 results = get_all_players()
                 return JsonResponse(results)
@@ -296,7 +296,7 @@ def search_api(request):
                 return JsonResponse({'error': str(e)}, status=400)
     
     elif request.method == 'POST':
-        # Búsqueda con filtros
+        # Search with filters
         try:
             data = json.loads(request.body)
             filters = build_search_filters(data)
@@ -309,14 +309,14 @@ def search_api(request):
 
 @login_required
 def saved_searches_api(request):
-    """API para gestionar búsquedas guardadas"""
+    """API for managing saved searches"""
     import json
     
     if request.method == 'GET':
         search_id = request.GET.get('id')
         
         if search_id:
-            # Obtener una búsqueda específica
+            # Get a specific search
             try:
                 search = SavedSearch.objects.get(id=search_id, user=request.user)
                 from .search_services import serialize_saved_search
@@ -324,14 +324,14 @@ def saved_searches_api(request):
             except SavedSearch.DoesNotExist:
                 return JsonResponse({'error': 'Search not found'}, status=404)
         else:
-            # Obtener todas las búsquedas guardadas del usuario
+            # Get all user's saved searches
             searches = SavedSearch.objects.filter(user=request.user)
             from .search_services import serialize_saved_search
             data = [serialize_saved_search(search) for search in searches]
             return JsonResponse({'searches': data})
     
     elif request.method == 'POST':
-        # Guardar nueva búsqueda
+        # Save new search
         try:
             data = json.loads(request.body)
             
@@ -349,7 +349,7 @@ def saved_searches_api(request):
             return JsonResponse({'error': str(e)}, status=400)
     
     elif request.method == 'DELETE':
-        # Eliminar búsqueda
+        # Delete search
         try:
             data = json.loads(request.body)
             search_id = data['id']
