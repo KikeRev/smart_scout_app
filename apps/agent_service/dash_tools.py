@@ -1,6 +1,4 @@
 import os, requests
-from typing import List, Dict
-from typing import Annotated
 
 DASHBOARD_HOST = os.getenv("DASHBOARD_HOST", "http://localhost:8000")  # contenedor web
 

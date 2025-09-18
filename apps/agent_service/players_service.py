@@ -3,7 +3,6 @@ from typing import Dict, Any
 from apps.agent_service.db import get_session
 from apps.ingestion.seed_and_ingest import Player       # tu modelo de jugadores
 from langchain.tools import tool
-import pandas as pd
 
 @tool(description="Devuelve role y stats de un jugador (PostgreSQL)")
 def player_stats(player_name: str) -> Dict[str, any]:

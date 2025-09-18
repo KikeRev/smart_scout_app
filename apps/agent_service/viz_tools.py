@@ -471,21 +471,19 @@ def pizza_comparison_chart(
     role: str | None = None,
     
 ) -> str:
-    """Crear un pizza plot coloreado por categoría para un jugador.
+    """Crear un pizza plot de comparación coloreado por categoría para dos jugadores.
 
     Parameters
     ----------
+    player1_name, player2_name : str
+        Nombres de los jugadores a comparar.
     role : {'GK', 'DF', 'MF', 'FW'}
-        Rol / posición del jugador.
-    stats : dict
-        Fila del DataFrame convertida a dict (`row.to_dict()`).
-    player_name, team : str
-        Metadatos para el encabezado del gráfico.
+        Rol / posición de los jugadores.
 
     Returns
     -------
     str
-        Ruta del PNG temporal con el gráfico.
+        Ruta del PNG temporal con el gráfico de comparación.
     """
     fetched1 = player_stats.invoke({"player_name": player1_name})
     fetched2 = player_stats.invoke({"player_name": player2_name})
