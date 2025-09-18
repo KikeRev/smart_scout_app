@@ -17,55 +17,55 @@
   <div class="home-container">
     <div class="home-header">
       <h1 class="home-welcome" role="heading" aria-level="1">
-        Bienvenido, {{ user.username }} 
-        <span aria-label="saludo con mano saludando" role="img">👋</span>
+        Welcome, {{ user.username }} 
+        <span aria-label="waving hand greeting" role="img">👋</span>
       </h1>
     </div>
 
-    <nav class="home-actions" role="navigation" aria-label="Navegación principal de la aplicación">
-      <div class="action-buttons" role="group" aria-label="Opciones principales de la aplicación">
+    <nav class="home-actions" role="navigation" aria-label="Main application navigation">
+      <div class="action-buttons" role="group" aria-label="Main application options">
         <a class="action-btn btn-primary" href="{% url 'chats:new' %}" 
            data-bs-toggle="tooltip" data-bs-placement="top" 
-           title="Crea un informe personalizado con el agente de inteligencia artificial"
+           title="Create a personalized report with the artificial intelligence agent"
            role="button" 
-           aria-label="Crear nuevo informe de análisis de jugadores con inteligencia artificial"
+           aria-label="Create new player analysis report with artificial intelligence"
            aria-describedby="nuevo-informe-desc">
           <div class="btn-icon" aria-hidden="true">📊</div>
           <div class="btn-content">
-            <h4 class="btn-title">Nuevo Informe</h4>
+            <h4 class="btn-title">New Report</h4>
           </div>
-          <span id="nuevo-informe-desc" class="sr-only">Botón para crear un nuevo informe personalizado utilizando inteligencia artificial. Al hacer clic se abrirá el chat con el agente para generar análisis detallados de jugadores.</span>
+          <span id="nuevo-informe-desc" class="sr-only">Button to create a new personalized report using artificial intelligence. Clicking will open the chat with the agent to generate detailed player analysis.</span>
         </a>
 
         <a class="action-btn btn-success" href="{% url 'dashboard:player_search' %}"
            data-bs-toggle="tooltip" data-bs-placement="top" 
-           title="Compara jugadores y analiza métricas de rendimiento"
+           title="Compare players and analyze performance metrics"
            role="button"
-           aria-label="Buscar y comparar jugadores con análisis de métricas detalladas"
+           aria-label="Search and compare players with detailed metrics analysis"
            aria-describedby="buscar-jugadores-desc">
           <div class="btn-icon" aria-hidden="true">🔍</div>
           <div class="btn-content">
-            <h4 class="btn-title">Buscar Jugadores</h4>
+            <h4 class="btn-title">Search Players</h4>
           </div>
-          <span id="buscar-jugadores-desc" class="sr-only">Botón para buscar y comparar jugadores. Permite filtrar por liga, equipo, posición y nacionalidad, seleccionar hasta 3 jugadores y generar gráficos de comparación con métricas personalizables.</span>
+          <span id="buscar-jugadores-desc" class="sr-only">Button to search and compare players. Allows filtering by league, team, position and nationality, select up to 3 players and generate comparison charts with customizable metrics.</span>
         </a>
 
         <a class="action-btn btn-info" href="{% url 'chats:list' %}"
            data-bs-toggle="tooltip" data-bs-placement="top" 
-           title="Revisa todos tus informes anteriores y guardados"
+           title="Review all your previous and saved reports"
            role="button"
-           aria-label="Ver todos los informes creados anteriormente"
+           aria-label="View all previously created reports"
            aria-describedby="mis-informes-desc">
           <div class="btn-icon" aria-hidden="true">📋</div>
           <div class="btn-content">
-            <h4 class="btn-title">Mis Informes</h4>
+            <h4 class="btn-title">My Reports</h4>
           </div>
-          <span id="mis-informes-desc" class="sr-only">Botón para acceder a todos los informes guardados anteriormente. Permite revisar, editar y descargar informes de análisis de jugadores creados previamente.</span>
+          <span id="mis-informes-desc" class="sr-only">Button to access all previously saved reports. Allows reviewing, editing and downloading player analysis reports created previously.</span>
         </a>
       </div>
     </nav>
 
-    {# — Carousel automático de fútbol — #}
+    {# — Automatic football carousel — #}
     {% if gallery %}
       <div class="home-gallery">
         <div id="galleryCarousel"
