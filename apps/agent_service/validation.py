@@ -1,6 +1,6 @@
 # apps/agent_service/validation.py
 """
-Utilidades de validación para reducir alucinaciones en el agente de scouting.
+Validation utilities to reduce hallucinations in the scouting agent.
 """
 
 from typing import List, Dict, Any, Optional
@@ -9,13 +9,13 @@ import re
 
 def validate_player_data(player_data: Dict[str, Any]) -> bool:
     """
-    Valida que los datos de un jugador sean coherentes y completos.
+    Validates that player data is coherent and complete.
     
     Args:
-        player_data: Diccionario con datos del jugador
+        player_data: Dictionary with player data
         
     Returns:
-        bool: True si los datos son válidos, False en caso contrario
+        bool: True if data is valid, False otherwise
     """
     if not player_data:
         return False
@@ -25,7 +25,7 @@ def validate_player_data(player_data: Dict[str, Any]) -> bool:
         if field not in player_data or not player_data[field]:
             return False
     
-    # Validar que el ID sea un entero positivo
+    # Validate that ID is a positive integer
     try:
         player_id = int(player_data['id'])
         if player_id <= 0:
@@ -33,7 +33,7 @@ def validate_player_data(player_data: Dict[str, Any]) -> bool:
     except (ValueError, TypeError):
         return False
     
-    # Validar que la posición sea válida
+    # Validate that position is valid
     valid_positions = ['GK', 'DF', 'MF', 'FW']
     if player_data['position'] not in valid_positions:
         return False
@@ -43,18 +43,18 @@ def validate_player_data(player_data: Dict[str, Any]) -> bool:
 
 def validate_similar_players_data(players_list: List[Dict[str, Any]]) -> bool:
     """
-    Valida que la lista de jugadores similares sea coherente.
+    Validates that the similar players list is coherent.
     
     Args:
-        players_list: Lista de diccionarios con datos de jugadores
+        players_list: List of dictionaries with player data
         
     Returns:
-        bool: True si los datos son válidos, False en caso contrario
+        bool: True if data is valid, False otherwise
     """
     if not players_list or not isinstance(players_list, list):
         return False
     
-    # Verificar que todos los jugadores tengan datos válidos
+    # Check that all players have valid data
     for player in players_list:
         if not validate_player_data(player):
             return False
@@ -64,13 +64,13 @@ def validate_similar_players_data(players_list: List[Dict[str, Any]]) -> bool:
 
 def validate_news_data(news_data: List[Dict[str, Any]]) -> bool:
     """
-    Valida que los datos de noticias sean coherentes.
+    Validates that news data is coherent.
     
     Args:
-        news_data: Lista de diccionarios con datos de noticias
+        news_data: List of dictionaries with news data
         
     Returns:
-        bool: True si los datos son válidos, False en caso contrario
+        bool: True if data is valid, False otherwise
     """
     if not news_data or not isinstance(news_data, list):
         return False
@@ -79,11 +79,11 @@ def validate_news_data(news_data: List[Dict[str, Any]]) -> bool:
         if not isinstance(news_item, dict):
             return False
         
-        # Verificar campos mínimos
+        # Check minimum fields
         if 'title' not in news_item or 'content' not in news_item:
             return False
         
-        # Verificar que el contenido no esté vacío
+        # Check that content is not empty
         if not news_item['content'].strip():
             return False
     
@@ -92,24 +92,24 @@ def validate_news_data(news_data: List[Dict[str, Any]]) -> bool:
 
 def validate_stats_data(stats_data: Dict[str, Any]) -> bool:
     """
-    Valida que los datos estadísticos sean coherentes.
+    Validates that statistical data is coherent.
     
     Args:
-        stats_data: Diccionario con estadísticas del jugador
+        stats_data: Dictionary with player statistics
         
     Returns:
-        bool: True si los datos son válidos, False en caso contrario
+        bool: True if data is valid, False otherwise
     """
     if not stats_data or not isinstance(stats_data, dict):
         return False
     
-    # Verificar que tenga al menos algunas estadísticas básicas
+    # Check that it has at least some basic statistics
     required_stats = ['age', 'minutes_played', 'games_played']
     for stat in required_stats:
         if stat not in stats_data:
             return False
         
-        # Verificar que sea un número válido
+        # Check that it's a valid number
         try:
             value = float(stats_data[stat])
             if value < 0:
@@ -122,21 +122,21 @@ def validate_stats_data(stats_data: Dict[str, Any]) -> bool:
 
 def sanitize_text(text: str) -> str:
     """
-    Sanitiza texto para evitar caracteres problemáticos.
+    Sanitizes text to avoid problematic characters.
     
     Args:
-        text: Texto a sanitizar
+        text: Text to sanitize
         
     Returns:
-        str: Texto sanitizado
+        str: Sanitized text
     """
     if not text:
         return ""
     
-    # Eliminar caracteres de control
+    # Remove control characters
     text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', text)
     
-    # Limitar longitud
+    # Limit length
     if len(text) > 10000:
         text = text[:10000] + "..."
     
@@ -145,14 +145,14 @@ def sanitize_text(text: str) -> str:
 
 def validate_parameters(params: Dict[str, Any], required_params: List[str]) -> bool:
     """
-    Valida que los parámetros requeridos estén presentes y sean válidos.
+    Validates that required parameters are present and valid.
     
     Args:
-        params: Diccionario de parámetros
-        required_params: Lista de parámetros requeridos
+        params: Dictionary of parameters
+        required_params: List of required parameters
         
     Returns:
-        bool: True si todos los parámetros son válidos, False en caso contrario
+        bool: True if all parameters are valid, False otherwise
     """
     for param in required_params:
         if param not in params or params[param] is None:
@@ -163,15 +163,15 @@ def validate_parameters(params: Dict[str, Any], required_params: List[str]) -> b
 
 def check_data_consistency(data1: Any, data2: Any, field: str) -> bool:
     """
-    Verifica que dos conjuntos de datos sean consistentes en un campo específico.
+    Checks that two data sets are consistent in a specific field.
     
     Args:
-        data1: Primer conjunto de datos
-        data2: Segundo conjunto de datos
-        field: Campo a verificar
+        data1: First data set
+        data2: Second data set
+        field: Field to check
         
     Returns:
-        bool: True si son consistentes, False en caso contrario
+        bool: True if they are consistent, False otherwise
     """
     if not isinstance(data1, dict) or not isinstance(data2, dict):
         return False
@@ -184,15 +184,15 @@ def check_data_consistency(data1: Any, data2: Any, field: str) -> bool:
 
 def validate_age_range(age: int, min_age: int = 16, max_age: int = 45) -> bool:
     """
-    Valida que la edad esté en un rango razonable.
+    Validates that age is in a reasonable range.
     
     Args:
-        age: Edad a validar
-        min_age: Edad mínima permitida
-        max_age: Edad máxima permitida
+        age: Age to validate
+        min_age: Minimum allowed age
+        max_age: Maximum allowed age
         
     Returns:
-        bool: True si la edad es válida, False en caso contrario
+        bool: True if age is valid, False otherwise
     """
     try:
         age_int = int(age)

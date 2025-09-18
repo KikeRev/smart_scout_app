@@ -2,12 +2,12 @@
 from langchain_core.output_parsers import BaseOutputParser
 
 class ScoutParser(BaseOutputParser):
-    """Convierte la salida de la tool en un mensaje único para el front."""
+    """Converts tool output into a single message for the frontend."""
 
     def parse(self, text: str, **kwargs):
         """
-        Si `text` es JSON con 'text' + 'attachments', lo pasa tal cual.
-        Si es normal, lo deja en {'text': text, 'attachments': []}
+        If `text` is JSON with 'text' + 'attachments', passes it as is.
+        If it's normal, puts it in {'text': text, 'attachments': []}
         """
         import json
         try:
