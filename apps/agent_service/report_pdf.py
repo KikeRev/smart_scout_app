@@ -1,40 +1,39 @@
 from __future__ import annotations
-import os, uuid, datetime, textwrap
+import os, uuid
 from pathlib import Path
 from typing import List
-import requests
 from weasyprint import HTML
 from django.template.loader import render_to_string
 from django.templatetags.static import static
 from django.utils import timezone
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 try:
-    # Solo funcionará cuando Django esté inicializado (proceso web)
+    # Only works when Django is initialized (web process)
     from django.conf import settings        # noqa: WPS433  (runtime import)
 
     MEDIA_DIR = Path(settings.MEDIA_ROOT) / "reports"
 
-except Exception:                           # settings no existe → FastAPI
-    # Usa una ruta genérica o variable de entorno
+except Exception:                           # settings doesn't exist → FastAPI
+    # Use a generic path or environment variable
     MEDIA_ROOT_FALLBACK = os.getenv("MEDIA_ROOT", "/app/media")
     MEDIA_DIR = Path(MEDIA_ROOT_FALLBACK) / "reports"
 
-# crea el directorio si no existe
+# create directory if it doesn't exist
 MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
 def _abs_uri(url: str) -> str:
-    """Convierte /media/… o /static/… en file://… para WeasyPrint."""
+    """Converts /media/… or /static/… to file://… for WeasyPrint."""
     if url.startswith("/media/"):
         abs_path = Path(settings.MEDIA_ROOT, url.replace("/media/", "", 1))
         return abs_path.resolve(strict=True).as_uri()
     if url.startswith("/static/"):
-        # STATIC_ROOT ya contiene los archivos recolectados con collectstatic
+        # STATIC_ROOT already contains files collected with collectstatic
         abs_path = Path(settings.STATIC_ROOT, url.replace("/static/", "", 1))
         return abs_path.resolve(strict=True).as_uri()
-    # Si ya es absoluta devuélvela tal cual
+    # If already absolute return as is
     if bool(urlparse(url).netloc):
         return url
-    return url  # último recurso
+    return url  # last resort
 
 
 def build_report_pdf(
@@ -48,30 +47,30 @@ def build_report_pdf(
     cons: List[str],
 ) -> dict:
     """
-    Devuelve {"file_url": "/media/reports/<uuid>.pdf"}
+    Returns {"file_url": "/media/reports/<uuid>.pdf"}
 
-    El agente debe pasar:
-        • objective          → objetivo del informe
-        • base_id            → jugador referencia
-        • candidate_ids      → lista completa sugerida
-        • chosen_id          → jugador recomendado
-        • recommendation     → texto libre resumen
-        • pros, cons         → listas de bullets
+    The agent must pass:
+        • objective          → report objective
+        • base_id            → reference player
+        • candidate_ids      → complete suggested list
+        • chosen_id          → recommended player
+        • recommendation     → free text summary
+        • pros, cons         → bullet lists
     """
     from apps.agent_service.agents.tools import player_news_tool
     from apps.dashboard.views import _context, _fetch_stats
 
-    # 1) recopila stats + gráficos
+    # 1) collect stats + charts
     ctx_dash= _context(base_id, chosen_id, candidate_ids, metrics=[])
     from pprint import pprint
     print("=" * 40, "CTX", "=" * 40)
     pprint(ctx_dash, depth=2, compact=True)
     print("=" * 80)
-    # 2) info jugadores
+    # 2) player info
     players_map = {p["id"]: p for p in _fetch_stats(candidate_ids+[base_id]).values()}
     alt_players = [players_map[i] for i in candidate_ids if i != chosen_id]
 
-    # 3) últimas noticias resumidas
+    # 3) latest summarized news
     news_raw = player_news_tool.invoke(
     {
         "player_id":   chosen_id,                      
@@ -81,29 +80,29 @@ def build_report_pdf(
     )
 
     if isinstance(news_raw, list):                 
-        news_items = news_raw                      # el tool ya devuelve la lista
+        news_items = news_raw                      # the tool already returns the list
     else:
-        news_items = news_raw.get("items", [])     # compatibilidad por si cambia
+        news_items = news_raw.get("items", [])     # compatibility in case it changes
 
     news_summary = [item["summary"] for item in news_items]
 
-    # ---  tabla de candidatos --------------------------------
+    # ---  candidates table --------------------------------
     import pandas as pd
     df_alt = pd.DataFrame(alt_players)[["id", "full_name", "club", "age"]]
     table_alt_html = (
         df_alt.rename(columns={
-            "id": "ID", "full_name": "Jugador", "club": "Club", "age": "Edad"})
+            "id": "ID", "full_name": "Player", "club": "Club", "age": "Age"})
         .to_html(index=False, classes="table table-sm table-striped")
     )
 
-    # 4) monta el HTML
+    # 4) build HTML
     html_str = render_to_string(
         "reports/report.html",
         {
             "objective":   objective,
-            "date":        timezone.now(),        # dd/mm/aaaa hh:mm
+            "date":        timezone.now(),        # dd/mm/yyyy hh:mm
             "candidates":  table_alt_html,
-            "chosen":      players_map[chosen_id],# dict completo
+            "chosen":      players_map[chosen_id],# complete dict
             "summary":     recommendation,
             "pros":        pros,
             "cons":        cons,
@@ -121,22 +120,22 @@ def build_report_pdf(
 
     # 5) HTML → PDF
     file_id   = uuid.uuid4().hex
-    rel_path  = f"reports/{file_id}.pdf"           #   reports/… dentro de MEDIA_ROOT
+    rel_path  = f"reports/{file_id}.pdf"           #   reports/… inside MEDIA_ROOT
     pdf_path  = MEDIA_DIR / f"{file_id}.pdf"
     HTML(string=html_str, base_url=settings.MEDIA_ROOT).write_pdf(target=pdf_path)
 
-    # URL pública (relativa) → /media/reports/…
-    report_url = settings.MEDIA_URL + rel_path     # «/media/…» por defecto
+    # public URL (relative) → /media/reports/…
+    report_url = settings.MEDIA_URL + rel_path     # «/media/…» by default
 
     return {
     "text": (
-        "He generado el informe en PDF. "
-        "Pulsa el botón para descargarlo."
+        "I have generated the PDF report. "
+        "Click the button to download it."
     ),
     "attachments": [
         {
             "type": "file",
-            "title": "informe_scouting.pdf",
+            "title": "scouting_report.pdf",
             "url": report_url,   
         }
     ],
