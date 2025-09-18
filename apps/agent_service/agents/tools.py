@@ -4,12 +4,11 @@ from langchain.tools import StructuredTool
 from apps.agent_service.viz_tools import radar_chart, pizza_chart, radar_comparison_chart, pizza_comparison_chart
 from apps.agent_service.players_service import player_stats
 from apps.agent_service.utils import stats_to_html_table, compare_stats_to_html_table
-from typing import List, Optional       
+from typing import List, Optional, Annotated
 from apps.agent_service.dash_tools import dashboard_inline
 from apps.agent_service.report_pdf import build_report_pdf
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
-from typing import Optional, Annotated
 from apps.agent_service.llm_provider import get_llm
 from apps.agent_service.validation import (
     validate_player_data, 
@@ -23,15 +22,15 @@ from apps.agent_service.validation import (
 
 # --------------------------- 1) Similar Players ----------------------------- #
 class SimilarPlayersInput(BaseModel):
-    """Parámetros para buscar jugadores similares"""
-    player_id: int = Field(..., description="ID del jugador de referencia")
-    position: str = Field(..., description="Posición a comparar (e.g. 'MF')")
-    k: int = Field(10, description="Número de candidatos a devolver")
+    """Parameters to search for similar players"""
+    player_id: int = Field(..., description="Reference player ID")
+    position: str = Field(..., description="Position to compare (e.g. 'MF')")
+    k: int = Field(10, description="Number of candidates to return")
     exclude_club: Optional[str] = Field(
-        None, description="Club a excluir de la búsqueda"
+        None, description="Club to exclude from search"
     )
-    min_minutes: int = Field(0, description="Mínimo de minutos jugados")
-    max_age: int = Field(45, description="Edad máxima")
+    min_minutes: int = Field(0, description="Minimum minutes played")
+    max_age: int = Field(45, description="Maximum age")
 
 def _similar_players(
     player_id: int,
@@ -41,7 +40,7 @@ def _similar_players(
     min_minutes: int = 0,
     max_age: int = 45,
 ) -> List[dict]:
-    """Llama a /players/{id}/similar con los filtros recibidos."""
+    """Calls /players/{id}/similar with the received filters."""
     params = dict(
         position=position,
         k=k,
@@ -170,40 +169,40 @@ def _summarize_player_news(player_id: int, k: int = 5) -> str:
         if not contents:
             return "No hay contenido detallado disponible en las noticias recientes de este jugador."
 
-        # Paso 3: Concatenar y resumir con tu LLM
+        # Step 3: Concatenate and summarize with your LLM
         full_text = "\n\n".join(contents)
 
         prompt = PromptTemplate.from_template(
             """
-            Eres un analista de scouting especializado en evaluar noticias futbolísticas.
+            You are a scouting analyst specialized in evaluating football news.
             
-            **INSTRUCCIONES CRÍTICAS:**
-            - Solo resume información que esté EXPLÍCITAMENTE mencionada en las noticias.
-            - NO inventes datos, fechas, clubes o cifras que no aparezcan en el texto.
-            - Si una noticia no contiene información relevante para scouting, omítela del resumen.
-            - Usa el idioma en que se te ha hecho la petición.
+            **CRITICAL INSTRUCTIONS:**
+            - Only summarize information that is EXPLICITLY mentioned in the news.
+            - DO NOT invent data, dates, clubs or figures that do not appear in the text.
+            - If a news item does not contain scouting-relevant information, omit it from the summary.
+            - Use the language in which the request was made.
             
-            **ASPECTOS A INCLUIR (solo si están en las noticias):**
-            - Traspasos confirmados o rumores específicos con clubes mencionados
-            - Interés de clubes concretos con nombres específicos
-            - Lesiones con detalles médicos mencionados
-            - Declaraciones del jugador, entrenador o directivos
-            - Rendimiento reciente con estadísticas específicas
-            - Situación contractual con fechas o cifras mencionadas
+            **ASPECTS TO INCLUDE (only if they are in the news):**
+            - Confirmed transfers or specific rumors with mentioned clubs
+            - Interest from specific clubs with specific names
+            - Injuries with mentioned medical details
+            - Statements from the player, coach or executives
+            - Recent performance with specific statistics
+            - Contractual situation with mentioned dates or figures
             
-            **FORMATO:**
-            - Máximo 3 párrafos concisos
-            - Estilo técnico y profesional
-            - Solo información verificable en el texto original
+            **FORMAT:**
+            - Maximum 3 concise paragraphs
+            - Technical and professional style
+            - Only verifiable information from the original text
             
-            Noticias:
+            News:
             {text}
 
-            Resumen:"""
+            Summary:"""
         )
 
         chain = LLMChain(
-            llm=get_llm(),  # Usamos tu función aquí
+            llm=get_llm(),  # We use your function here
             prompt=prompt,
         )
         resumen = chain.run({"text": full_text})
@@ -271,49 +270,49 @@ def generate_recommendation_with_news(
     if not player_name or not objective:
         return "Error: Nombre del jugador u objetivo no válidos."
     
-    # Paso 1: Obtener resumen de noticias
+    # Step 1: Get news summary
     summary = summarize_player_news_tool.run({"player_id": chosen_id, "k": 5})
 
-    # Paso 2: Crear prompt con contexto
+    # Step 2: Create prompt with context
     prompt = PromptTemplate.from_template(
         """
-        Eres un analista profesional de scouting con experiencia en fichajes de fútbol.
+        You are a professional scouting analyst with experience in football transfers.
         
-        **INSTRUCCIONES CRÍTICAS:**
-        - Solo usa información que esté EXPLÍCITAMENTE proporcionada en los datos de entrada.
-        - NO inventes estadísticas, fechas, clubes o detalles que no estén en los datos.
-        - Si no tienes información suficiente sobre algún aspecto, reconócelo claramente.
-        - Usa el idioma en que se te ha hecho la petición.
+        **CRITICAL INSTRUCTIONS:**
+        - Only use information that is EXPLICITLY provided in the input data.
+        - DO NOT invent statistics, dates, clubs or details that are not in the data.
+        - If you don't have enough information about some aspect, acknowledge it clearly.
+        - Use the language in which the request was made.
         
-        **OBJETIVO DEL INFORME:**
-        Redactar un informe técnico profesional para recomendar un fichaje basado ÚNICAMENTE en los datos proporcionados.
+        **REPORT OBJECTIVE:**
+        Write a professional technical report to recommend a transfer based ONLY on the provided data.
         
-        **DATOS DISPONIBLES:**
-        - Objetivo del fichaje: {objective}
-        - Jugador recomendado: {player_name}
-        - Resumen de noticias (si existen): {news}
+        **AVAILABLE DATA:**
+        - Transfer objective: {objective}
+        - Recommended player: {player_name}
+        - News summary (if any): {news}
         
-        **ESTRUCTURA DEL INFORME:**
-        1. **Análisis Técnico** (2-3 párrafos):
-           - Virtudes del jugador basadas en datos reales
-           - Áreas de mejora identificadas
-           - Estilo de juego y características técnicas
+        **REPORT STRUCTURE:**
+        1. **Technical Analysis** (2-3 paragraphs):
+           - Player's strengths based on real data
+           - Identified areas for improvement
+           - Playing style and technical characteristics
         
-        2. **Contexto de Mercado** (1 párrafo):
-           - Solo si las noticias contienen información relevante y verificable
-           - Si no hay noticias relevantes, omite esta sección
+        2. **Market Context** (1 paragraph):
+           - Only if the news contains relevant and verifiable information
+           - If there are no relevant news, omit this section
         
-        3. **Justificación del Fichaje** (1 párrafo):
-           - Por qué este jugador encaja en el objetivo planteado
-           - Coherencia con las necesidades del equipo
+        3. **Transfer Justification** (1 paragraph):
+           - Why this player fits the stated objective
+           - Coherence with the team's needs
         
-        **REGLAS DE ESCRITURA:**
-        - Máximo 4 párrafos en total
-        - Estilo técnico y profesional
-        - Solo información verificable
-        - Si no tienes datos suficientes, indícalo claramente
+        **WRITING RULES:**
+        - Maximum 4 paragraphs in total
+        - Technical and professional style
+        - Only verifiable information
+        - If you don't have enough data, indicate it clearly
 
-        Informe:
+        Report:
         """
     )
 
