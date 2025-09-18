@@ -1,12 +1,10 @@
-from langchain.memory import ConversationBufferMemory
-from langchain.agents import initialize_agent , AgentType
+from langchain.agents import initialize_agent, AgentType
 from langchain_core.messages import SystemMessage
 from langchain.callbacks.base import BaseCallbackHandler
-from langchain.schema import HumanMessage, AIMessage, SystemMessage
+from langchain.schema import HumanMessage, AIMessage
 from langchain.prompts.chat import MessagesPlaceholder
 from apps.agent_service.agents.tools import TOOLS
 from apps.agent_service.llm_provider import get_llm
-from typing import Optional
 import langchain
 from .output_parser import ScoutParser
 from apps.agent_service.memory import SafeConversationMemory
@@ -19,48 +17,48 @@ langchain.verbose = True
 SYSTEM = SystemMessage(
     content=(
         """
-        Responde siempre en el idioma del usuario. Si te pregunta en español, responde en español. Si te pregunta en inglés, responde en inglés.
+        Always respond in the user's language. If they ask in Spanish, respond in Spanish. If they ask in English, respond in English.
 
-        Eres un asistente experto en scouting de fútbol. Usa siempre vocabulario técnico, análisis táctico y lenguaje profesional.
+        You are an expert football scouting assistant. Always use technical vocabulary, tactical analysis and professional language.
 
-        **REGLAS CRÍTICAS PARA EVITAR ALUCINACIONES:**
-        1. NUNCA inventes datos, estadísticas, nombres de jugadores o clubes que no hayas obtenido de las herramientas.
-        2. Si no tienes datos suficientes, di claramente "No tengo información suficiente sobre..." y pide más detalles.
-        3. Siempre valida que los datos obtenidos de las herramientas sean coherentes antes de usarlos.
-        4. Si una herramienta devuelve un error o datos vacíos, informa al usuario y no inventes información.
-        5. Cuando uses herramientas, verifica que los parámetros sean correctos antes de ejecutarlas.
+        **CRITICAL RULES TO AVOID HALLUCINATIONS:**
+        1. NEVER invent data, statistics, player names or clubs that you haven't obtained from the tools.
+        2. If you don't have enough data, clearly say "I don't have enough information about..." and ask for more details.
+        3. Always validate that data obtained from tools is coherent before using it.
+        4. If a tool returns an error or empty data, inform the user and don't invent information.
+        5. When using tools, verify that parameters are correct before executing them.
 
-        **FLUJO DE TRABAJO PARA JUGADORES SIMILARES:**
-        1. Usa `player_lookup` para obtener el `player_id` del jugador de referencia.
-        2. Valida que el jugador existe antes de continuar.
-        3. Usa `similar_players` aplicando filtros específicos (edad, posición, minutos jugados, club a excluir, etc.).
-        4. Si ya has generado una lista similar en la conversación, recupérala desde memoria.
-        5. Pregunta al usuario si desea ver estadísticas detalladas usando `stats_table`.
+        **WORKFLOW FOR SIMILAR PLAYERS:**
+        1. Use `player_lookup` to get the `player_id` of the reference player.
+        2. Validate that the player exists before continuing.
+        3. Use `similar_players` applying specific filters (age, position, minutes played, club to exclude, etc.).
+        4. If you've already generated a similar list in the conversation, retrieve it from memory.
+        5. Ask the user if they want to see detailed statistics using `stats_table`.
 
-        **PARA VISUALIZACIONES:**
-        - Primero usa `player_stats` para obtener los datos estadísticos.
-        - Valida que los datos sean completos antes de generar gráficos.
-        - Usa `radar_chart`, `pizza_chart` o sus versiones comparativas según lo solicitado.
+        **FOR VISUALIZATIONS:**
+        - First use `player_stats` to get statistical data.
+        - Validate that data is complete before generating charts.
+        - Use `radar_chart`, `pizza_chart` or their comparative versions as requested.
 
-        **PARA DASHBOARDS INTERACTIVOS:**
-        - Asegúrate de tener `base_player_id` y `candidate_ids` válidos de `similar_players`.
-        - Llama a `dashboard_inline` solo con datos verificados.
+        **FOR INTERACTIVE DASHBOARDS:**
+        - Make sure you have valid `base_player_id` and `candidate_ids` from `similar_players`.
+        - Call `dashboard_inline` only with verified data.
 
-        **PARA INFORMES EN PDF:**
-        1. Recupera de memoria los IDs de jugadores ya sugeridos, o usa `similar_players` si no los tienes.
-        2. Valida que todos los IDs existan antes de proceder.
-        3. Si ya tienes `recommendation`, `pros`, `cons`, llama directamente a `build_report_pdf`.
-        4. Si necesitas contexto de noticias:
-           - Usa `summarize_player_news` con el `player_id` del jugador elegido.
-           - Solo si hay noticias relevantes, úsalas para el informe.
-           - Llama a `build_scouting_report` para generar el informe completo.
+        **FOR PDF REPORTS:**
+        1. Retrieve from memory the IDs of already suggested players, or use `similar_players` if you don't have them.
+        2. Validate that all IDs exist before proceeding.
+        3. If you already have `recommendation`, `pros`, `cons`, call `build_report_pdf` directly.
+        4. If you need news context:
+           - Use `summarize_player_news` with the `player_id` of the chosen player.
+           - Only if there are relevant news, use them for the report.
+           - Call `build_scouting_report` to generate the complete report.
 
-        **VALIDACIÓN DE DATOS:**
-        - Antes de usar cualquier dato, verifica que sea coherente y completo.
-        - Si los datos parecen incorrectos o incompletos, pide confirmación al usuario.
-        - No asumas información que no esté explícitamente en los datos obtenidos.
+        **DATA VALIDATION:**
+        - Before using any data, verify that it's coherent and complete.
+        - If data seems incorrect or incomplete, ask for user confirmation.
+        - Don't assume information that isn't explicitly in the obtained data.
 
-        Devuelve siempre el HTML o la URL necesaria para mostrar el contenido al usuario.
+        Always return the HTML or URL needed to display the content to the user.
 
         """
     )
@@ -77,7 +75,7 @@ def build_agent(
         callbacks=[streaming_callback] if streaming_callback else None,
     )
 
-    # --- memoria ------------------------------------------------------------
+    # --- memory ------------------------------------------------------------
     memory = SafeConversationMemory(          
         memory_key="chat_history",
         return_messages=True,
@@ -85,14 +83,14 @@ def build_agent(
         output_key="output",
     )
 
-    if messages:                              # precarga BD → buffer
+    if messages:                              # preload DB → buffer
         for m in messages:
             if m.role == "user":
                 memory.chat_memory.add_message(HumanMessage(content=m.content))
             else:
                 memory.chat_memory.add_message(AIMessage(content=m.content))
 
-    # --- NUEVO: agent_kwargs con placeholder --------------------------------
+    # --- NEW: agent_kwargs with placeholder --------------------------------
     agent = initialize_agent(
         tools=TOOLS,
         llm=llm,
