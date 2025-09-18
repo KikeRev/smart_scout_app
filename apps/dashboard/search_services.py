@@ -1,17 +1,17 @@
 """
-search_services.py - Servicios para el sistema de búsqueda manual de jugadores
+search_services.py - Services for the manual player search system
 
-Funciones para:
-- Búsqueda de jugadores con filtros
-- Obtención de datos de jugadores
-- Gestión de búsquedas guardadas
+Functions for:
+- Player search with filters
+- Player data retrieval
+- Saved search management
 """
 
 import requests
 from typing import Dict, List, Any, Optional
 import json
 
-# Import Django settings solo cuando esté disponible
+# Import Django settings only when available
 try:
     from django.conf import settings
     DJANGO_AVAILABLE = True
@@ -19,8 +19,8 @@ except ImportError:
     DJANGO_AVAILABLE = False
     settings = None
 
-# URL base de la API de jugadores
-API_BASE_URL = "http://api:8001"  # Ajustar según tu configuración
+# Base URL for the players API
+API_BASE_URL = "http://api:8001"  # Adjust according to your configuration
 
 def search_players(
     query: str = "",
@@ -34,43 +34,43 @@ def search_players(
     per_page: int = 20
 ) -> Dict[str, Any]:
     """
-    Busca jugadores con filtros aplicados
+    Searches players with applied filters
     
     Parameters
     ----------
     query : str
-        Término de búsqueda por nombre
+        Search term by name
     leagues : List[str]
-        Lista de ligas a filtrar
+        List of leagues to filter
     clubs : List[str]
-        Lista de clubes a filtrar
+        List of clubs to filter
     positions : List[str]
-        Lista de posiciones a filtrar
+        List of positions to filter
     age_min : int
-        Edad mínima
+        Minimum age
     age_max : int
-        Edad máxima
+        Maximum age
     min_minutes : int
-        Minutos mínimos jugados
+        Minimum minutes played
     page : int
-        Página actual
+        Current page
     per_page : int
-        Jugadores por página
+        Players per page
         
     Returns
     -------
     Dict[str, Any]
-        Resultados de la búsqueda con paginación
+        Search results with pagination
     """
     try:
-        # Construir parámetros de búsqueda
+        # Build search parameters
         search_params = {
             "query": query,
             "page": page,
             "per_page": per_page
         }
         
-        # Añadir filtros si están presentes
+        # Add filters if present
         if leagues:
             search_params["leagues"] = leagues
         if clubs:
@@ -84,14 +84,14 @@ def search_players(
         if min_minutes is not None:
             search_params["min_minutes"] = min_minutes
         
-        # Hacer la petición a la API
+        # Make request to API
         response = requests.post(f"{API_BASE_URL}/players/search", json=search_params)
         response.raise_for_status()
         
         return response.json()
         
     except requests.exceptions.RequestException as e:
-        # En caso de error, devolver estructura vacía
+        # In case of error, return empty structure
         return {
             "players": [],
             "total": 0,
@@ -103,42 +103,42 @@ def search_players(
 
 def get_player_details(player_ids: List[int]) -> List[Dict[str, Any]]:
     """
-    Obtiene detalles de jugadores por sus IDs
+    Gets player details by their IDs
     
     Parameters
     ----------
     player_ids : List[int]
-        Lista de IDs de jugadores
+        List of player IDs
         
     Returns
     -------
     List[Dict[str, Any]]
-        Lista de datos de jugadores
+        List of player data
     """
     try:
-        # Usar el endpoint /players/all que ya funciona y filtrar localmente
+        # Use the /players/all endpoint that already works and filter locally
         response = requests.get(f"{API_BASE_URL}/players/all", timeout=30)
         response.raise_for_status()
         
         all_players = response.json().get('players', [])
         
-        # Filtrar solo los jugadores que necesitamos
+        # Filter only the players we need
         filtered_players = [p for p in all_players if p.get('id') in player_ids]
         
         return filtered_players
         
     except requests.exceptions.RequestException as e:
-        print(f"Error en get_player_details: {e}")
+        print(f"Error in get_player_details: {e}")
         return []
 
 def get_all_players() -> Dict[str, Any]:
     """
-    Obtiene todos los jugadores de la base de datos para filtrado dinámico
+    Gets all players from the database for dynamic filtering
     
     Returns
     -------
     Dict[str, Any]
-        Lista de todos los jugadores con sus datos
+        List of all players with their data
     """
     try:
         response = requests.get(f"{API_BASE_URL}/players/all")
@@ -147,9 +147,9 @@ def get_all_players() -> Dict[str, Any]:
         return response.json()
         
     except requests.exceptions.RequestException as e:
-        # Fallback: obtener jugadores por lotes
+        # Fallback: get players in batches
         try:
-            # Obtener algunos jugadores de ejemplo
+            # Get some example players
             response = requests.get(f"{API_BASE_URL}/players/search", params={"limit": 1000})
             response.raise_for_status()
             return response.json()
@@ -158,15 +158,15 @@ def get_all_players() -> Dict[str, Any]:
 
 def get_filter_options() -> Dict[str, List[str]]:
     """
-    Obtiene las opciones disponibles para los filtros desde la base de datos
+    Gets available options for filters from the database
     
     Returns
     -------
     Dict[str, List[str]]
-        Diccionario con opciones por filtro
+        Dictionary with options per filter
     """
     try:
-        # Usar el endpoint de FastAPI que obtiene todas las opciones únicas
+        # Use the FastAPI endpoint that gets all unique options
         response = requests.get('http://api:8001/players/filter-options', timeout=30)
         if response.status_code == 200:
             return response.json()
@@ -178,14 +178,14 @@ def get_filter_options() -> Dict[str, List[str]]:
 
 def get_filter_options_fallback() -> Dict[str, List[str]]:
     """
-    Fallback para obtener opciones de filtros desde Django
+    Fallback to get filter options from Django
     """
     try:
-        # Obtener todos los jugadores para extraer opciones únicas
+        # Get all players to extract unique options
         all_players = get_all_players()
         players = all_players.get('players', [])
         
-        # Extraer valores únicos para cada filtro
+        # Extract unique values for each filter
         leagues = list(set([p.get('league', '') for p in players if p.get('league')]))
         clubs = list(set([p.get('club', '') for p in players if p.get('club')]))
         positions = list(set([p.get('position', '') for p in players if p.get('position')]))
@@ -199,12 +199,12 @@ def get_filter_options_fallback() -> Dict[str, List[str]]:
         }
         
     except Exception as e:
-        # Devolver opciones por defecto si hay error
+        # Return default options if there's an error
         return {
             "leagues": ["La Liga", "Premier League", "Serie A", "Bundesliga", "Ligue 1"],
             "clubs": ["Real Madrid", "Barcelona", "Atletico Madrid", "Manchester City", "Liverpool"],
             "positions": ["GK", "DF", "MF", "FW"],
-            "nationalities": ["España", "Argentina", "Brasil", "Francia", "Alemania"]
+            "nationalities": ["Spain", "Argentina", "Brazil", "France", "Germany"]
         }
 
 def get_comparison_data(players: List[Dict[str, Any]], metrics: List[str] = None) -> Dict[str, Any]:
