@@ -209,7 +209,7 @@ def _summarize_player_news(player_id: int, k: int = 5) -> str:
         return resumen.strip()
 
     except Exception as e:
-        return f"Error al generar el resumen de noticias: {str(e)}"
+        return f"Error generating news summary: {str(e)}"
 
 # Tool LangChain
 summarize_player_news_tool = StructuredTool.from_function(
@@ -222,7 +222,7 @@ summarize_player_news_tool = StructuredTool.from_function(
     args_schema=SummarizePlayerNewsInput,
 )
 
-# -------------------------- 4.2) Recomendación con noticias ------------------- #
+# -------------------------- 4.2) Recommendation with news ------------------- #
 
 class BuildScoutingReportInput(BaseModel):
     objective: str = Field(..., description="Report objective (e.g. 'Find young left-back')")
@@ -241,7 +241,7 @@ def generate_recommendation_with_news(
     pros: List[str],
     cons: List[str],
 ) -> str:
-    # Validar parámetros de entrada
+    # Validate input parameters
     if not validate_parameters({
         "chosen_id": chosen_id, 
         "player_name": player_name, 
@@ -253,7 +253,7 @@ def generate_recommendation_with_news(
     }, ["chosen_id", "player_name", "objective", "base_id", "candidate_ids", "pros", "cons"]):
         return "Error: Invalid input parameters to generate recommendation."
     
-    # Validar que los IDs sean enteros positivos
+    # Validate that IDs are positive integers
     if not isinstance(chosen_id, int) or chosen_id <= 0:
         return "Error: Invalid chosen player ID."
     
@@ -261,14 +261,14 @@ def generate_recommendation_with_news(
         return "Error: Invalid base player ID."
     
     if not isinstance(candidate_ids, list) or not all(isinstance(id, int) and id > 0 for id in candidate_ids):
-        return "Error: Lista de IDs de candidatos inválida."
+        return "Error: Invalid candidate IDs list."
     
-    # Sanitizar texto de entrada
+    # Sanitize input text
     player_name = sanitize_text(player_name)
     objective = sanitize_text(objective)
     
     if not player_name or not objective:
-        return "Error: Nombre del jugador u objetivo no válidos."
+        return "Error: Invalid player name or objective."
     
     # Step 1: Get news summary
     summary = summarize_player_news_tool.run({"player_id": chosen_id, "k": 5})
@@ -355,16 +355,16 @@ def build_scouting_report(
     )
 
 
-# --------------------------- 5) Visualización de estadísticas ---------------- #
+# --------------------------- 5) Statistics visualization ---------------- #
 def stats_table(player_name: str) -> str:
     """
-    Busca las estadísticas (player_stats) y las devuelve formateadas
-    como tabla Markdown para su impresión en el chat.
+    Fetches player statistics (player_stats) and returns them formatted
+    as a Markdown table for display in the chat.
     """
     data = player_stats.invoke({"player_name": player_name})
     tabla_html = stats_to_html_table(data["stats"])
     return {
-        "text": f"Aquí tienes la tabla de {player_name}:",
+        "text": f"Here's the table for {player_name}:",
         "attachments": [
             {"type": "table", "html": tabla_html}
         ]
@@ -372,15 +372,15 @@ def stats_table(player_name: str) -> str:
 
 def compare_stats_table(player1_name: str, player2_name: str) -> str:
     """
-    Busca las estadísticas (player_stats) y las devuelve formateadas
-    como tabla Markdown para su impresión en el chat.
+    Fetches player statistics (player_stats) and returns them formatted
+    as a Markdown table for display in the chat.
     """
     player1 = player_stats.invoke({"player_name": player1_name})
     player2 = player_stats.invoke({"player_name": player2_name})
 
     tabla_html = compare_stats_to_html_table(player1["stats"], player2["stats"])
     return {
-        "text": f"Aquí tienes la tabla de {player1_name} vs {player2_name}:",
+        "text": f"Here's the table for {player1_name} vs {player2_name}:",
         "attachments": [
             {"type": "table", "html": tabla_html}
         ]
@@ -390,94 +390,94 @@ pizza_chart_tool = StructuredTool.from_function(
     func=pizza_chart,
     name="pizza_chart",
     description=(
-        "Pizza chart de 9 métricas por rol (verde=ataque, azul=posesión, naranja=defensa)."
-        """Requiere: role (position) ('GK'|'DF'|'MF'|'FW') y stats (dict con las métricas), 
-        el player_name (full_name) y club (team)"""
+        "Pizza chart of 9 role-based metrics (green=attack, blue=possession, orange=defense)."
+        """Requires: role (position) ('GK'|'DF'|'MF'|'FW') and stats (dict with the metrics), 
+        the player_name (full_name) and club (team)"""
         ),
-    return_direct=True          #  <<–– Importante: permite devolver el gráfico directamente al chat 
+    return_direct=True          #  <<–– Important: allows returning the chart directly to the chat 
 )
 
 pizza_comparison_chart_tool = StructuredTool.from_function(
     func=pizza_comparison_chart,
     name="pizza_comparison_chart",
     description=(
-        "Pizza comparison chart de 9 métricas por rol (verde=ataque, azul=posesión, naranja=defensa)."
-        """Requiere: player1_name, player2_name como mínimo, ya que el role lo podemos inferir de las stats"""
+        "Pizza comparison chart of 9 role-based metrics (green=attack, blue=possession, orange=defense)."
+        """Requires: player1_name, player2_name at minimum, as the role can be inferred from the stats"""
         ),
-    return_direct=True          #  <<–– Importante: permite devolver el gráfico directamente al chat 
+    return_direct=True          #  <<–– Important: allows returning the chart directly to the chat 
 )
 
 radar_chart_tool = StructuredTool.from_function(
     func=radar_chart,
     name="radar_chart",
     description=(
-    "Radar de 6 métricas genéricas para un jugador (edad, minutos/juego, partidos_90s, goles, asistencias, G+A)."
-    "Requiere:  un dict con las player stats, el player_name, club, position (role) y nationality."),
-    return_direct=True          #  <<–– Importante: permite devolver el gráfico directamente al chat
+    "Radar of 6 generic metrics for a player (age, minutes/game, games_90s, goals, assists, G+A)."
+    "Requires: a dict with player stats, player_name, club, position (role) and nationality."),
+    return_direct=True          #  <<–– Important: allows returning the chart directly to the chat
 )
 
 radar_comparison_chart_tool = StructuredTool.from_function(
     func=radar_comparison_chart,
     name="radar_comparison_chart",
     description=(
-    "Radar de 6 métricas genéricas para dos jugadores (edad, minutos/juego, partidos_90s, goles, asistencias, G+A)."
-    "Requiere:  player1_name, player2_name como mínimo, ya que el role y el resto lo podemos inferir de las stats."),
-    return_direct=True          #  <<–– Importante: permite devolver el gráfico directamente al chat
+    "Radar of 6 generic metrics for two players (age, minutes/game, games_90s, goals, assists, G+A)."
+    "Requires: player1_name, player2_name at minimum, as the role and the rest can be inferred from the stats."),
+    return_direct=True          #  <<–– Important: allows returning the chart directly to the chat
 )
 
 stats_table_tool = StructuredTool.from_function(
     func=stats_table,
     name="stats_table",
-    description="Genera una tabla HTML de estadísticas de un jugador",
-    return_direct=True          #  <<–– Importante: permite devolver la tabla directamente al chat
+    description="Generates an HTML table of a player's statistics",
+    return_direct=True          #  <<–– Important: allows returning the table directly to the chat
 )
 
 compare_stats_table_tool = StructuredTool.from_function(
     func=compare_stats_table,
     name="compare_stats_table",
-    description="Genera una tabla HTML con estadísticas de dos jugadores y resalta el mejor valor de cada fila",
-    return_direct=True          #  <<–– Importante: permite devolver la tabla directamente al chat
+    description="Generates an HTML table with two players' statistics and highlights the best value in each row",
+    return_direct=True          #  <<–– Important: allows returning the table directly to the chat
 )
 
 build_report_pdf_tool = StructuredTool.from_function(
     func=build_report_pdf,
     name="build_report_pdf",
-    description="Genera un informe descargable en pdf",
-    return_direct=True          #  <<–– Importante: permite devolver la tabla directamente al chat
+    description="Generates a downloadable PDF report",
+    return_direct=True          #  <<–– Important: allows returning the table directly to the chat
 )
 
 dashboard_inline_tool = StructuredTool.from_function(
     func=dashboard_inline,
     name="dashboard_inline",
-    description="Genera un dashboard interactivo con el jugador base y los candidatos",
-    return_direct=True          #  <<–– Importante: permite devolver la URL directamente al chat
+    description="Generates an interactive dashboard with the base player and candidates",
+    return_direct=True          #  <<–– Important: allows returning the URL directly to the chat
 )
 
 build_scouting_report_tool = StructuredTool.from_function(
     func=build_scouting_report,
     name="build_scouting_report",
     description=(
-        "Genera un informe PDF profesional de scouting usando datos estadísticos y contexto de mercado actual "
-        "(noticias recientes). El informe incluye análisis técnico, pros, contras y recomendación final."
+        "Generates a professional PDF scouting report using statistical data and current market context "
+        "(recent news). The report includes technical analysis, pros, cons, and final recommendation."
     ),
     return_direct=True
 )
 
-# --------------------------- 5) Exporta la lista ---------------------------- #
+# --------------------------- 5) Export the list ---------------------------- #
 TOOLS = [
-    player_lookup_tool,           # <-- importante: primero lookup
-    player_stats,                 # <-- herramienta para obtener stats de un jugador
-    stats_table_tool,             # <-- herramienta para formatear stats a Markdown
-    summarize_player_news_tool,       # <-- herramienta para resumir las noticias
-    compare_stats_table_tool,     # <-- herramienta para comparar stats de dos jugadores
-    pizza_chart_tool,             # <-- herramienta para generar pizza charts
-    pizza_comparison_chart_tool,  # <-- herramienta para generar pizza comparison charts
-    radar_chart_tool,             # <-- herramienta para generar radar charts   
-    radar_comparison_chart_tool,  # <-- herramienta para generar radar comparison charts
-    similar_players_tool,         # <-- herramienta para buscar jugadores similares
-    news_search_tool,             # <-- herramienta para buscar noticias
-    player_news_tool,             # <-- herramienta para buscar noticias relaconadas con un jugador
-    dashboard_inline_tool,        # <-- herramienta para generar dashboard inline
-    build_scouting_report_tool,   # <-- Herramienta para generar el la recomendación dentro del report pdf
-    build_report_pdf_tool         # <-- herramienta para crear un report en pfd
+    player_lookup_tool,           # <-- important: first lookup
+    player_stats,                 # <-- tool to get player stats
+    stats_table_tool,             # <-- tool to format stats to Markdown
+    summarize_player_news_tool,       # <-- tool to summarize news
+    compare_stats_table_tool,     # <-- tool to compare stats of two players
+    pizza_chart_tool,             # <-- tool to generate pizza charts
+    pizza_comparison_chart_tool,  # <-- tool to generate pizza comparison charts
+    radar_chart_tool,             # <-- tool to generate radar charts   
+    radar_comparison_chart_tool,  # <-- tool to generate radar comparison charts
+    similar_players_tool,         # <-- tool to search for similar players
+    news_search_tool,             # <-- tool to search for news
+    player_news_tool,             # <-- tool to search for news related to a player
+    dashboard_inline_tool,        # <-- tool to generate inline dashboard
+    build_scouting_report_tool,   # <-- Tool to generate the recommendation within the PDF report
+    build_report_pdf_tool         # <-- tool to create a PDF report
 ] 
