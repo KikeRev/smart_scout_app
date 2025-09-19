@@ -209,10 +209,10 @@ def validate_minutes_played(minutes: int) -> bool:
         minutes: Minutos jugados
         
     Returns:
-        bool: True si los minutos son válidos, False en caso contrario
+        bool: True if minutes are valid, False otherwise
     """
     try:
         minutes_int = int(minutes)
-        return 0 <= minutes_int <= 5000  # Máximo razonable para una temporada
+        return 0 <= minutes_int <= 5000  # Maximum reasonable for a season
     except (ValueError, TypeError):
         return False
