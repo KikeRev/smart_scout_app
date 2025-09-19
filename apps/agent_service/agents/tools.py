@@ -181,6 +181,7 @@ def _summarize_player_news(player_id: int, k: int = 5) -> str:
             - DO NOT invent data, dates, clubs or figures that do not appear in the text.
             - If a news item does not contain scouting-relevant information, omit it from the summary.
             - Use the language in which the request was made.
+            - Format the response as HTML for better PDF integration.
             
             **ASPECTS TO INCLUDE (only if they are in the news):**
             - Confirmed transfers or specific rumors with mentioned clubs
@@ -190,15 +191,19 @@ def _summarize_player_news(player_id: int, k: int = 5) -> str:
             - Recent performance with specific statistics
             - Contractual situation with mentioned dates or figures
             
-            **FORMAT:**
-            - Maximum 3 concise paragraphs
-            - Technical and professional style
-            - Only verifiable information from the original text
+            **FORMAT (HTML):**
+            Use the following HTML structure:
+            <div class="news-summary">
+                <h4>Recent News Summary</h4>
+                <p>Maximum 3 concise paragraphs with technical and professional style.</p>
+                <p>Only verifiable information from the original text.</p>
+                <p>Use <strong> tags for key information and <em> for emphasis.</em></p>
+            </div>
             
             News:
             {text}
 
-            Summary:"""
+            Summary (HTML format):"""
         )
 
         chain = LLMChain(
@@ -283,6 +288,7 @@ def generate_recommendation_with_news(
         - DO NOT invent statistics, dates, clubs or details that are not in the data.
         - If you don't have enough information about some aspect, acknowledge it clearly.
         - Use the language in which the request was made.
+        - Format the response as HTML for PDF integration.
         
         **REPORT OBJECTIVE:**
         Write a professional technical report to recommend a transfer based ONLY on the provided data.
@@ -292,27 +298,30 @@ def generate_recommendation_with_news(
         - Recommended player: {player_name}
         - News summary (if any): {news}
         
-        **REPORT STRUCTURE:**
-        1. **Technical Analysis** (2-3 paragraphs):
-           - Player's strengths based on real data
-           - Identified areas for improvement
-           - Playing style and technical characteristics
+        **REPORT STRUCTURE (HTML FORMAT):**
+        Use the following HTML structure:
         
-        2. **Market Context** (1 paragraph):
-           - Only if the news contains relevant and verifiable information
-           - If there are no relevant news, omit this section
-        
-        3. **Transfer Justification** (1 paragraph):
-           - Why this player fits the stated objective
-           - Coherence with the team's needs
+        <div class="scouting-report">
+            <h3>Technical Analysis</h3>
+            <p>Player's strengths based on real data, identified areas for improvement, and playing style characteristics.</p>
+            
+            <h3>Market Context</h3>
+            <p>Only include if news contains relevant and verifiable information. If no relevant news, omit this section.</p>
+            
+            <h3>Transfer Justification</h3>
+            <p>Why this player fits the stated objective and coherence with team needs.</p>
+        </div>
         
         **WRITING RULES:**
+        - Use proper HTML tags: <h3> for section headers, <p> for paragraphs
         - Maximum 4 paragraphs in total
         - Technical and professional style
         - Only verifiable information
         - If you don't have enough data, indicate it clearly
+        - Use <strong> tags for emphasis on key points
+        - Use <ul> and <li> for lists when appropriate
 
-        Report:
+        Report (HTML format):
         """
     )
 
