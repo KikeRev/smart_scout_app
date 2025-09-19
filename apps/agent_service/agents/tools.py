@@ -58,10 +58,10 @@ def _similar_players(
 similar_players_tool = StructuredTool.from_function(
     name="similar_players",
     description=(
-        "Devuelve una lista de jugadores similares al jugador base "
-        "según vector de características y filtros (posición, minutos, edad, etc.). "
-        "REQUISITOS: player_id debe existir en la base de datos, position debe ser válida ('GK'|'DF'|'MF'|'FW'). "
-        "Siempre valida que el player_id existe antes de usar esta herramienta."
+        "Returns a list of players similar to the base player "
+        "based on feature vector and filters (position, minutes, age, etc.). "
+        "REQUIREMENTS: player_id must exist in the database, position must be valid ('GK'|'DF'|'MF'|'FW'). "
+        "Always validate that the player_id exists before using this tool."
     ),
     func=_similar_players,
     args_schema=SimilarPlayersInput,
@@ -70,13 +70,13 @@ similar_players_tool = StructuredTool.from_function(
 
 # ----------------------------- 2) Player Lookup ----------------------------- #
 class PlayerLookupInput(BaseModel):
-    """Búsqueda rápida de jugadores por nombre (y opcionalmente posición)"""
-    name: str = Field(..., description="Nombre o parte del nombre del jugador")
-    position: str = Field("MF", description="Posición a filtrar (e.g. 'FW', 'MF')")
-    limit: int = Field(5, description="Cuántos resultados devolver")
+    """Quick player search by name (and optionally position)"""
+    name: str = Field(..., description="Player name or part of the name")
+    position: str = Field("MF", description="Position to filter (e.g. 'FW', 'MF')")
+    limit: int = Field(5, description="Number of results to return")
 
 def _player_lookup(name: str, position: str = "MF", limit: int = 5) -> List[dict]:
-    """Llama a /players/search y devuelve los candidatos encontrados."""
+    """Calls /players/search and returns the found candidates."""
     url = "http://api:8001/players/search"
     resp = requests.get(url, params=dict(query=name, position=position, limit=limit), timeout=30)
     resp.raise_for_status()
@@ -85,11 +85,11 @@ def _player_lookup(name: str, position: str = "MF", limit: int = 5) -> List[dict
 player_lookup_tool = StructuredTool.from_function(
     name="player_lookup",
     description=(
-        "Busca en la base de datos interna a partir del nombre (y posicion) y "
-        "devuelve los posibles jugadores con su id, nombre y club. "
-        "REQUISITO: El nombre debe ser exacto o muy similar al nombre en la base de datos. "
-        "Si no encuentra el jugador, devuelve lista vacía. "
-        "Siempre valida que el jugador existe antes de usar su ID en otras herramientas."
+        "Searches the internal database by name (and position) and "
+        "returns possible players with their id, name and club. "
+        "REQUIREMENT: The name must be exact or very similar to the name in the database. "
+        "If it doesn't find the player, returns empty list. "
+        "Always validate that the player exists before using their ID in other tools."
     ),
     func=_player_lookup,
     args_schema=PlayerLookupInput,
@@ -98,8 +98,8 @@ player_lookup_tool = StructuredTool.from_function(
 
 # ------------------------------- 3) News Search ----------------------------- #
 class NewsSearchInput(BaseModel):
-    query: str = Field(..., description="Búsqueda en lenguaje natural")
-    limit: int = Field(5, description="Máximo de noticias a devolver")
+    query: str = Field(..., description="Natural language search")
+    limit: int = Field(5, description="Maximum number of news to return")
 
 def _news_search(query: str, limit: int = 5) -> List[dict]:
     url = "http://api:8001/news/search"
@@ -109,7 +109,7 @@ def _news_search(query: str, limit: int = 5) -> List[dict]:
 
 news_search_tool = StructuredTool.from_function(
     name="news_search",
-    description="Busca noticias futbolísticas relevantes y devuelve título, URL y resumen.",
+    description="Searches for relevant football news and returns title, URL and summary.",
     func=_news_search,
     args_schema=NewsSearchInput,
 )
@@ -117,8 +117,8 @@ news_search_tool = StructuredTool.from_function(
 
 # --------------------------- 4) Player → News ------------------------------- #
 class PlayerNewsInput(BaseModel):
-    player_id: int = Field(..., description="ID del jugador")
-    k: int = Field(5, description="Cuántas noticias devolver")
+    player_id: int = Field(..., description="Player ID")
+    k: int = Field(5, description="Number of news to return")
 
 def _player_news(player_id: int, k: int = 5) -> List[dict]:
     url = f"http://api:8001/news/players/{player_id}/news"
@@ -128,7 +128,7 @@ def _player_news(player_id: int, k: int = 5) -> List[dict]:
 
 player_news_tool = StructuredTool.from_function(
     name="player_news",
-    description="Devuelve las últimas noticias enlazadas a un jugador concreto.",
+    description="Returns the latest news linked to a specific player.",
     func=_player_news,
     args_schema=PlayerNewsInput,
 )
@@ -136,29 +136,29 @@ player_news_tool = StructuredTool.from_function(
 # -------------------------- 4.1) New summarizer -------------------------------#
 
 class SummarizePlayerNewsInput(BaseModel):
-    player_id: int = Field(..., description="ID del jugador")
-    k: Optional[int] = Field(5, description="Número máximo de noticias a resumir")
+    player_id: int = Field(..., description="Player ID")
+    k: Optional[int] = Field(5, description="Maximum number of news to summarize")
 
 def _summarize_player_news(player_id: int, k: int = 5) -> str:
     try:
-        # Validar parámetros de entrada
+        # Validate input parameters
         if not validate_parameters({"player_id": player_id, "k": k}, ["player_id", "k"]):
-            return "Error: Parámetros de entrada inválidos."
+            return "Error: Invalid input parameters."
         
         if not isinstance(player_id, int) or player_id <= 0:
-            return "Error: ID de jugador inválido."
+            return "Error: Invalid player ID."
         
         if not isinstance(k, int) or k <= 0 or k > 20:
-            return "Error: Número de noticias inválido (debe ser entre 1 y 20)."
+            return "Error: Invalid number of news (must be between 1 and 20)."
 
-        # Paso 1: Recuperar noticias
+        # Step 1: Retrieve news
         news = _player_news(player_id=player_id, k=k)
         
-        # Validar datos de noticias
+        # Validate news data
         if not validate_news_data(news):
-            return "No hay noticias relevantes sobre este jugador en los últimos meses."
+            return "No relevant news about this player in recent months."
 
-        # Paso 2: Extraer contenido completo y sanitizar
+        # Step 2: Extract full content and sanitize
         contents = []
         for n in news:
             if n.get("content"):
@@ -167,7 +167,7 @@ def _summarize_player_news(player_id: int, k: int = 5) -> str:
                     contents.append(sanitized_content)
         
         if not contents:
-            return "No hay contenido detallado disponible en las noticias recientes de este jugador."
+            return "No detailed content available in recent news about this player."
 
         # Step 3: Concatenate and summarize with your LLM
         full_text = "\n\n".join(contents)
@@ -215,22 +215,22 @@ def _summarize_player_news(player_id: int, k: int = 5) -> str:
 summarize_player_news_tool = StructuredTool.from_function(
     func=_summarize_player_news,
     name="summarize_player_news",
-    description="Resume en lenguaje técnico las noticias recientes relacionadas con un jugador. "
-    "REQUISITOS: player_id debe existir en la base de datos. "
-    "Solo resume información explícitamente mencionada en las noticias. "
-    "Si no hay noticias relevantes, devuelve mensaje indicando ausencia de información.",
+    description="Summarizes in technical language the recent news related to a player. "
+    "REQUIREMENTS: player_id must exist in the database. "
+    "Only summarizes information explicitly mentioned in the news. "
+    "If there are no relevant news, returns message indicating absence of information.",
     args_schema=SummarizePlayerNewsInput,
 )
 
 # -------------------------- 4.2) Recomendación con noticias ------------------- #
 
 class BuildScoutingReportInput(BaseModel):
-    objective: str = Field(..., description="Objetivo del informe (e.g. 'Buscar lateral izquierdo joven')")
-    base_id: int = Field(..., description="ID del jugador base de comparación")
-    candidate_ids: List[int] = Field(..., description="Lista de IDs de jugadores candidatos")
-    chosen_id: int = Field(..., description="ID del jugador elegido como fichaje recomendado")
-    pros: List[str] = Field(..., description="Lista de ventajas del jugador")
-    cons: List[str] = Field(..., description="Lista de inconvenientes o riesgos del jugador")
+    objective: str = Field(..., description="Report objective (e.g. 'Find young left-back')")
+    base_id: int = Field(..., description="Base player ID for comparison")
+    candidate_ids: List[int] = Field(..., description="List of candidate player IDs")
+    chosen_id: int = Field(..., description="ID of the chosen player as recommended signing")
+    pros: List[str] = Field(..., description="List of player advantages")
+    cons: List[str] = Field(..., description="List of player disadvantages or risks")
 
 def generate_recommendation_with_news(
     chosen_id: int,
@@ -251,14 +251,14 @@ def generate_recommendation_with_news(
         "pros": pros,
         "cons": cons
     }, ["chosen_id", "player_name", "objective", "base_id", "candidate_ids", "pros", "cons"]):
-        return "Error: Parámetros de entrada inválidos para generar recomendación."
+        return "Error: Invalid input parameters to generate recommendation."
     
     # Validar que los IDs sean enteros positivos
     if not isinstance(chosen_id, int) or chosen_id <= 0:
-        return "Error: ID del jugador elegido inválido."
+        return "Error: Invalid chosen player ID."
     
     if not isinstance(base_id, int) or base_id <= 0:
-        return "Error: ID del jugador base inválido."
+        return "Error: Invalid base player ID."
     
     if not isinstance(candidate_ids, list) or not all(isinstance(id, int) and id > 0 for id in candidate_ids):
         return "Error: Lista de IDs de candidatos inválida."
