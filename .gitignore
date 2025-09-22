@@ -30,6 +30,12 @@ __pycache__/
 data/
 *.parquet
 
+# ─── Testing & Coverage ──────────────────────────────────
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+
 # ─── Otros ────────────────────────────────────────────────
 .env 
 /media/charts/
