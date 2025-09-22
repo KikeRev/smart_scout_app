@@ -1,6 +1,6 @@
 [project]
 name = "agent-smart-scouting-ai"
-version = "1.0.0"
+version = "1.0.1"
 description = "Conversational AI scouting platform – FastAPI backend, Django UI, embeddings & RAG"
 authors = [
   { name = "Enrique Revuelta", email = "enrique.revuelta@bain.com" }
