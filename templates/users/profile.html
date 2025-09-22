@@ -3,7 +3,7 @@
 
 {% block fullwidth_content %}
 <div class="page-wrapper-80">
-  <!-- Logo de la aplicación -->
+  <!-- Logo of the application -->
   <section class="text-center py-3">
     <img src="{% static 'img/app_logo_6.png' %}"    
          alt="Smart Scout logo"
@@ -11,18 +11,18 @@
   </section>
   
   <div class="profile-container">
-    <h2 class="profile-title mb-4">Mi cuenta</h2>
+    <h2 class="profile-title mb-4">My Account</h2>
     <div class="profile-content">
       <div class="profile-avatar">
         {% if user_obj.avatar %}
-          <img src="{{ user_obj.avatar.url }}" class="profile-image" alt="Avatar del usuario" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+          <img src="{{ user_obj.avatar.url }}" class="profile-image" alt="User avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
         {% else %}
-          <img src="/static/img/avatar-placeholder.png" class="profile-image" alt="Avatar por defecto" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+          <img src="/static/img/avatar-placeholder.png" class="profile-image" alt="Default avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
         {% endif %}
         <div class="profile-image-fallback" style="display: none;">
           <div class="profile-image-placeholder">
             <i class="bi bi-person-fill" style="font-size: 4rem; color: #6c757d;"></i>
-            <p style="margin-top: 1rem; color: #6c757d; font-size: 0.9rem;">Avatar no disponible</p>
+            <p style="margin-top: 1rem; color: #6c757d; font-size: 0.9rem;">Avatar not available</p>
           </div>
         </div>
       </div>
@@ -31,16 +31,16 @@
         <table class="profile-table">
           <tbody>
             <tr><th>Email</th><td>{{ user_obj.email }}</td></tr>
-            <tr><th>Nombre</th><td>{{ user_obj.name }} {{ user_obj.surname }}</td></tr>
-            <tr><th>Puesto</th><td>{{ user_obj.job_title|default:"—" }}</td></tr>
-            <tr><th>Club favorito</th><td>{{ user_obj.favourite_club|default:"—" }}</td></tr>
-            <tr><th>Ciudad / País</th><td>{{ user_obj.city }}, {{ user_obj.country }}</td></tr>
-            <tr><th>Fecha de nacimiento</th><td>{{ user_obj.birth_date|date:"d M Y" }}</td></tr>
+            <tr><th>Name</th><td>{{ user_obj.name }} {{ user_obj.surname }}</td></tr>
+            <tr><th>Position</th><td>{{ user_obj.job_title|default:"—" }}</td></tr>
+            <tr><th>Favorite Club</th><td>{{ user_obj.favourite_club|default:"—" }}</td></tr>
+            <tr><th>City / Country</th><td>{{ user_obj.city }}, {{ user_obj.country }}</td></tr>
+            <tr><th>Birth Date</th><td>{{ user_obj.birth_date|date:"d M Y" }}</td></tr>
           </tbody>
         </table>
 
         <a href="{% url 'users:profile_edit' %}" class="btn btn-submit mb-3"
-           role="button" aria-label="Editar mi perfil de usuario">Editar perfil</a>
+           role="button" aria-label="Edit my user profile">Edit Profile</a>
       </div>
     </div>
   </div>

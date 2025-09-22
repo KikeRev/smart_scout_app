@@ -155,18 +155,18 @@ MEDIA_ROOT = BASE_DIR / "media"
 TEMPLATES[0]["DIRS"] = [ BASE_DIR / "templates" ]
 
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [ BASE_DIR / "static" ]   # añade tu carpeta
+STATICFILES_DIRS = [ BASE_DIR / "static" ]   # add your folder
 STATIC_ROOT  = BASE_DIR / "staticfiles"      # para collectstatic
 
 MARKDOWNIFY = {
     "bleach": {
         "tags": [
-            "p", "br",              # básicos
+            "p", "br",              # basic
             "strong", "em", "a",
             "h1", "h2", "h3",
             "ul", "ol", "li",
             "table", "thead", "tbody", "tr", "th", "td",
-            "img"                  # ← ¡importante!
+            "img"                  # ← ¡important!
         ],
         "attributes": {
             "a":   ["href", "title"],

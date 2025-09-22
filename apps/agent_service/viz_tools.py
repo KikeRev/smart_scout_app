@@ -3,9 +3,9 @@ from __future__ import annotations
 
 Exposes two LangChain tools that generate PNG files with **mplsoccer**:
 
-* **radar_chart**  – 6 métricas genéricas (edad, min/juego, etc.)
-* **pizza_chart**  – 9 métricas por rol con porciones codificadas por color
-  (🌿 verde = ataque, 🔵 azul = posesión, 🟠 naranja = defensa)
+* **radar_chart**  – 6 generic metrics (age, min/game, etc.)
+* **pizza_chart**  – 9 role-based metrics with color-coded portions
+  (🌿 green = attack, 🔵 blue = possession, 🟠 orange = defense)
 
 Each tool returns the *filesystem path* to a temporary PNG stored under `/tmp`;
 Django/FastAPI should serve the file and embed an `<img>` tag.
@@ -27,20 +27,20 @@ from shutil import move
 from highlight_text import fig_text
 from uuid import uuid4
 
-# ─── Opcional │ registrar la imagen en la BD SOLO cuando hay Django ───
+# ─── Optional │ register image in DB ONLY when Django is available ───
 import importlib
 
 def _django_model(name):
     """
-    Devuelve el modelo Django si Django está configurado;
-    si no, devuelve None para que FastAPI no intente importarlo.
+    Returns the Django model if Django is configured;
+    otherwise returns None so FastAPI doesn't try to import it.
     """
     try:
         from django.conf import settings  # noqa: WPS433
         if settings.configured:
             module, cls = name.rsplit(".", 1)
             return getattr(importlib.import_module(module), cls)
-    except Exception:         # FastAPI: settings no existe
+    except Exception:         # FastAPI: settings doesn't exist
         return None
 
 TempChart = _django_model("apps.charts.models.TempChart")
@@ -72,13 +72,13 @@ TEXT_CLR = "#000000"
 # Metric definitions
 # ────────────────────────────────────────────────────────────────────────────
 RADAR_METRICS: List[Tuple[str, str, Any | None]] = [
-    ("Edad", "age", 45),
-    ("Min/juego", None, 100),          # minutes ÷ 90s
-    ("Partidos_90s", "minutes_90s", 50),
-    ("Goles", "goals", 50),
+    ("Age", "age", 45),
+    ("Min/Games", None, 100),          # minutes ÷ 90s
+    ("Games_90s", "minutes_90s", 50),
+    ("Goals", "goals", 50),
     ("Asist", "assists", 20),
     ("G+A", None, 50),
-    ("%Pases","passes_pct", 100),
+    ("%Pass","passes_pct", 100),
     ("Tackles Won","tackles_won",151),
     ("Interceptions","interceptions", 75),
     ("Challenges","challenges", 200),
@@ -154,7 +154,7 @@ def _save(fig, label: str | None = None) -> dict:
 
     chart = TempChart.objects.create(image=f"charts/{final.name}")
     return {
-        "text": f"Aquí tienes el gráfico{': ' + label if label else ''}.",
+        "text": f"Here's the chart{': ' + label if label else ''}.",
         "attachments": [
             {"type": "image", "url": chart.image.url}
         ],
@@ -164,7 +164,7 @@ def _save(fig, label: str | None = None) -> dict:
 # Radar chart tool
 # ────────────────────────────────────────────────────────────────────────────
 #@tool(description=(
-#    "Radar de 6 métricas genéricas para un jugador (edad, minutos/juego, partidos_90s, goles, asistencias, G+A)."
+#    "Radar of 6 generic metrics for a player (age, minutes/game, games_90s, goals, assists, G+A)."
 #    "Requiere:  un dict con las player stats, el player_name, club, position (role) y nationality.")
 #    )
 def radar_chart(
@@ -353,8 +353,8 @@ def radar_comparison_chart(
 # Pizza chart tool
 # ────────────────────────────────────────────────────────────────────────────
 #@tool(description=(
-#        "Pizza chart de 9 métricas por rol (verde=ataque, azul=posesión, naranja=defensa)."
-#        """Requiere: role (position) ('GK'|'DF'|'MF'|'FW') y stats (dict con las métricas), 
+#        "Pizza chart of 9 role-based metrics (green=attack, blue=possession, orange=defense)."
+#        """Requires: role (position) ('GK'|'DF'|'MF'|'FW') and stats (dict with the metrics), 
 #        el player_name (full_name) y club (team)"""
 #        )
 #      )
@@ -365,21 +365,21 @@ def pizza_chart(
     stats: Optional[Dict[str, Any]] = None,
     team: str | None = None,
 ) -> str:
-    """Crear un pizza plot coloreado por categoría para un jugador.
+    """Create a category-colored pizza plot for a player.
 
     Parameters
     ----------
     role : {'GK', 'DF', 'MF', 'FW'}
-        Rol / posición del jugador.
+        Player role / position.
     stats : dict
-        Fila del DataFrame convertida a dict (`row.to_dict()`).
+        DataFrame row converted to dict (`row.to_dict()`).
     player_name, team : str
-        Metadatos para el encabezado del gráfico.
+        Metadata for the chart header.
 
     Returns
     -------
     str
-        Ruta del PNG temporal con el gráfico.
+        Path to the temporary PNG with the chart.
     """
     if stats is None or role is None:
         fetched = player_stats.invoke({"player_name": player_name})
@@ -395,7 +395,7 @@ def pizza_chart(
     params, values, cats, max_vals = [], [], [], []
     for lbl, col, cat, max_val in ROLE_METRICS[role]:
         val = float(stats.get(col, 0.0))
-        if col in INVERSE:          # invertir métricas donde menos es mejor
+        if col in INVERSE:          # invert metrics where less is better
             val = -val
         params.append(lbl)
         values.append(val)
@@ -471,21 +471,19 @@ def pizza_comparison_chart(
     role: str | None = None,
     
 ) -> str:
-    """Crear un pizza plot coloreado por categoría para un jugador.
+    """Create a category-colored comparison pizza plot for two players.
 
     Parameters
     ----------
+    player1_name, player2_name : str
+        Names of the players to compare.
     role : {'GK', 'DF', 'MF', 'FW'}
-        Rol / posición del jugador.
-    stats : dict
-        Fila del DataFrame convertida a dict (`row.to_dict()`).
-    player_name, team : str
-        Metadatos para el encabezado del gráfico.
+        Player role / position.
 
     Returns
     -------
     str
-        Ruta del PNG temporal con el gráfico.
+        Path to the temporary PNG with the comparison chart.
     """
     fetched1 = player_stats.invoke({"player_name": player1_name})
     fetched2 = player_stats.invoke({"player_name": player2_name})
@@ -506,7 +504,7 @@ def pizza_comparison_chart(
     for lbl, col, cat, max_val in ROLE_METRICS[role]:
         val = float(stats.get(col, 0.0))
         val2 = float(stats2.get(col, 0.0))
-        if col in INVERSE:          # invertir métricas donde menos es mejor
+        if col in INVERSE:          # invert metrics where less is better
             val = -val
             val2 = -val2
         params.append(lbl)

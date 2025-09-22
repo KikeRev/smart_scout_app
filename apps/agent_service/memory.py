@@ -1,18 +1,17 @@
 # apps/agent_service/memory.py
-# apps/agent_service/memory.py
 import json
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import AIMessage, HumanMessage
 
 class SafeConversationMemory(ConversationBufferMemory):
-    """Guarda sólo texto en memoria; evita ValidationError con dicts."""
+    """Saves only text in memory; avoids ValidationError with dicts."""
 
     def save_context(self, inputs: dict, outputs: dict) -> None:
-        # ‑‑ entrada tal cual ‑‑
+        # -- input as is --
         inp = inputs.get(self.input_key, inputs)
         self.chat_memory.add_message(HumanMessage(content=str(inp)))
 
-        # ‑‑ salida: si es dict → toma "text"  o serializa a JSON ‑‑
+        # -- output: if dict → take "text" or serialize to JSON --
         out = outputs.get(self.output_key, outputs)
         if isinstance(out, dict):
             out = out.get("text") or json.dumps(out, ensure_ascii=False)

@@ -3,7 +3,7 @@ from sqlalchemy import select, func, literal, cast
 from sqlalchemy.orm import Session
 import numpy as np
 from pgvector.sqlalchemy import Vector
-from apps.ingestion.seed_and_ingest import Player   # modelo ya existente
+from apps.ingestion.seed_and_ingest import Player   # existing model
 from apps.agent_service.db import get_session
 from typing import List
 from decimal import Decimal
@@ -16,24 +16,24 @@ class PlayerBatchRequest(BaseModel):
 
 
 def _serialize(v):
-    """Convierte cualquier valor de SQLAlchemy a algo JSON-safe."""
+    """Converts any SQLAlchemy value to something JSON-safe."""
     if v is None:
         return None
 
-    # ── vectores o secuencias ───────────────────────────────
+    # ── vectors or sequences ───────────────────────────────
     if isinstance(v, (PGVector, list, tuple, np.ndarray)):
-        # Asegura que *cada* elemento sea float/int nativo
+        # Ensures that *each* element is a native float/int
         return [ _serialize(x) for x in list(v) ]
 
-    # ── escalares numpy (np.float32, np.int64, …) ───────────
+    # ── numpy scalars (np.float32, np.int64, …) ───────────
     if isinstance(v, np.generic):
-        return v.item()           # → float / int de Python
+        return v.item()           # → Python float / int
 
-    # ── Decimals opcionales ─────────────────────────────────
+    # ── optional Decimals ─────────────────────────────────
     if isinstance(v, Decimal):
         return float(v)
 
-    # ── tipos ya serializables (str, int, float, datetime…) ─
+    # ── already serializable types (str, int, float, datetime…) ─
     return v
 
 def player_to_dict(p: Player) -> dict:
@@ -50,7 +50,7 @@ def similar_players(
     max_age: int | None = Query(None, ge=0),
     exclude_club: str | None = Query(
         None,
-        description="Lista de clubes a excluir, separados por coma"
+        description="List of clubs to exclude, separated by comma"
     ),
     k: int = Query(15, le=100),
     db: Session = Depends(get_session),
@@ -63,18 +63,18 @@ def similar_players(
     if isinstance(base_vec, np.ndarray):
         base_vec = base_vec.tolist() 
 
-    filters = [Player.id != player_id]  # nunca devolvemos al propio
+    filters = [Player.id != player_id]  # never return the same player
 
-    # ⬇️ 1. Excluir club del jugador base
+    # ⬇️ 1. Exclude base player's club
     filters.append(Player.club != base.club)
 
-    # ⬇️ 2. Excluir club(es) pasados por query
+    # ⬇️ 2. Exclude club(s) passed by query
     if exclude_club:
         clubs_to_exclude = [c.strip() for c in exclude_club.split(",") if c.strip()]
         if clubs_to_exclude:
             filters.append(Player.club.notin_(clubs_to_exclude))
 
-    # Resto de filtros de inclusión
+    # Rest of inclusion filters
     if nationality:
         filters.append(Player.nationality == nationality)
     if position:
@@ -113,7 +113,7 @@ def similar_players(
         for p, dist in rows
     ]
 
-@router.post("/batch", summary="Devuelve todas las métricas de varios jugadores")
+@router.post("/batch", summary="Returns all metrics for multiple players")
 def players_batch(
     ids: List[int] = Body(..., embed=True, example=[274, 311, 658]),
     db: Session = Depends(get_session),
@@ -137,7 +137,7 @@ def search_players(query: str, limit: int = 5, db: Session = Depends(get_session
 
 @router.get("/all")
 def get_all_players(limit: int = 20000, db: Session = Depends(get_session)):
-    """Obtiene todos los jugadores para filtrado dinámico"""
+    """Gets all players for dynamic filtering"""
     rows = (
         db.query(Player)
           .limit(limit)
@@ -147,20 +147,20 @@ def get_all_players(limit: int = 20000, db: Session = Depends(get_session)):
 
 @router.get("/filter-options")
 def get_filter_options(db: Session = Depends(get_session)):
-    """Obtiene opciones únicas para filtros sin límite de jugadores"""
-    # Obtener ligas únicas
+    """Gets unique options for filters without player limit"""
+    # Get unique leagues
     leagues = db.query(Player.league).filter(Player.league.isnot(None)).distinct().all()
     leagues = [league[0] for league in leagues if league[0]]
     
-    # Obtener equipos únicos
+    # Get unique clubs
     clubs = db.query(Player.club).filter(Player.club.isnot(None)).distinct().all()
     clubs = [club[0] for club in clubs if club[0]]
     
-    # Obtener posiciones únicas
+    # Get unique positions
     positions = db.query(Player.position).filter(Player.position.isnot(None)).distinct().all()
     positions = [position[0] for position in positions if position[0]]
     
-    # Obtener nacionalidades únicas
+    # Get unique nationalities
     nationalities = db.query(Player.nationality).filter(Player.nationality.isnot(None)).distinct().all()
     nationalities = [nationality[0] for nationality in nationalities if nationality[0]]
     
@@ -173,7 +173,7 @@ def get_filter_options(db: Session = Depends(get_session)):
 
 @router.post("/details")
 def get_players_details(request: PlayerBatchRequest, db: Session = Depends(get_session)):
-    """Obtiene detalles de jugadores por sus IDs para el dashboard"""
+    """Gets player details by their IDs for the dashboard"""
     player_ids = request.player_ids
     if not player_ids:
         return []

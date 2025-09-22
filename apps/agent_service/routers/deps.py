@@ -6,11 +6,11 @@ class _Anon(BaseModel):
 
 
 class User(BaseModel):
-    id: int = 0               # lo mínimo que necesitamos - un ID
+    id: int = 0               # minimum we need - an ID
 
 def get_current_user() -> Annotated[User, "stub"]:
     """
-    Versión placeholder que simula un usuario autenticado.
-    Sustitúyelo cuando añadas auth real.
+    Placeholder version that simulates an authenticated user.
+    Replace it when you add real auth.
     """
     return User(id=0)  

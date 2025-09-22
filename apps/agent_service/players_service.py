@@ -1,19 +1,18 @@
 
 from typing import Dict, Any
 from apps.agent_service.db import get_session
-from apps.ingestion.seed_and_ingest import Player       # tu modelo de jugadores
+from apps.ingestion.seed_and_ingest import Player       # your player model
 from langchain.tools import tool
-import pandas as pd
 
-@tool(description="Devuelve role y stats de un jugador (PostgreSQL)")
+@tool(description="Returns role and stats of a player (PostgreSQL)")
 def player_stats(player_name: str) -> Dict[str, any]:
     """
-    Lee el jugador en la BD y devuelve:
-      • role           → posición
-      • stats          → solo columnas escalares (listas/arrays excluidas)
-      • player_name    → nombre completo
+    Reads the player from the database and returns:
+      • role           → position
+      • stats          → only scalar columns (lists/arrays excluded)
+      • player_name    → full name
       • team           → club
-      • nationality    → país
+      • nationality    → country
     """
     #with get_session() as db:
     db = get_session()
@@ -24,17 +23,17 @@ def player_stats(player_name: str) -> Dict[str, any]:
                 .first()
         )
         if row is None:
-            raise ValueError(f"Jugador {player_name} no encontrado")
+            raise ValueError(f"Player {player_name} not found")
 
-        # --- limpia el dict del ORM ---
+        # --- clean the ORM dict ---
         stats = row.__dict__.copy()
         stats.pop("_sa_instance_state", None)
-        # elimina columnas no escalares que rompen tabulate/markdown
+        # remove non-scalar columns that break tabulate/markdown
         stats.pop("feature_vector", None)
 
         return {
             "role":        row.position,
-            "stats":       stats,          # dict limpio, sin arrays
+            "stats":       stats,          # clean dict, no arrays
             "player_name": row.full_name,
             "team":        row.club,
             "nationality": row.nationality,

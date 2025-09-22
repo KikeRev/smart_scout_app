@@ -5,9 +5,9 @@
 <html lang="es">
     <head>
         <meta charset="utf-8">
-        <title>Informe de Scouting</title>
+        <title>Scouting Report</title>
 
-        <!-- Ajustes mínimos de colores/tamaños -->
+        <!-- Minimum color/size adjustments -->
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
 
@@ -27,7 +27,7 @@
             color: var(--smart-green); 
             }
 
-            /* garantiza que todas las imágenes respeten ancho/alto */
+            /* ensures that all images respect width/height */
             .img-fluid { 
             max-width:100%; 
             height:auto; 
@@ -69,16 +69,16 @@
                 <img src="{{ logo_url }}" alt="SmartScoutLogo" class="img-fluid logo-center app-logo">
             </div>
 
-            <h1 class="text-center mb-2">Informe de Scouting</h1>
+            <h1 class="text-center mb-2">Scouting Report</h1>
 
-            <h2>1. Objetivo</h2>
+            <h2>1. Objective</h2>
             <p>{{ objective }}</p>
 
-            <h2>2. Jugadores alternativos propuestos</h2>
+            <h2>2. Proposed Alternative Players</h2>
             {{ candidates|safe }}
 
-            <h2>3. Recomendación</h2>
-            <p><strong>Jugador elegido:</strong> {{ chosen.full_name }} ({{ chosen.club }})</p>
+            <h2>3. Recommendation</h2>
+            <p><strong>Chosen player:</strong> {{ chosen.full_name }} ({{ chosen.club }})</p>
             <p>{{ summary }}</p>
 
             <div class="row g-4">
@@ -87,21 +87,21 @@
                     <ul>{% for p in pros %}<li>{{ p }}</li>{% endfor %}</ul>
                 </div>
                 <div class="col-md-6">
-                    <h4 class="text-danger" style="color:red">Contras</h4>
+                    <h4 class="text-danger" style="color:red">Cons</h4>
                     <ul>{% for c in cons %}<li>{{ c }}</li>{% endfor %}</ul>
                 </div>
             </div>
 
-            <h2 class="mt-4">4. Resumen de prensa reciente</h2>
+            <h2 class="mt-4">4. Recent news summary</h2>
             <ul>
                 {% for n in news %}
                     <li>{{ n }}</li>
                 {% empty %}
-                    <li><em>No se encontraron noticias recientes.</em></li>
+                    <li><em>No recent news found.</em></li>
                 {% endfor %}
             </ul>
 
-            <h2 class="mt-4">5. Comparativa estadística</h2>
+            <h2 class="mt-4">5. Statistical comparison</h2>
             {{ table_html|safe }}
 
             <div class="row text-center my-4">
@@ -118,7 +118,7 @@
             </div>
         </div>
 
-        <!-- ---------- footer social original de base.html ---------- -->
+        <!-- ---------- footer social original from base.html ---------- -->
         <footer class="site-footer">
             <div class="footer-container">
                 <p>

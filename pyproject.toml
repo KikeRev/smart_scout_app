@@ -1,6 +1,6 @@
 [project]
 name = "agent-smart-scouting-ai"
-version = "0.0.1"
+version = "1.0.0"
 description = "Conversational AI scouting platform – FastAPI backend, Django UI, embeddings & RAG"
 authors = [
   { name = "Enrique Revuelta", email = "enrique.revuelta@bain.com" }
@@ -9,69 +9,68 @@ requires-python = ">=3.11"
 
 dependencies = [
   # --- Web & API layer ---
-  "fastapi",
-  "uvicorn[standard]",
-  "django>=5.2.4",
-  "django-bootstrap5>=25.1",
-  "django-widget-tweaks>=1.5.0",
-  "dj-database-url>=1.0",
-  "python-decouple>=3.8",
-  "django-allauth",
-  "django-markdownify>=0.9.5",
-
+  "fastapi==0.116.1",
+  "uvicorn[standard]==0.35.0",
+  "django==5.2.6",
+  "django-bootstrap5==25.2",
+  "django-widget-tweaks==1.5.0",
+  "dj-database-url==3.0.1",
+  "python-decouple==3.8",
+  "django-allauth==65.11.2",
+  "django-markdownify==0.9.5",
 
   # --- GenAI & RAG ---
-  "langchain",
-  "langgraph",
-  "sentence-transformers",
-  "llama-cpp-python",
-  "faiss-cpu>=1.8",
-  "transformers>=4.43",
-  "torch>=2.3",
-  "sentencepiece>=0.2",
-  "langchain-community>=0.0.34",
-  "openai>=1.30.0",
-  "langchain-openai>=0.1.8",
+  "langchain==0.3.27",
+  "langgraph==0.6.7",
+  "sentence-transformers==5.1.0",
+  "llama-cpp-python==0.3.16",
+  "faiss-cpu==1.12.0",
+  "transformers==4.56.1",
+  "torch==2.8.0",
+  "sentencepiece==0.2.1",
+  "langchain-community==0.3.29",
+  "openai==1.107.1",
+  "langchain-openai==0.3.33",
 
   # --- Data processing & ML ---
-  "pandas",
-  "numpy",
-  "scipy",
-  "scikit-learn",
-  "rapidfuzz",
-  "matplotlib",
-  "plotly",
-  "mplsoccer",
-  "highlight_text",
-  "unidecode",
+  "pandas==2.3.2",
+  "numpy==2.3.3",
+  "scipy==1.16.2",
+  "scikit-learn==1.7.2",
+  "rapidfuzz==3.14.1",
+  "matplotlib==3.10.6",
+  "plotly==6.3.0",
+  "mplsoccer==1.5.1",
+  "highlight-text==0.2",
+  "unidecode==1.4.0",
 
   # --- ETL / scraping ---
-  "feedparser>=6.0",
-  "newspaper3k>=0.2.8",
-  "lxml_html_clean",
-  "tabulate>=0.9",
-  "requests",
+  "feedparser==6.0.12",
+  "newspaper3k==0.2.8",
+  "lxml_html_clean==0.4.2",
+  "tabulate==0.9.0",
+  "requests==2.32.5",
 
   # --- Vector & storage ---
-  "psycopg2-binary",
-  "pgvector",
-  "redis",
-  "sqlalchemy",
+  "psycopg2-binary==2.9.10",
+  "pgvector==0.4.1",
+  "redis==6.4.0",
+  "sqlalchemy==2.0.43",
 
   # --- Task queue & workers ---
-  "celery>=5.4",
-  "python-dotenv",
+  "celery==5.5.3",
+  "python-dotenv==1.1.1",
 
   # --- Reporting ---
-  "fpdf2",
-  "kaleido",
-  "markdown",
-  "cairosvg",
-  "weasyprint",
+  "fpdf2==2.8.4",
+  "kaleido==1.1.0",
+  "markdown==3.9",
+  "cairosvg==2.8.2",
+  "weasyprint==66.0",
 
   # --- Dev & notebooks (optional, installed in dev profile) ---
-  "jupyterlab",
-  "ipykernel"
+  "jupyterlab==4.4.7",
+  "ipykernel==6.30.1"
 ]
 
 [tool.pip]

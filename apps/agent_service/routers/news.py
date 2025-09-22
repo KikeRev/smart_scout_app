@@ -6,12 +6,12 @@ from pgvector.sqlalchemy import Vector
 from apps.agent_service.db import get_session
 from apps.ingestion.seed_and_ingest import FootballNews, player_news
 from sentence_transformers import SentenceTransformer
-import os, numpy as np
+import os
 import sqlalchemy as sa
 
 router = APIRouter(prefix="/news", tags=["news"])
 
-# ---------- 1. Noticias por jugador ---------------------------------
+# ---------- 1. News by player ---------------------------------
 @router.get("/players/{player_id}/news")
 def player_news_endpoint(
     player_id: int,
@@ -39,14 +39,14 @@ def player_news_endpoint(
     ]
 
 
-# ---------- 2. Búsqueda semántica global ----------------------------
+# ---------- 2. Global semantic search ----------------------------
 
 
-# Reutiliza el embedder que ya usas en seed_and_ingest
+# Reuse the embedder you already use in seed_and_ingest
 _EMB_MODEL = os.getenv("EMB_MODEL", "sentence-transformers/all-mpnet-base-v2")
 _embedder = SentenceTransformer(_EMB_MODEL)
 
-EMB_DIM = 768  # la misma dimensión que usaste al crear la columna embedding
+EMB_DIM = 768  # same dimension you used when creating the embedding column
 
 @router.get("/search")
 def news_search_endpoint(

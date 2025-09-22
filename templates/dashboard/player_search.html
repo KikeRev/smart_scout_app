@@ -5,131 +5,131 @@
 <div class="fullscreen-search-wrapper">
 {% csrf_token %}
   <div class="search-layout">
-    <!-- Sidebar con filtros -->
+    <!-- Sidebar with filters -->
     <div class="search-sidebar">
       <div class="sidebar-header">
-        <h5 class="sidebar-title">🔍 Filtros de Búsqueda</h5>
+        <h5 class="sidebar-title">🔍 Search Filters</h5>
         <a href="{% url 'dashboard:home' %}" class="btn btn-sm btn-outline-secondary"
-           role="button" aria-label="Volver al inicio">
-          <i class="fas fa-home" aria-hidden="true"></i> Inicio
+           role="button" aria-label="Return to home">
+          <i class="fas fa-home" aria-hidden="true"></i> Home
         </a>
       </div>
       
       <div class="sidebar-content">
         <form id="searchForm">
-          <!-- Búsqueda por texto -->
+          <!-- Text search -->
           <div class="mb-3">
-            <label for="query" class="form-label">Nombre del jugador</label>
+            <label for="query" class="form-label">Player Name</label>
             <div class="position-relative">
-              <input type="text" class="form-control" id="query" name="query" placeholder="Ej: Messi" autocomplete="off">
+              <input type="text" class="form-control" id="query" name="query" placeholder="e.g: Messi" autocomplete="off">
               <div id="autocompleteDropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1000; background: white; border: 1px solid #dee2e6; border-radius: 0.375rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);">
-                <!-- Se llenará dinámicamente -->
+                    <!-- Will be filled dynamically -->
               </div>
             </div>
           </div>
           
-          <!-- Filtro por posición -->
+          <!-- Position filter -->
           <div class="mb-3">
-            <label class="form-label">Posición</label>
+            <label class="form-label">Position</label>
             <div class="dropdown">
               <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="positionDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Seleccionar posiciones
+                Select positions
               </button>
               <ul class="dropdown-menu w-100" id="positionDropdownMenu" style="max-height: 200px; overflow-y: auto;">
-                <li><p class="text-muted">Cargando...</p></li>
+                <li><p class="text-muted">Loading...</p></li>
               </ul>
             </div>
           </div>
           
-          <!-- Filtro por liga -->
+          <!-- League filter -->
           <div class="mb-3">
-            <label class="form-label">Liga</label>
+            <label class="form-label">League</label>
             <div class="dropdown">
               <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="leagueDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Seleccionar ligas
+                Select leagues
               </button>
               <ul class="dropdown-menu w-100" id="leagueDropdownMenu" style="max-height: 200px; overflow-y: auto;">
-                <li><p class="text-muted">Cargando...</p></li>
+                <li><p class="text-muted">Loading...</p></li>
               </ul>
             </div>
           </div>
           
-          <!-- Filtro por equipo -->
+          <!-- Team filter -->
           <div class="mb-3">
-            <label class="form-label">Equipo</label>
+            <label class="form-label">Team</label>
             <div class="dropdown">
               <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="clubDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Seleccionar equipos
+                Select teams
               </button>
               <ul class="dropdown-menu w-100" id="clubDropdownMenu" style="max-height: 200px; overflow-y: auto;">
-                <li><p class="text-muted">Cargando...</p></li>
+                <li><p class="text-muted">Loading...</p></li>
               </ul>
             </div>
           </div>
           
-          <!-- Filtro por nacionalidad -->
+          <!-- Nationality filter -->
           <div class="mb-3">
-            <label class="form-label">Nacionalidad</label>
+            <label class="form-label">Nationality</label>
             <div class="dropdown">
               <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="nationalityDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Seleccionar nacionalidades
+                Select nationalities
               </button>
               <ul class="dropdown-menu w-100" id="nationalityDropdownMenu" style="max-height: 200px; overflow-y: auto;">
-                <li><p class="text-muted">Cargando...</p></li>
+                <li><p class="text-muted">Loading...</p></li>
               </ul>
             </div>
           </div>
           
-          <!-- Filtro por edad -->
+          <!-- Age filter -->
           <div class="mb-3">
-            <label for="age_min" class="form-label">Edad mínima</label>
+            <label for="age_min" class="form-label">Minimum age</label>
             <input type="number" class="form-control" id="age_min" name="age_min" min="16" max="45" value="16">
           </div>
           
           <div class="mb-3">
-            <label for="age_max" class="form-label">Edad máxima</label>
+            <label for="age_max" class="form-label">Maximum age</label>
             <input type="number" class="form-control" id="age_max" name="age_max" min="16" max="45" value="45">
           </div>
           
-          <!-- Filtro por minutos -->
+          <!-- Minutes filter -->
           <div class="mb-3">
-            <label for="min_minutes" class="form-label">Minutos mínimos</label>
+            <label for="min_minutes" class="form-label">Minimum minutes</label>
             <input type="number" class="form-control" id="min_minutes" name="min_minutes" min="0" value="0">
           </div>
           
           <button type="submit" class="btn btn-primary w-100"
-                  role="button" aria-label="Buscar jugadores con los filtros aplicados">
-            Buscar
+                  role="button" aria-label="Search players with applied filters">
+            Search
           </button>
         </form>
         
-        <!-- Métricas seleccionadas -->
+        <!-- Selected metrics -->
         <div class="mt-4">
-          <h6 class="text-muted">📊 Métricas</h6>
+          <h6 class="text-muted">📊 Metrics</h6>
           <div id="metricsSelector">
-            <p class="text-muted">Selecciona jugadores para ver métricas disponibles</p>
+            <p class="text-muted">Select players to see available metrics</p>
           </div>
         </div>
         
-        <!-- Búsquedas guardadas -->
+        <!-- Saved searches -->
         <div class="mt-4">
-          <h6 class="text-muted">🔖 Búsquedas Guardadas</h6>
+          <h6 class="text-muted">🔖 Saved Searches</h6>
           <div id="savedSearches">
-            <p class="text-muted">No hay búsquedas guardadas</p>
+            <p class="text-muted">No saved searches</p>
           </div>
         </div>
       </div>
     </div>
     
-    <!-- Área principal de resultados -->
+    <!-- Main results area -->
     <div class="search-main">
       <div class="main-header">
-        <h5 class="main-title">Jugadores</h5>
+        <h5 class="main-title">Players</h5>
         <div class="main-actions">
-          <span id="selectedCount" class="btn btn-outline-primary me-2" role="status" aria-live="polite">0 seleccionados</span>
+          <span id="selectedCount" class="btn btn-outline-primary me-2" role="status" aria-live="polite">0 selected</span>
           <button id="createDashboard" class="btn btn-success" disabled
-                  role="button" aria-label="Crear dashboard de comparación con los jugadores seleccionados">
-            Crear Dashboard
+                  role="button" aria-label="Create comparison dashboard with selected players">
+            Create Dashboard
           </button>
         </div>
       </div>
@@ -139,8 +139,8 @@
         <div id="searchResults" class="results-container">
           <div class="text-center text-muted py-5">
             <i class="fas fa-search fa-3x mb-3"></i>
-            <h5>Aplica al menos 2 filtros para ver jugadores</h5>
-            <p>Usa los filtros de la izquierda para buscar jugadores específicos</p>
+            <h5>Apply at least 2 filters to see players</h5>
+            <p>Use the filters on the left to search for specific players</p>
           </div>
         </div>
         
@@ -257,18 +257,18 @@
 </style>
 
 <script>
-// Variables globales
-let selectedPlayers = []; // Array para mantener jugadores seleccionados
-let selectedMetrics = []; // Array para mantener métricas seleccionadas
+// Global variables
+let selectedPlayers = []; // Array to maintain selected players
+let selectedMetrics = []; // Array to maintain selected metrics
 let currentPage = 1;
 let totalPages = 0;
 let allPlayers = [];
 let filteredPlayers = [];
 let availableMetrics = [];
 
-// Inicializar
+// Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    // Solo cargar opciones de filtros, NO todos los jugadores
+    // Only load filter options, NOT all players
     loadFilterOptions();
     loadAvailableMetrics();
     loadSavedSearches();
@@ -351,7 +351,7 @@ function loadAllPlayers() {
     })
     .catch(error => {
         console.error('Error:', error);
-        document.getElementById('searchResults').innerHTML = '<p class="text-danger">Error al cargar jugadores</p>';
+        document.getElementById('searchResults').innerHTML = '<p class="text-danger">Error loading players</p>';
         throw error;
     });
 }
@@ -372,7 +372,7 @@ function loadFilterOptions() {
             populateFilterOptions(data);
         })
         .catch(error => {
-            console.error('Error cargando opciones de filtros:', error);
+            console.error('Error loading filter options:', error);
         });
     });
 }
@@ -490,7 +490,7 @@ function filterPlayers() {
             applyFilters();
         }).catch(error => {
             console.error('Error cargando jugadores:', error);
-            document.getElementById('searchResults').innerHTML = '<p class="text-danger">Error al cargar jugadores</p>';
+            document.getElementById('searchResults').innerHTML = '<p class="text-danger">Error loading players</p>';
         });
         return;
     }
@@ -600,7 +600,7 @@ function togglePlayer(playerId) {
         selectedPlayers = selectedPlayers.filter(id => id !== playerId);
     } else {
         if (selectedPlayers.length >= 3) {
-            alert('Máximo 3 jugadores seleccionados');
+            alert('Maximum 3 players selected');
             document.querySelector(`input[value="${playerId}"]`).checked = false;
             return;
         }
@@ -813,14 +813,14 @@ function handleSearch(e) {
 // Crear dashboard
 function createDashboard() {
     if (selectedPlayers.length === 0) {
-        alert('Selecciona al menos un jugador');
+        alert('Select at least one player');
         return;
     }
     
     selectedMetrics = Array.from(document.querySelectorAll('input[name="metrics"]:checked')).map(cb => cb.value);
     
     if (selectedMetrics.length === 0) {
-        alert('Selecciona al menos una métrica');
+        alert('Select at least one metric');
         return;
     }
     

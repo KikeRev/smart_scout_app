@@ -11,10 +11,10 @@
   
   <div class="py-5">
 
-  <h2 class="section-title mb-4">Mis informes</h2>
+  <h2 class="section-title mb-4">My Reports</h2>
   <a href="{% url 'chats:new' %}" class="btn btn-submit mb-3"
-     role="button" aria-label="Crear un nuevo chat con el agente">
-    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Nuevo chat
+     role="button" aria-label="Create a new chat with the agent">
+    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> New chat
   </a>
 
   {% if sessions %}
@@ -33,8 +33,8 @@
                   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                   hx-target="#sess-{{ s.id }}"   
                   hx-swap="delete"               
-                  hx-confirm="¿Borrar este chat? Se perderán sus mensajes."
-                  role="button" aria-label="Eliminar este chat permanentemente"
+                  hx-confirm="Delete this chat? Its messages will be lost."
+                  role="button" aria-label="Delete this chat permanently"
                 >
                   <i class="bi bi-trash" aria-hidden="true"></i>
                   <span aria-hidden="true">🗑️</span>
@@ -49,8 +49,8 @@
 
               <a href="{% url 'chats:session' s.id %}"
                  class="btn btn-submit mt-auto w-100"
-                 role="button" aria-label="Abrir conversación con {{ s.title }}">
-                 Abrir conversación
+                 role="button" aria-label="Open conversation with {{ s.title }}">
+                 Open conversation
               </a>
 
             </div>
@@ -59,7 +59,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <p class="section-paragraph">Todavía no hay informes.</p>
+    <p class="section-paragraph">No reports yet.</p>
   {% endif %}
 
   </div>

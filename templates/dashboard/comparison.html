@@ -18,13 +18,13 @@
   </div>
   {% else %}
   
-  <!-- Tarjetas de jugadores -->
+  <!-- Player cards -->
   <div class="row mb-4">
     {% for player in players %}
     <div class="col-md-{% if player_count == 1 %}12{% elif player_count == 2 %}6{% else %}4{% endif %}">
       <div class="card h-100">
         <div class="card-body text-center">
-          <!-- Logo del equipo -->
+          <!-- Team logo -->
           {% if player.team_logo %}
           <div class="mb-3">
             <img src="{{ player.team_logo }}" 
@@ -35,27 +35,27 @@
           </div>
           {% endif %}
           
-          <!-- Información del jugador -->
+          <!-- Player information -->
           <h5 class="card-title">{{ player.full_name|default:"N/A" }}</h5>
           <p class="card-text">
-            <strong>Equipo:</strong> {{ player.club|default:"N/A" }}<br>
-            <strong>Nacionalidad:</strong> {{ player.nationality|default:"N/A" }}<br>
-            <strong>Edad:</strong> {{ player.age|default:"N/A" }} años<br>
-            <strong>Posición:</strong> {{ player.position|default:"N/A" }}
+            <strong>Team:</strong> {{ player.club|default:"N/A" }}<br>
+            <strong>Nationality:</strong> {{ player.nationality|default:"N/A" }}<br>
+            <strong>Age:</strong> {{ player.age|default:"N/A" }} years<br>
+            <strong>Position:</strong> {{ player.position|default:"N/A" }}
           </p>
           
-          <!-- Estadísticas básicas -->
+          <!-- Basic statistics -->
           <div class="row text-center">
             <div class="col-4">
-              <small class="text-muted">Minutos</small><br>
+              <small class="text-muted">Minutes</small><br>
               <strong>{{ player.minutes|default:"0" }}</strong>
             </div>
             <div class="col-4">
-              <small class="text-muted">Goles</small><br>
+              <small class="text-muted">Goals</small><br>
               <strong>{{ player.goals|default:"0" }}</strong>
             </div>
             <div class="col-4">
-              <small class="text-muted">Asistencias</small><br>
+              <small class="text-muted">Assists</small><br>
               <strong>{{ player.assists|default:"0" }}</strong>
             </div>
           </div>
@@ -65,32 +65,32 @@
     {% endfor %}
   </div>
   
-  <!-- Gráfico de comparación -->
+  <!-- Comparison chart -->
   {% if chart_url %}
   <div class="card">
     <div class="card-header">
       <h5 class="mb-0">
         {% if player_count == 1 %}
-        📊 Análisis Individual
+        📊 Individual Analysis
         {% else %}
-        📊 Comparación de Jugadores
+        📊 Player Comparison
         {% endif %}
       </h5>
     </div>
     <div class="card-body text-center">
       <img src="{{ chart_url }}" 
-           alt="Gráfico de comparación" 
+           alt="Comparison chart" 
            class="img-fluid"
            style="max-width: 100%; height: auto;">
     </div>
   </div>
   {% endif %}
   
-  <!-- Información de métricas seleccionadas -->
+  <!-- Selected metrics information -->
   {% if selected_metrics %}
   <div class="card mt-4">
     <div class="card-header">
-      <h6 class="mb-0">Métricas mostradas</h6>
+      <h6 class="mb-0">Displayed metrics</h6>
     </div>
     <div class="card-body">
       <div class="row">
@@ -104,68 +104,68 @@
   </div>
   {% endif %}
   
-  <!-- Botones de acción -->
+  <!-- Action buttons -->
   <div class="text-center mt-4">
     <a href="{% url 'dashboard:home' %}" class="btn btn-outline-secondary"
-       role="button" aria-label="Volver al inicio">
-      <span aria-hidden="true">🏠</span> Inicio
+       role="button" aria-label="Return to home">
+      <span aria-hidden="true">🏠</span> Home
     </a>
     <a href="{% url 'dashboard:player_search' %}" class="btn btn-outline-primary ms-2"
-       role="button" aria-label="Realizar una nueva búsqueda de jugadores">
-      <span aria-hidden="true">←</span> Nueva Búsqueda
+       role="button" aria-label="Perform a new player search">
+      <span aria-hidden="true">←</span> New Search
     </a>
     <button class="btn btn-success ms-2" onclick="saveSearch()"
-            role="button" aria-label="Guardar la búsqueda actual en mi perfil">
-      <span aria-hidden="true">💾</span> Guardar Búsqueda
+            role="button" aria-label="Save current search to my profile">
+      <span aria-hidden="true">💾</span> Save Search
     </button>
   </div>
   
   {% endif %}
 </div>
 
-<!-- Modal para guardar búsqueda -->
+<!-- Save search modal -->
 <div class="modal fade" id="saveSearchModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Guardar Búsqueda</h5>
+        <h5 class="modal-title">Save Search</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <form id="saveSearchForm">
           <div class="mb-3">
-            <label for="searchName" class="form-label">Nombre de la búsqueda</label>
+            <label for="searchName" class="form-label">Search name</label>
             <input type="text" class="form-control" id="searchName" required>
           </div>
         </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
-                role="button" aria-label="Cancelar el guardado de la búsqueda">Cancelar</button>
+                role="button" aria-label="Cancel search saving">Cancel</button>
         <button type="button" class="btn btn-primary" onclick="confirmSaveSearch()"
-                role="button" aria-label="Confirmar el guardado de la búsqueda">Guardar</button>
+                role="button" aria-label="Confirm search saving">Save</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-// Guardar búsqueda
+// Save search
 function saveSearch() {
     const modal = new bootstrap.Modal(document.getElementById('saveSearchModal'));
     modal.show();
 }
 
-// Confirmar guardado
+// Confirm save
 function confirmSaveSearch() {
     const searchName = document.getElementById('searchName').value;
     
     if (!searchName.trim()) {
-        alert('Por favor, ingresa un nombre para la búsqueda');
+        alert('Please enter a name for the search');
         return;
     }
     
-    // Obtener datos de la búsqueda actual
+    // Get current search data
     const urlParams = new URLSearchParams(window.location.search);
     const playerIds = urlParams.getAll('player_ids');
     const metrics = urlParams.getAll('metrics');
@@ -173,13 +173,13 @@ function confirmSaveSearch() {
     const searchData = {
         name: searchName,
         search_params: {
-            // Aquí podrías incluir los filtros originales si los tienes
+            // Here you could include the original filters if you have them
         },
         selected_players: playerIds.map(id => parseInt(id)),
         selected_metrics: metrics
     };
     
-    // Obtener el token CSRF
+    // Get CSRF token
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     
     fetch('{% url "dashboard:saved_searches_api" %}', {
@@ -193,18 +193,18 @@ function confirmSaveSearch() {
     .then(response => response.json())
     .then(data => {
         if (data.error) {
-            alert('Error al guardar: ' + data.error);
+            alert('Error saving: ' + data.error);
         } else {
-            alert('Búsqueda guardada exitosamente');
+            alert('Search saved successfully');
             const modal = bootstrap.Modal.getInstance(document.getElementById('saveSearchModal'));
             modal.hide();
-            // Limpiar el campo de nombre
+            // Clear name field
             document.getElementById('searchName').value = '';
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al guardar la búsqueda: ' + error.message);
+        alert('Error saving search: ' + error.message);
     });
 }
 </script>

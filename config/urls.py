@@ -21,10 +21,10 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
 urlpatterns = [
-    # raíz → landing del dashboard
+    # root → dashboard landing
     path("", RedirectView.as_view(url="/dashboard/", permanent=False)),
 
-    # todas las rutas del dashboard bajo /dashboard/…
+    # all dashboard routes under /dashboard/…
     path("dashboard/", include("apps.dashboard.urls", namespace="dashboard")),
 
     path("users/",  include("apps.users.urls",  namespace="users")),
