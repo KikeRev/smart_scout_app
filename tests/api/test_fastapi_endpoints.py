@@ -20,17 +20,21 @@ class TestPlayerEndpoints:
     
     def test_get_players(self):
         """Test GET /players endpoint."""
-        with patch('apps.agent_service.routers.players.get_players') as mock_get:
-            mock_get.return_value = [
-                {
-                    'id': 1,
-                    'full_name': 'Lionel Messi',
-                    'team': 'Inter Miami',
-                    'position': 'FW',
-                    'age': 36,
-                    'nationality': 'Argentina'
-                }
-            ]
+        with patch('apps.agent_service.routers.players.get_session') as mock_session:
+            # Mock the database session and query
+            mock_db = Mock()
+            mock_session.return_value.__enter__.return_value = mock_db
+            
+            # Mock the Player model and query results
+            mock_player = Mock()
+            mock_player.id = 1
+            mock_player.full_name = 'Lionel Messi'
+            mock_player.team = 'Inter Miami'
+            mock_player.position = 'FW'
+            mock_player.age = 36
+            mock_player.nationality = 'Argentina'
+            
+            mock_db.execute.return_value.scalars.return_value.all.return_value = [mock_player]
             
             response = client.get("/players")
             assert response.status_code == 200
