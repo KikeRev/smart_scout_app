@@ -237,51 +237,115 @@ flowchart TD
     Ingest --> Redis
 ```
 
-# 🧐 Agent Workflow Diagram
+# 🧐 Application Workflow Diagram
 
 ```mermaid
 flowchart TD
-    A[User] -->|Natural Query| B[Scout Agent - LangChain]
-    B --> C[LLM with Function Calling - OpenAI]
-    B --> D[Conversation Memory]
-    B --> E[Scouting System Prompt]
-
-    subgraph Tools - LangChain
-        F1[player_lookup]
-        F2[similar_players]
-        F3[player_stats]
-        F4[stats_table / compare_stats_table]
-        F5[radar_chart / pizza_chart / comparisons]
-        F6[news_search / player_news]
-        F6A[summarize_player_news]
-        F7[dashboard_inline]
-        F8[build_report_pdf]
-        F9[build_scouting_report]
-        F10[dashboard_radar_single]
-        F11[dashboard_radar_comparison]
-        F12[get_available_metrics]
-        F13[get_metrics_percentiles_95]
+    %% User Entry Points
+    User[👤 User] -->|"Natural Language Query"| ChatInterface[💬 Chat Interface]
+    User -->|"Manual Search"| SearchInterface[🔍 Search Interface]
+    User -->|"View Reports"| ReportsInterface[📊 Reports Interface]
+    
+    %% Chat Flow - AI Agent
+    ChatInterface -->|"Process Query"| Agent[🤖 Scout Agent - LangChain]
+    Agent -->|"Parse Intent"| LLM[🧠 OpenAI GPT-4]
+    Agent -->|"Store Context"| Memory[💾 Conversation Memory]
+    Agent -->|"Apply Rules"| SystemPrompt[📋 Scouting System Prompt]
+    
+    %% Tool Selection & Execution
+    LLM -->|"Select Tools"| ToolRouter{🔀 Tool Router}
+    
+    %% Chat Flow Tools
+    ToolRouter -->|"Player Analysis"| ChatPlayerTools[👥 Player Analysis Tools]
+    ToolRouter -->|"News Research"| ChatNewsTools[📰 News Research Tools]
+    ToolRouter -->|"Data Visualization"| ChatVizTools[📊 Visualization Tools]
+    ToolRouter -->|"Report Generation"| ChatReportTools[📄 Report Tools]
+    
+    %% Chat Player Tools Detail
+    subgraph ChatPlayerTools[👥 Player Analysis Tools]
+        CPT1[player_lookup<br/>🔍 Find player by name]
+        CPT2[player_stats<br/>📊 Get player statistics]
+        CPT3[similar_players<br/>🔍 Find similar players]
+        CPT4[stats_table<br/>📋 Format stats table]
+        CPT5[compare_stats_table<br/>⚖️ Compare players]
     end
-
-    C --> F1
-    C --> F2
-    C --> F3 --> F4
-    C --> F5
-    C --> F6
-    C --> F6A
-    C --> F7
-    C --> F8
-    C --> F9
-    C --> F10
-    C --> F11
-    C --> F12
-    C --> F13
-
-    F4 -->|HTML table| G1[UI Output]
-    F5 -->|Chart image| G1
-    F7 -->|Inline dashboard| G1
-    F8 -->|PDF URL| G1
-    F9 -->|PDF URL - with recommendation| G1
+    
+    %% Chat News Tools Detail
+    subgraph ChatNewsTools[📰 News Research Tools]
+        CNT1[news_search<br/>🔍 Search football news]
+        CNT2[player_news<br/>👤 Get player news]
+        CNT3[summarize_player_news<br/>📝 Summarize news]
+    end
+    
+    %% Chat Visualization Tools Detail
+    subgraph ChatVizTools[📊 Visualization Tools]
+        CVT1[radar_chart<br/>📊 Single player radar]
+        CVT2[pizza_chart<br/>🍕 Single player pizza]
+        CVT3[dashboard_inline<br/>📊 Interactive dashboard]
+    end
+    
+    %% Chat Report Tools Detail
+    subgraph ChatReportTools[📄 Report Tools]
+        CRT1[build_scouting_report<br/>📋 Generate recommendation]
+        CRT2[build_report_pdf<br/>📄 Create PDF report]
+    end
+    
+    %% Manual Search Flow
+    SearchInterface -->|"Apply Filters"| SearchAPI[🔍 Search API]
+    SearchAPI -->|"Filter Data"| Database[(🗄️ PostgreSQL)]
+    SearchAPI -->|"Generate Charts"| SearchVizTools[📊 Search Visualization Tools]
+    SearchAPI -->|"Save Search"| SavedSearches[💾 Saved Searches]
+    
+    %% Manual Search Visualization Tools
+    subgraph SearchVizTools[📊 Search Visualization Tools]
+        SVT1[dashboard_radar_single<br/>📊 Single player radar]
+        SVT2[dashboard_radar_comparison<br/>📊 Multi-player comparison]
+        SVT3[get_available_metrics<br/>📋 Available metrics]
+        SVT4[get_metrics_percentiles_95<br/>📊 Metric percentiles]
+    end
+    
+    %% Reports Flow
+    ReportsInterface -->|"View Reports"| ReportsAPI[📊 Reports API]
+    ReportsAPI -->|"Load Reports"| PDFStorage[📁 PDF Storage]
+    ReportsAPI -->|"Generate New"| ReportTools[📄 Report Tools]
+    
+    %% Data Sources
+    ChatPlayerTools -->|"Query"| Database
+    ChatNewsTools -->|"Query"| Database
+    SearchAPI -->|"Query"| Database
+    ChatVizTools -->|"Generate"| ChartStorage[🖼️ Chart Storage]
+    SearchVizTools -->|"Generate"| ChartStorage
+    ChatReportTools -->|"Generate"| PDFStorage
+    ReportTools -->|"Generate"| PDFStorage
+    
+    %% Output Generation
+    ToolRouter -->|"Results"| ResponseBuilder[🏗️ Response Builder]
+    ResponseBuilder -->|"Format Output"| OutputFormatter[📝 Output Formatter]
+    
+    %% Output Types
+    OutputFormatter -->|"Text + Charts"| ChatResponse[💬 Chat Response]
+    OutputFormatter -->|"Interactive Dashboard"| DashboardResponse[📊 Dashboard Response]
+    OutputFormatter -->|"PDF Report"| PDFResponse[📄 PDF Response]
+    
+    %% User Interfaces
+    ChatResponse -->|"Display"| ChatInterface
+    DashboardResponse -->|"Display"| SearchInterface
+    PDFResponse -->|"Download"| ReportsInterface
+    
+    %% Styling
+    classDef userInterface fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef agent fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef chatTools fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef searchTools fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef data fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef output fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    
+    class User,ChatInterface,SearchInterface,ReportsInterface userInterface
+    class Agent,LLM,Memory,SystemPrompt agent
+    class ChatPlayerTools,ChatNewsTools,ChatVizTools,ChatReportTools chatTools
+    class SearchVizTools,SearchAPI,ReportsAPI,ReportTools searchTools
+    class Database,ChartStorage,PDFStorage,SavedSearches data
+    class ResponseBuilder,OutputFormatter,ChatResponse,DashboardResponse,PDFResponse output
 ```
 
 # 📄 Prompt Examples
