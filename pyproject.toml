@@ -5,6 +5,8 @@ description = "Conversational AI scouting platform – FastAPI backend, Django U
 authors = [
   { name = "Enrique Revuelta", email = "enrique.revuelta@bain.com" }
 ]
+license = { text = "MIT" }
+readme = "README.md"
 requires-python = ">=3.11"
 
 dependencies = [
