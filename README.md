@@ -470,14 +470,13 @@ Navigate to the "Search Players" option from the main dashboard to access the ma
 
 ## Overview
 
-The Smart Scout App includes a comprehensive testing suite with **63 passing tests** covering unit tests, API tests, validation tests, and integration tests. The testing framework ensures reliability, data quality, and prevents AI hallucinations across all components.
+The Smart Scout App includes a comprehensive testing suite with **63 passing tests** covering unit tests, API tests, and validation tests. The testing framework ensures reliability, data quality, and prevents AI hallucinations across all components.
 
 ## 🎯 **Current Test Status**
 - ✅ **63 Tests Passing** (100% success rate)
 - ✅ **Unit Tests**: 44 tests (Models, Validation)
 - ✅ **API Tests**: 19 tests (FastAPI endpoints)
 - ✅ **Coverage**: >80% for critical components
-- ✅ **CI/CD Ready**: GitHub Actions configuration included
 
 ## Testing Strategy
 
@@ -487,62 +486,31 @@ The Smart Scout App includes a comprehensive testing suite with **63 passing tes
 - **Files**:
   - `test_validation.py` - 27 tests for data validation
   - `test_models_simple.py` - 17 tests for Django models
-- **Run**: `python -m pytest tests/unit/ -v`
 
 ### 2. **API Tests** (FastAPI TestClient)
 - **Location**: `tests/api/`
 - **Coverage**: All REST endpoints, error handling, documentation
 - **Files**:
   - `test_simple_endpoints.py` - 19 tests for API endpoints
-- **Run**: `python -m pytest tests/api/ -v`
 
-### 3. **Integration Tests** (Jupyter Notebooks)
-- **Location**: `tests/integration/`
-- **Purpose**: End-to-end testing of data pipelines
-- **Files**: 
-  - `test_data_pipeline.py` - Data ingestion and processing tests
-  - `notebooks/ingest_news_tests.ipynb` - News ingestion testing
-  - `notebooks/db_checks.ipynb` - Database integrity checks
-
-### 4. **Data Validation Tests** (Custom Validation)
+### 3. **Data Validation Tests** (Custom Validation)
 - **Location**: `apps/agent_service/validation.py`
 - **Purpose**: Prevent AI hallucinations and ensure data integrity
 - **Coverage**: Player data, news data, parameter validation, age ranges
 
 ## Running Tests
 
-### 🐳 **Docker Environment** (Recommended)
+### 🐳 **Docker Environment**
 ```bash
-# Install testing dependencies
-docker-compose exec --user root api uv pip install --system pytest pytest-django pytest-cov pytest-mock pytest-asyncio factory-boy faker httpx coverage
-
-# Run all working tests
+# Run all working tests (63 tests)
 docker-compose exec api python -m pytest tests/unit/test_validation.py tests/unit/test_models_simple.py tests/api/test_simple_endpoints.py -v
 
 # Run specific test categories
 docker-compose exec api python -m pytest tests/unit/ -v                    # Unit tests
 docker-compose exec api python -m pytest tests/api/ -v                     # API tests
-docker-compose exec api python -m pytest tests/integration/ -v             # Integration tests
 
 # Run with coverage
 docker-compose exec api python -m pytest tests/ --cov=. --cov-report=html
-```
-
-### 🖥️ **Local Environment**
-```bash
-# Install dependencies
-pip install -e .
-
-# Run all tests
-python -m pytest tests/ -v
-
-# Run specific categories
-python -m pytest tests/unit/ -v                    # Unit tests
-python -m pytest tests/api/ -v                     # API tests
-python -m pytest tests/integration/ -v             # Integration tests
-
-# Run with coverage
-python -m pytest tests/ --cov=. --cov-report=html --cov-report=term-missing
 ```
 
 ### 🎯 **Quick Test Commands**
@@ -555,110 +523,25 @@ docker-compose exec api python -m pytest tests/api/test_simple_endpoints.py -v
 
 # Model tests only (17 tests)
 docker-compose exec api python -m pytest tests/unit/test_models_simple.py -v
-
-# All working tests (63 tests)
-docker-compose exec api python -m pytest tests/unit/test_validation.py tests/unit/test_models_simple.py tests/api/test_simple_endpoints.py -v
 ```
 
 ## Test Categories
 
 ### 🔍 **Data Quality Tests** (27 tests)
 - **Player Data Validation**: Ensures player information is complete and coherent
-  - Valid player data structure
-  - Required field validation
-  - Position and ID validation
-  - Age range validation
 - **News Data Validation**: Validates news articles and summaries
-  - News data structure validation
-  - Content validation
-  - Source validation
 - **Parameter Validation**: Input parameter validation
-  - Required parameter checking
-  - Data type validation
-  - Range validation
-
-### 🤖 **AI Agent Tests** (Ready for implementation)
-- **Tool Functionality**: Tests all LangChain tools work correctly
-- **Prompt Validation**: Ensures prompts generate expected outputs
-- **Response Formatting**: Validates HTML and JSON output formats
-- **Hallucination Prevention**: Data validation to prevent AI hallucinations
 
 ### 🌐 **API Tests** (19 tests)
 - **Endpoint Availability**: All API endpoints respond correctly
-  - Players endpoints (`/players/{id}/similar`)
-  - News endpoints (`/news/players/{id}/news`, `/news/search`)
-  - Chat endpoints (`/chat`)
 - **Error Handling**: Proper error responses (404, 422, 500)
 - **Documentation**: OpenAPI schema and docs endpoints
-- **Data Serialization**: Proper JSON serialization/deserialization
 
 ### 🎨 **Model Tests** (17 tests)
 - **Django Models**: Model structure and relationships
-  - User model validation
-  - SavedSearch model validation
-  - FootballNews model validation
 - **Field Validation**: Model field constraints and validation
 - **Relationships**: Foreign key relationships and constraints
-- **Meta Configuration**: Model meta settings and ordering
 
-## Continuous Integration
-
-### GitHub Actions (Ready to implement)
-```yaml
-name: Smart Scout App Tests
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:6
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-      
-      - name: Install dependencies
-        run: |
-          pip install -e .
-          pip install pytest pytest-django pytest-cov
-      
-      - name: Run validation tests
-        run: python -m pytest tests/unit/test_validation.py -v
-      
-      - name: Run model tests
-        run: python -m pytest tests/unit/test_models_simple.py -v
-      
-      - name: Run API tests
-        run: python -m pytest tests/api/test_simple_endpoints.py -v
-      
-      - name: Run all tests with coverage
-        run: python -m pytest tests/ --cov=. --cov-report=xml
-      
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
-```
 
 ## Test Structure
 
@@ -669,67 +552,19 @@ tests/
 │   ├── test_validation.py         # 27 validation tests
 │   └── test_models_simple.py      # 17 model tests
 ├── api/                           # API tests
-│   ├── test_simple_endpoints.py   # 19 API endpoint tests
-│   └── test_fastapi_endpoints.py  # Advanced API tests
-├── integration/                   # Integration tests
-│   └── test_data_pipeline.py      # Data pipeline tests
+│   └── test_simple_endpoints.py   # 19 API endpoint tests
 ├── conftest.py                    # Pytest configuration
 └── pytest.ini                    # Pytest settings
 ```
 
-### 🧪 **Test Configuration**
-- **Framework**: pytest + pytest-django
-- **Coverage**: pytest-cov for coverage reporting
-- **Mocking**: pytest-mock for mocking external services
-- **Factories**: factory-boy for test data generation
-- **Faker**: faker for realistic test data
+## Test Coverage
 
-## Test Data
+### 📊 **Current Coverage**
+- **Validation Functions**: >95% coverage (27 tests)
+- **API Endpoints**: >80% coverage (19 tests)
+- **Django Models**: >85% coverage (17 tests)
+- **Overall Target**: >80% total code coverage
 
-### 🎭 **Test Data Generation**
-- **Factory-Boy**: Automated test data generation
-- **Faker**: Realistic fake data for testing
-- **Mock Data**: Isolated test data without database dependencies
-- **Edge Cases**: Boundary conditions and error scenarios
-
-### 📊 **Test Coverage Goals**
-- **Unit Tests**: >90% coverage for validation functions
-- **API Tests**: >80% coverage for endpoint functionality
-- **Model Tests**: >85% coverage for Django models
-- **Integration Tests**: >70% coverage for data pipelines
-
-## Performance Testing
-
-### Load Testing
-- **Concurrent Users**: Test with multiple simultaneous users
-- **Database Queries**: Optimize slow queries
-- **Memory Usage**: Monitor memory consumption
-
-### Stress Testing
-- **Large Datasets**: Test with maximum data volumes
-- **Long-running Processes**: Test ingestion and processing
-- **Error Handling**: Test failure scenarios
-
-## Best Practices
-
-### 1. **Test Naming**
-- Use descriptive test names
-- Follow pattern: `test_<function>_<scenario>_<expected_result>`
-
-### 2. **Test Organization**
-- Group related tests in classes
-- Use fixtures for common test data
-- Keep tests independent and isolated
-
-### 3. **Assertions**
-- Use specific assertions
-- Test both positive and negative cases
-- Include edge cases and error conditions
-
-### 4. **Documentation**
-- Document test purpose and expected behavior
-- Include setup and teardown instructions
-- Maintain test data documentation
 
 ## Troubleshooting
 
@@ -740,85 +575,27 @@ tests/
 # Issue: Database connection errors in tests
 # Solution: Use Docker environment
 docker-compose exec api python -m pytest tests/ -v
-
-# Issue: Django settings not configured
-# Solution: Set environment variable
-export DJANGO_SETTINGS_MODULE=config.settings
-```
-
-#### Import Errors
-```bash
-# Issue: ImportError for FastAPI
-# Solution: Install FastAPI dependencies
-pip install fastapi httpx
-
-# Issue: ImportError for Django models
-# Solution: Ensure Django is properly configured
-python manage.py check
 ```
 
 #### Test Failures
 ```bash
 # Issue: Tests failing due to missing dependencies
-# Solution: Install all testing dependencies
+# Solution: Install testing dependencies
 docker-compose exec --user root api uv pip install --system pytest pytest-django pytest-cov pytest-mock pytest-asyncio factory-boy faker httpx coverage
-
-# Issue: Permission errors
-# Solution: Run with proper user permissions
-docker-compose exec api python -m pytest tests/ -v
 ```
 
 ### 🔍 **Debug Mode**
 ```bash
 # Run tests with verbose output
-python -m pytest tests/ -v -s
+docker-compose exec api python -m pytest tests/ -v -s
 
 # Run specific test with debugging
-python -m pytest tests/unit/test_validation.py::TestPlayerDataValidation::test_validate_player_data_valid -v -s
+docker-compose exec api python -m pytest tests/unit/test_validation.py::TestPlayerDataValidation::test_validate_player_data_valid -v -s
 
 # Run tests with coverage report
-python -m pytest tests/ --cov=. --cov-report=html
-
-# Run tests with detailed output
-python -m pytest tests/ --tb=long -v
+docker-compose exec api python -m pytest tests/ --cov=. --cov-report=html
 ```
 
-### 📊 **Test Coverage**
-```bash
-# Generate coverage report
-python -m pytest tests/ --cov=. --cov-report=html --cov-report=term-missing
-
-# View coverage report
-open htmlcov/index.html  # macOS
-xdg-open htmlcov/index.html  # Linux
-```
-
-## Coverage Goals
-
-### 📈 **Current Coverage Status**
-- ✅ **Validation Functions**: >95% coverage (27 tests)
-- ✅ **API Endpoints**: >80% coverage (19 tests)
-- ✅ **Django Models**: >85% coverage (17 tests)
-- 🎯 **Overall Target**: >80% total code coverage
-
-### 🎯 **Coverage Targets by Category**
-- **Unit Tests**: >90% code coverage for validation functions
-- **API Tests**: >85% endpoint coverage for FastAPI routes
-- **Model Tests**: >85% coverage for Django models
-- **Integration Tests**: >70% coverage for data pipelines
-- **Overall Project**: >80% total code coverage
-
-### 📊 **Coverage Reporting**
-```bash
-# Generate detailed coverage report
-python -m pytest tests/ --cov=. --cov-report=html --cov-report=term-missing
-
-# Coverage by file
-python -m pytest tests/ --cov=apps.agent_service.validation --cov-report=term-missing
-
-# Coverage for specific modules
-python -m pytest tests/ --cov=apps.dashboard.models --cov-report=term-missing
-```
 
 # 📋 Release Notes - Version 1.0
 
