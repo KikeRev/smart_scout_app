@@ -37,8 +37,8 @@ class UserFactory(DjangoModelFactory):
     
     username = Faker('user_name')
     email = Faker('email')
-    first_name = Faker('first_name')
-    last_name = Faker('last_name')
+    name = Faker('first_name')
+    surname = Faker('last_name')
     is_active = True
     is_staff = False
     is_superuser = False
