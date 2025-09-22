@@ -1046,7 +1046,7 @@ select[multiple] { min-height: 150px; }
 /* ==========================================================================
    13) HOME PAGE RESPONSIVE LAYOUT
    ========================================================================== */
-/* Wrapper principal con ancho del 80% */
+/* Wrapper principal with width of 80% */
 .home-page-wrapper {
   width: 80%;
   max-width: 1200px;
@@ -1054,7 +1054,7 @@ select[multiple] { min-height: 150px; }
   padding: 0 1rem;
 }
 
-/* Contenedor principal de la página de inicio */
+/* Main container of the home page */
 .home-container {
   width: 100%;
   max-width: 100%;
@@ -1062,7 +1062,7 @@ select[multiple] { min-height: 150px; }
   padding: 2rem 1rem;
 }
 
-/* Header de bienvenida */
+/* Welcome header */
 .home-header {
   text-align: center;
   margin-bottom: 2rem;
@@ -1077,7 +1077,7 @@ select[multiple] { min-height: 150px; }
   margin-bottom: 0;
 }
 
-/* Sección de acciones */
+/* Actions section */
 .home-actions {
   margin-bottom: 4rem;
   padding: 0 1rem;
@@ -1131,7 +1131,7 @@ select[multiple] { min-height: 150px; }
   opacity: 1;
 }
 
-/* Tonalidades verdes */
+/* Green tones */
 .action-btn.btn-primary {
   background: linear-gradient(135deg, 
     rgba(11, 61, 11, 0.9) 0%, 
@@ -1213,7 +1213,7 @@ select[multiple] { min-height: 150px; }
   transform: translateX(100%) translateY(100%) rotate(45deg);
 }
 
-/* Galería de imágenes */
+/* Gallery of images */
 .home-gallery {
   width: 100%;
   margin-bottom: 3rem;
@@ -1229,7 +1229,7 @@ select[multiple] { min-height: 150px; }
   aspect-ratio: 16/9;
 }
 
-/* Sección de noticias */
+/* News section */
 .home-news {
   width: 100%;
 }
@@ -1393,7 +1393,7 @@ select[multiple] { min-height: 150px; }
 /* Fullscreen chat wrapper - bypasses container but keeps navbar */
 .fullscreen-chat-wrapper {
   width: 100vw;
-  height: calc(100vh - 60px); /* Solo restar altura del navbar */
+  height: calc(100vh - 60px); /* Subtract the height of the navbar */
   margin-left: calc(-50vw + 50%);
   background: url('/static/img/grass.jpg') center center / cover no-repeat;
   background-attachment: fixed;
@@ -1421,7 +1421,7 @@ select[multiple] { min-height: 150px; }
   50% { transform: perspective(1000px) rotateX(5deg) rotateY(-5deg) translateY(-10px); }
 }
 
-/* Mensaje de bienvenida solo para chats nuevos */
+/* Welcome message only for new chats */
 .chat-welcome-message {
   text-align: center;
   padding: 2rem;
@@ -1442,7 +1442,7 @@ select[multiple] { min-height: 150px; }
   overflow: visible;
 }
 
-/* Animación de máquina de escribir */
+/* Typing animation */
 .typewriter-text {
   overflow: visible;
   border-right: 0.15em solid #00ff00;
@@ -1462,7 +1462,7 @@ select[multiple] { min-height: 150px; }
   from, to { border-color: transparent; }
   50% { border-color: #00ff00; }
 }
-/* Wrapper principal de la página de chat con ancho del 95% */
+/* Wrapper principal of the chat page with width of 95% */
 .chat-page-wrapper {
   width: 100%;
   max-width: 100%;
@@ -1472,7 +1472,7 @@ select[multiple] { min-height: 150px; }
   overflow: hidden;
 }
 
-/* Contenedor principal del chat */
+/* Main container of the chat */
 .chat-container {
   width: 100%;
   max-width: 100%;
@@ -1484,7 +1484,7 @@ select[multiple] { min-height: 150px; }
   overflow: hidden;
 }
 
-/* Log de chat mejorado */
+/* Improved chat log */
 .chat-log {
   width: 100%;
   max-width: 100%;
@@ -1495,7 +1495,7 @@ select[multiple] { min-height: 150px; }
   backdrop-filter: blur(10px);
   flex: 1;
   overflow-y: auto;
-  /* Ocultar scrollbar pero mantener funcionalidad */
+  /* Hide scrollbar but keep functionality */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
@@ -1504,7 +1504,7 @@ select[multiple] { min-height: 150px; }
   display: none; /* Chrome, Safari, Opera */
 }
 
-/* Formulario de chat mejorado */
+/* Improved chat form */
 .chat-form {
   width: 100%;
   max-width: 100%;
@@ -1517,7 +1517,7 @@ select[multiple] { min-height: 150px; }
   backdrop-filter: blur(10px);
 }
 
-/* Contenedor del textarea con botón integrado */
+/* Container of the textarea with integrated button */
 .chat-input-container {
   position: relative;
   width: 100%;
@@ -1525,14 +1525,14 @@ select[multiple] { min-height: 150px; }
   align-items: flex-end;
 }
 
-/* Textarea del chat */
+/* Chat textarea */
 .chat-input {
   width: 100% !important;
   max-width: 100% !important;
   min-height: 6rem;
   resize: vertical;
   font-size: 1rem;
-  padding: 1rem 4rem 1rem 1rem; /* Espacio para el botón */
+  padding: 1rem 4rem 1rem 1rem; /* Space for the button */
   border: 2px solid #0b3d0b;
   border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.9);
@@ -1544,7 +1544,7 @@ select[multiple] { min-height: 150px; }
   outline: none;
 }
 
-/* Botón de envío integrado */
+/* Integrated send button */
 .btn-send {
   position: absolute !important;
   right: 0.5rem !important;
@@ -1583,7 +1583,7 @@ select[multiple] { min-height: 150px; }
   transform: translateY(-50%) scale(0.95) !important;
 }
 
-/* Estilos específicos para el ícono de envío */
+/* Specific styles for the send icon */
 .btn-send .send-icon {
   font-size: 20px !important;
   color: white !important;
@@ -1594,7 +1594,7 @@ select[multiple] { min-height: 150px; }
   font-weight: bold !important;
 }
 
-/* Botón de descarga de informe - separado del botón de envío */
+/* Download button - separated from the send button */
 .btn-download {
   display: inline-flex;
   align-items: center;
@@ -1623,7 +1623,7 @@ select[multiple] { min-height: 150px; }
   transform: translateY(0);
 }
 
-/* Estilos para las burbujas de chat */
+/* Chat bubbles styles */
 .chat-row {
   display: flex;
   margin-bottom: 1rem;
@@ -1689,7 +1689,7 @@ select[multiple] { min-height: 150px; }
   animation: logoFloat 3s ease-in-out infinite;
 }
 
-/* Eliminar padding extra de la sección del logo */
+/* Remove extra padding of the logo section */
 section.text-center.py-3 {
   padding: 0 !important;
   margin: 0 !important;
@@ -1697,26 +1697,26 @@ section.text-center.py-3 {
   border: none !important;
 }
 
-/* Eliminar cualquier espacio extra debajo del navbar */
+/* Remove any extra space below the navbar */
 .navbar + section {
   margin-top: 0 !important;
   padding-top: 0 !important;
 }
 
-/* Eliminar cualquier fondo o borde que cause la barra */
+/* Remove any background or border that causes the bar */
 header + section {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
 }
 
-/* Asegurar que no hay separación visual */
+/* Ensure that there is no visual separation */
 .navbar {
   margin-bottom: 0 !important;
   border-bottom: none !important;
 }
 
-/* Ocultar el contenedor main que causa el espacio extra solo en el chat */
+/* Hide the main container that causes the extra space only in the chat */
 .fullscreen-chat-wrapper main.container.py-4 {
   display: none !important;
 }
@@ -1881,7 +1881,7 @@ header + section {
   flex-direction: column;
 }
 
-/* Responsive para chat con sidebar */
+/* Responsive for chat with sidebar */
 @media (max-width: 768px) {
   .chat-layout {
     flex-direction: column;
@@ -2028,7 +2028,7 @@ header + section {
   font-weight: 600 !important;
 }
 
-/* Responsive para perfil */
+/* Responsive for profile */
 @media (min-width: 768px) {
   .profile-content {
     flex-direction: row;
@@ -2045,7 +2045,7 @@ header + section {
   }
 }
 
-/* Responsive para chat */
+/* Responsive for chat */
 @media (min-width: 768px) {
   .chat-page-wrapper {
     width: 95%;
@@ -2124,7 +2124,7 @@ header + section {
 /* ==========================================================================
    15) GENERAL FULL-WIDTH LAYOUT CLASSES
    ========================================================================== */
-/* Clase genérica para páginas con ancho del 80% */
+/* Generic class for pages with width of 80% */
 .page-wrapper-80 {
   width: 80%;
   max-width: 1200px;
@@ -2132,7 +2132,7 @@ header + section {
   padding: 0 1rem;
 }
 
-/* Clase genérica para páginas con ancho del 85% */
+/* Generic class for pages with width of 85% */
 .page-wrapper-85 {
   width: 85%;
   max-width: 1300px;
@@ -2140,7 +2140,7 @@ header + section {
   padding: 0 1rem;
 }
 
-/* Clase genérica para páginas con ancho del 90% */
+/* Generic class for pages with width of 90% */
 .page-wrapper-90 {
   width: 90%;
   max-width: 1400px;
@@ -2148,7 +2148,7 @@ header + section {
   padding: 0 1rem;
 }
 
-/* Clase genérica para páginas con ancho del 95% */
+/* Generic class for pages with width of 95% */
 .page-wrapper-95 {
   width: 95%;
   max-width: 1600px;
@@ -2156,7 +2156,7 @@ header + section {
   padding: 0 1rem;
 }
 
-/* Clase genérica para páginas con ancho del 75% */
+/* Generic class for pages with width of 75% */
 .page-wrapper-75 {
   width: 75%;
   max-width: 1200px;
@@ -2164,7 +2164,7 @@ header + section {
   padding: 0 1rem;
 }
 
-/* Responsive para las clases genéricas */
+/* Responsive for the generic classes */
 @media (min-width: 768px) {
   .page-wrapper-80, .page-wrapper-85, .page-wrapper-75 {
     padding: 0 2rem;
@@ -2193,23 +2193,21 @@ form.chat-form {
 }
 
 form.chat-form textarea.chat-input {
-  width: 100% !important;   /* llena todo el contenedor */
-  max-width: none !important;  /* sin límite horizontal */
+  width: 100% !important;   
+  max-width: none !important;  
   min-height: 6rem;
-  resize: vertical;         /* sigue permitiendo estirar a lo alto */
+  resize: vertical;        
 }
 
 textarea.chat-input {
   width: 100%;
-  min-width: 6rem;            /* llena el padre */
-  max-width: 80%;       /* tope opcional */
-  min-height: 6rem;       /* altura cómoda */
-  resize: vertical;       /* solo estirar en vertical */
-  resize: horizontal;
-  font-size: 1rem;        /* texto legible */
+  min-width: 6rem;            
+  max-width: 80%;       
+  min-height: 6rem;       
+  resize: vertical;       
+  font-size: 1rem;        
 }
 
-/* .btn-send styles moved to chat section above */
 
 .btn-delete {
   background: none;
@@ -2221,13 +2219,13 @@ textarea.chat-input {
 .btn-delete:hover { color:#a00; }
 
 .msg-body img {
-    display: block !important;      /* anula posibles display:none  */
-    max-width: 100%;               /* que no se salga del bocadillo */
-    height: auto;                  /* mantiene proporción            */
-    margin: 0.75rem 0;             /* un poco de aire                */
+    display: block !important;      
+    max-width: 100%;               
+    height: auto;                  
+    margin: 0.75rem 0;             
 }
 
-/* -- Estilo de mensajes tipo WhatsApp -- */
+/* -- WhatsApp style messages -- */
 .chat-row {
     display: flex;
     margin: 0.5rem 1rem;
@@ -2271,7 +2269,7 @@ textarea.chat-input {
     text-align: left;
 }
 
-/* -- Cola de burbuja tipo WhatsApp -- */
+/* -- WhatsApp bubble queue -- */
 .bubble-user::after {
     content: "";
     position: absolute;
@@ -2298,7 +2296,7 @@ textarea.chat-input {
     margin-left: -1px;
 }
 
-/* -- Animación de entrada -- */
+/* -- Entry animation -- */
 @keyframes fadeInUp {
     to {
         opacity: 1;
@@ -2306,7 +2304,7 @@ textarea.chat-input {
     }
 }
 
-/* Contenedor principal del efecto */
+/* Main container of the effect */
 .typewriter-wrapper {
   display: inline-block;
   font-size: clamp(1.3rem, 2.8vw, 1.6rem);
@@ -2320,7 +2318,7 @@ textarea.chat-input {
   position: relative;
 }
 
-/* Texto animado */
+/* Animated text */
 .typewriter-text {
   display: inline-block;
   animation: typing 3s steps(45, end) forwards;
@@ -2328,14 +2326,14 @@ textarea.chat-input {
   white-space: nowrap;
 }
 
-/* Cursor independiente */
+/* Independent cursor */
 .typewriter-cursor {
   display: inline-block;
   color: #0b3d0b;
   animation: blink-caret 0.6s step-end 5 forwards;
 }
 
-/* Emoji aparece al final */
+/* Emoji appears at the end */
 .bot-icon {
   display: inline-block;
   opacity: 0;
@@ -2344,13 +2342,13 @@ textarea.chat-input {
   animation-delay: 3.2s;
 }
 
-/* Animación de escritura */
+/* Writing animation */
 @keyframes typing {
   from { width: 0 }
   to { width: 100% }
 }
 
-/* Parpadeo del cursor (hasta que desaparece) */
+/* Blink of the cursor (until it disappears) */
 @keyframes blink-caret {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
@@ -2358,7 +2356,7 @@ textarea.chat-input {
   100% { opacity: 0; }
 }
 
-/* Aparición suave del emoji */
+/* Smooth appearance of the emoji */
 @keyframes show-bot {
   from { opacity: 0; transform: scale(0.8) translateY(5px); }
   to { opacity: 1; transform: scale(1) translateY(0); }

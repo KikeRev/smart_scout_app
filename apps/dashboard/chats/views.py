@@ -97,7 +97,7 @@ def chat_api(request):
         for m in past
     ]
 
-    # 4. invoca al micro‑servicio FastAPI
+    # 4. Invoque micro‑service FastAPI
     payload = {
         "session_id": str(session.id),
         "user_id":    str(user.id),
@@ -108,10 +108,10 @@ def chat_api(request):
     r.raise_for_status()
     answer = r.json()["answer"]
 
-    # 5. guarda la respuesta del asistente
+    # 5. Save the assistant's response
     Message.objects.create(session=session, role="assistant", content=answer)
 
-    # 6. título automático (primera vez)
+    # 6. Automatic title (first time)
     if not session.title:
         session.title = answer.split("\n", 1)[0][:100]
         session.save(update_fields=["title"])
@@ -137,17 +137,17 @@ def chat_stream(request):
     else:
         session = ChatSession.objects.create(user=user)
 
-    # 2. guarda el turno del usuario (✔ una sola vez)
+    # 2. Save the user's turn (✔ once)
     Message.objects.create(session=session, role="user", content=text)
 
-    # 3. histórico para el agente
+    # 3. History for the agent
     past = session.messages.order_by("-created_at")[:20][::-1]
     history = [
         {"role": "user" if m.role == "user" else "assistant", "content": m.content}
         for m in past
     ]
 
-    # 4. generador SSE
+    # 4. SSE generator
     def event_stream():
         payload = {
             "session_id": str(session.id),
@@ -171,19 +171,19 @@ def chat_stream(request):
                 obj   = json.loads(raw)
                 delta = obj.get("content", "")
                 assistant_chunks.append(delta)
-                yield f"data: {delta}\n\n"      # envía token al navegador
+                yield f"data: {delta}\n\n"      # send token to the browser
 
             full_answer = "".join(assistant_chunks)
 
-        # 5. guarda la respuesta completa
+        # 5. Save the complete answer
         Message.objects.create(session=session, role="assistant", content=full_answer)
 
-        # 6. título automático
+        # 6. Automatic title
         if not session.title:
             session.title = full_answer.split("\n", 1)[0][:100]
             session.save(update_fields=["title"])
 
-        # 7. marca fin de stream
+        # 7. Mark end of stream
         yield f"event: done\ndata: {json.dumps({'session_id': session.id})}\n\n"
 
     headers = {
@@ -202,11 +202,11 @@ def chat_message(request, pk):
     if not text_in:
         return HttpResponse(status=204)
 
-    # ---------- 1) memoria ----------
+    # ---------- 1) memory ----------
     past_msgs = session.messages.order_by("created_at")
     agent = build_agent(user_id=str(request.user.id), messages=past_msgs)
 
-    # ---------- 2) AGENTE ----------
+    # ---------- 2) AGENT ----------
     raw = agent.invoke({"input": text_in})["output"]
 
     # ­—— detect posible redirect (dashboard_inline) -------------
@@ -219,7 +219,7 @@ def chat_message(request, pk):
         answer_text = str(raw)
         attachments = []
 
-    # ---------- 3) PERSISTENCIA ----------
+    # ---------- 3) PERSISTENCE ----------
     m_user, m_bot = Message.objects.bulk_create([
         Message(session=session, role="user",      content=text_in),
         Message(session=session, role="assistant", content=answer_text,
@@ -237,7 +237,7 @@ def chat_message(request, pk):
             {"url": raw["url"]},
             request=request,
         )
-        # guardamos igualmente el mensaje del bot (texto vacío ≈ “ok, hecho”)
+        # save the bot's message (empty text ≈ “ok, done”)
         Message.objects.create(
             session=session, role="assistant", content="",
             meta={"type": "dashboard", "url": raw["url"]},
@@ -254,15 +254,15 @@ def chat_message(request, pk):
     return HttpResponse(rendered)
 
 # --------------------------------------------------------------------------- #
-#  Elimina una sesión de chat (y sus mensajes)
+#  (Delete a chat session (and its messages)
 # --------------------------------------------------------------------------- #
 @login_required
-@require_POST          # ← en lugar de DELETE
+@require_POST          # ← instead of DELETE
 @csrf_protect 
 def chat_delete(request, pk):
     """
-    Borra una ChatSession (y sus mensajes en cascada).
-    Devuelve 204 para que HTMX quite el nodo del DOM.
+    Delete a ChatSession (and its messages).
+    Return 204 to let HTMX remove the DOM node.
     """
     session = get_object_or_404(ChatSession, pk=pk, user=request.user)
     session.delete()

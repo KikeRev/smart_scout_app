@@ -47,7 +47,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 hf_logging.set_verbosity_error()
 
-DIM = 42  # Feature vector dimension (adjust according to model)
+DIM = 42  # Feature vector dimension (adjust according to model) 
 
 # outside functions, so it loads once
 _SUMMARIZER = pipeline(
@@ -162,7 +162,7 @@ class FootballNews(Base):
     summary      = sa.Column(sa.Text)
     embedding    = sa.Column(Vector(EMB_DIM))           # pgvector
     source_id    = sa.Column(sa.String(50))
-    article_meta = sa.Column(sa.JSON, nullable=True)  # <— en vez de `metadata`
+    article_meta = sa.Column(sa.JSON, nullable=True)  # <— instead of `metadata`
 
 
 player_news = sa.Table(
@@ -182,7 +182,7 @@ def get_engine(echo: bool = False) -> sa.Engine:
 
 
 def create_tables(engine):
-    # Asegurarse de que existe la extensión vector
+    # Ensure that the vector extension exists
     with engine.begin() as conn:
         conn.exec_driver_sql("CREATE EXTENSION IF NOT EXISTS vector;")
     Base.metadata.create_all(engine)
@@ -261,18 +261,18 @@ def _to_int(x):
     return int(_to_float(x))
 
 def clean_name(name: str) -> str:
-    """Normaliza tildes, elimina caracteres raros y colapsa espacios."""
+    """Normalize tildes, remove rare characters and collapse spaces."""
     if pd.isna(name):
         return ""
-    # 1) Normaliza a NFKD y elimina diacríticos
+    # 1) Normalize to NFKD and remove diacritics
     name_ascii = (
         unicodedata.normalize("NFKD", name)
         .encode("ascii", "ignore")
         .decode("ascii")
     )
-    # 2) Colapsa espacios y quita espacios iniciales/finales
+    # 2) Collapse spaces and remove initial/final spaces
     name_ascii = _WS_RE.sub(" ", name_ascii).strip()
-    # 3) Convierte a Title Case (opcional)
+    # 3) Convert to Title Case (optional)
     return name_ascii.title()
 
 
@@ -391,17 +391,17 @@ def fetch_rss_items() -> List[dict]:
 
 def safe_summarize(text: str) -> str:
     """
-    Resume un texto con ajuste automático de longitudes y
-    fallback si el modelo falla.
+    Resume a text with automatic length adjustment and
+    fallback if the model fails.
     """
     try:
-        # tokens reales del chunk
+        # real tokens of the chunk
         n_tokens = len(_TOKENIZER(text).input_ids)
 
-        # Queremos algo más corto que el original pero > min_length
-        max_len = max(20, int(n_tokens * 0.8))    # 80 % del tamaño
-        max_len = min(max_len, 128)               # nunca > 128
-        min_len = max(10, int(max_len * 0.25))    # 25 % del max_len
+        # We want something shorter than the original but > min_length
+        max_len = max(20, int(n_tokens * 0.8))    # 80 % of the size
+        max_len = min(max_len, 128)               # never > 128
+        min_len = max(10, int(max_len * 0.25))    # 25 % of the max_len
 
         return _SUMMARIZER(
             text,
@@ -411,7 +411,7 @@ def safe_summarize(text: str) -> str:
         )[0]["summary_text"]
 
     except Exception:
-        # fallback: primeros 400 caracteres
+        # fallback: first 400 characters
         return text[:400] + "…"
 
 def parse_article(url: str) -> tuple[str, str] | None:
@@ -426,21 +426,21 @@ def parse_article(url: str) -> tuple[str, str] | None:
     if len(text.split()) < 20:
         return None
 
-    # Split by tokens ≤1024 para BART
+    # Split by tokens ≤1024 for BART
     tokens = _TOKENIZER(text).input_ids
     chunks = []
     while tokens:
         chunk_ids, tokens = tokens[:1024], tokens[1024:]
         chunks.append(_TOKENIZER.decode(chunk_ids, skip_special_tokens=True))
 
-    # Resumen jerárquico
+    # Hierarchical summary
     summaries = [safe_summarize(c) for c in chunks]
     full_summary = safe_summarize(" ".join(summaries))
     return text, full_summary
 
 
 def embed_texts(texts: list[str], verbose: bool = False) -> list[list[float]]:
-    # Filtra nulos y vacíos
+    # Filter null and empty
     valid_texts = [t for t in texts if t]
     if not valid_texts:
         return []
@@ -466,10 +466,10 @@ def ingest_news(engine: sa.Engine, verbose: bool = False):
     for meta in tqdm(items, desc="Parsing", unit="article",
                      disable=not verbose, dynamic_ncols=True):
         try:
-            # ── parsea el artículo y resume ───────────────────────────────
+            # ── parse the article and summarize ───────────────────────────────
             parsed = parse_article(meta["url"])
 
-            # ── descarta los que no devuelven nada ────────────────────────
+            # ── discard the ones that don't return anything ────────────────────────
             if parsed is None:
                 continue
 
@@ -485,7 +485,7 @@ def ingest_news(engine: sa.Engine, verbose: bool = False):
         print("No articles parsed, skipping embeddings.")
         return
 
-    # Usa RESÚMENES (o texts) para la embedding; los dos tienen la misma len
+    # Use SUMMARIES (or texts) for the embedding; the two have the same len
     embeddings = embed_texts(texts, verbose=verbose)
 
     with orm.Session(engine) as session:
@@ -499,7 +499,7 @@ def ingest_news(engine: sa.Engine, verbose: bool = False):
             dynamic_ncols=True
         ):
             if session.query(FootballNews).filter_by(url=meta["url"]).first():
-                continue  # duplicado
+                continue  # duplicate
 
             session.add(
                 FootballNews(
@@ -522,7 +522,7 @@ def ingest_news(engine: sa.Engine, verbose: bool = False):
 #  ==  Embedding / Standard‑Scaler pipeline for players  ====================
 # ---------------------------------------------------------------------------
 
-PLAYER_DIM = 43                 # 42 stats + minutes_90s (🗒️ ajusta si cambias)
+PLAYER_DIM = 43                 # 42 stats + minutes_90s (🗒️ adjust if you change)
 IVF_LISTS  = 140                # number of lists for ivfflat
 
 FEATURE_COLS = [

@@ -6,11 +6,11 @@ SERVICES := api db redis web jupyter
 
 .PHONY: up build stop down down-all restart prune clean
 
-## Compila imágenes si hace falta y levanta (recrea contenedores)
+## Compile images if needed and bring up (recreate containers)
 up: build
 	$(COMPOSE) up -d --force-recreate --remove-orphans $(SERVICES)
 
-## Build explícito (opcional)
+## Explicit build (optional)
 build:
 	$(COMPOSE) build $(SERVICES)
 
@@ -26,30 +26,30 @@ ingest-full: up-db   ## Load CSV, refresh embeddings, ingest news (idempotent)
 ingest-news: up-db   ## Only scrape & embed NEW football news
 	docker compose run --rm -t -e INGEST_MODE="news" ingestion
 
-## Detiene contenedores (NO borra redes ni volúmenes)
+## Stop containers (NO delete networks nor volumes)
 stop:
 	$(COMPOSE) stop $(SERVICES)
 
-## Elimina contenedores y la red; CONSERVA volúmenes
+## Delete containers and the network; KEEP volumes
 down:
 	$(COMPOSE) down --remove-orphans
 	-$(COMPOSE) rm -fv $(SERVICES) 2>NUL
 	-@docker network rm $(PROJECT_NAME)_scouting-net 2>NUL || echo Net cleared
 
-## Versión “todo-a-cero” (incluye volúmenes) → úsala sólo si estás de acuerdo en borrar pgdata
+## “all-zero” version (includes volumes) → use it only if you agree to delete pgdata
 down-all:
 	$(COMPOSE) down --volumes --remove-orphans
 	-@docker network rm $(PROJECT_NAME)_scouting-net 2>NUL || echo Net cleared
 
-## Reinicia rápido
-restart: down up                     # o  stop && up  si no quieres recrear
+## Quick restart
+restart: down up                     # or  stop && up  if you don't want to recreate
 
-## Limpieza agresiva de todo lo huérfano (imágenes, builds, etc.)
+## Aggressive cleanup of everything orphan (images, builds, etc.)
 prune:
 	docker container prune -f
 	docker network   prune -f
 	docker volume    prune -f
 	docker buildx    prune -af
 
-## “clean” = prune + build fresco
+## “clean” = prune + build fresh version
 clean: prune build

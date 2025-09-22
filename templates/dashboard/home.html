@@ -4,11 +4,11 @@
 {# Use fullwidth_content to bypass the container #}
 {% block fullwidth_content %}
 <div class="page-wrapper-80">
-  <!-- Logo de la aplicación -->
+  <!-- Logo of the application -->
   <section class="text-center py-3" role="banner">
     <div class="logo-container">
       <img src="{% static 'img/app_logo_6.png' %}"    
-           alt="Smart Scout - Aplicación de análisis de fútbol con inteligencia artificial"
+           alt="Smart Scout - Application of football analysis with artificial intelligence"
            class="img-fluid app-logo glass-logo"
            role="img">
     </div>
@@ -113,7 +113,7 @@
 </div>
 
 <script>
-// Inicializar tooltips de Bootstrap
+// Initialize Bootstrap tooltips
 document.addEventListener('DOMContentLoaded', function() {
   var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
   var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -123,11 +123,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Mejorar navegación por teclado
+  // Improve keyboard navigation
   const actionButtons = document.querySelectorAll('.action-btn');
   
   actionButtons.forEach(button => {
-    // Añadir soporte para tecla Enter y Espacio
+    // Add support for Enter and Space keys
     button.addEventListener('keydown', function(e) {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
     
-    // Añadir indicador visual de foco
+    // Add visual focus indicator
     button.addEventListener('focus', function() {
       this.style.transform = 'scale(1.02)';
     });
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Anunciar cambios de estado para lectores de pantalla
+  // Announce state changes for screen readers
   const announceToScreenReader = (message) => {
     const announcement = document.createElement('div');
     announcement.setAttribute('aria-live', 'polite');
@@ -159,11 +159,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 1000);
   };
 
-  // Añadir anuncios para interacciones importantes
+  // Add announcements for important interactions
   actionButtons.forEach(button => {
     button.addEventListener('click', function() {
       const buttonText = this.querySelector('.btn-title').textContent;
-      announceToScreenReader(`Navegando a ${buttonText}`);
+      announceToScreenReader(`Navigating to ${buttonText}`);
     });
   });
 });

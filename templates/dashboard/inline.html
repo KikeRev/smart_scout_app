@@ -3,7 +3,7 @@
 {% block content %}
 
 <style>
-    /* sólo lo específico del dashboard */
+    /* only specific to the dashboard */
     .chart-wrapper img { max-width:100%; height:auto; }
 </style>
 
@@ -11,9 +11,9 @@
 
     <!-- ──────────────── CABECERA ──────────────── -->
     <header class="d-flex flex-wrap align-items-center gap-3 mb-4">
-        <h2 class="m-0 flex-grow-1">Dashboard comparativo</h2>
+        <h2 class="m-0 flex-grow-1">Comparison dashboard</h2>
 
-        {# ⇩ al cambiar se hace un POST a /refresh y se reemplaza #dashboard-content #}
+        {# ⇩ when changing, a POST is made to /refresh and replaces #dashboard-content #}
         <form  hx-post="{% url 'dashboard:refresh' %}"
                hx-target="#dashboard-content"
                hx-swap="innerHTML"
@@ -21,12 +21,12 @@
 
             <input type="hidden" name="base_id" value="{{ base_id }}">
 
-            {# enviamos la lista completa; el servidor volverá a poblar el combo #}
+            {# send the complete list; the server will populate the combo #}
             {% for pid in cand_ids %}
                 <input type="hidden" name="cand_ids[]" value="{{ pid }}">
             {% endfor %}
 
-            <label class="m-0">Candidato:</label>
+            <label class="m-0">Candidate:</label>
             <select name="cand_id"
                     class="form-select"
                     onchange="this.form.requestSubmit()">
@@ -40,15 +40,15 @@
         </form>
     </header>
 
-    <!-- ───────────── CONTENIDO DINÁMICO ───────────── -->
+    <!-- ───────────── DYNAMIC CONTENT ───────────── -->
     <div id="dashboard-content">
-        {# cuerpo inicial; luego HTMX lo irá sustituyendo #}
+        {# initial body; then HTMX will replace it #}
         {% include "dashboard/_dash_body.html" %}
     </div>
 
 </div><!-- /.container-fluid -->
 
-<!-- abre el dashboard en pestaña nueva si llega un HX-Redirect -->
+<!-- opens the dashboard in a new tab if an HX-Redirect is received -->
 <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 <script>
 document.body.addEventListener('htmx:beforeOnLoad', function (e){
