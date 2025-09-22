@@ -70,7 +70,18 @@ dependencies = [
 
   # --- Dev & notebooks (optional, installed in dev profile) ---
   "jupyterlab==4.4.7",
-  "ipykernel==6.30.1"
+  "ipykernel==6.30.1",
+  
+  # --- Testing ---
+  "pytest==8.3.4",
+  "pytest-django==4.9.0",
+  "pytest-cov==6.0.0",
+  "pytest-mock==3.14.0",
+  "pytest-asyncio==0.24.0",
+  "factory-boy==3.3.1",
+  "faker==33.1.0",
+  "httpx==0.28.1",
+  "coverage==7.6.9"
 ]
 
 [tool.pip]
@@ -78,3 +89,52 @@ extra-index-url = ["https://download.pytorch.org/whl/cpu"]
 
 [tool.uv]
 # Additional uv configuration can go here if needed
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=.",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--cov-fail-under=80",
+    "--tb=short",
+    "-v"
+]
+testpaths = ["tests", "apps"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "api: API tests",
+    "slow: Slow running tests",
+    "validation: Data validation tests"
+]
+
+[tool.coverage.run]
+source = ["apps", "config"]
+omit = [
+    "*/migrations/*",
+    "*/venv/*",
+    "*/env/*",
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/settings/*",
+    "*/manage.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod"
+]
