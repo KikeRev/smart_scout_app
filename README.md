@@ -1,4 +1,4 @@
-<h1 align="center">SMART SCOUT APP</h1>
+<h1 align="center">SMART SCOUT APP v1.0</h1>
 
 <p align="center">
   <img src="./static/img/app_logo_6.png" alt="Logo">
@@ -6,7 +6,31 @@
 
 # 🚀 Welcome
 
-Welcome to **Smart Scout App** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
+Welcome to **Smart Scout App v1.0** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
+
+## ✨ Features Overview
+
+### 🤖 AI-Powered Scouting
+- **Intelligent Player Recommendations**: AI agent analyzes player data and provides recommendations
+- **Natural Language Queries**: Ask questions in plain English or Spanish
+- **Comprehensive Reports**: Generate detailed PDF reports with analysis and recommendations
+
+### 🔍 Manual Search & Analysis
+- **Advanced Player Search**: Filter players by multiple criteria
+- **Visual Comparisons**: Interactive radar and pizza charts
+- **Saved Searches**: Store and reuse search configurations
+- **Real-time Filtering**: Instant results as you type
+
+### 📊 Data Visualization
+- **Radar Charts**: Individual and comparison radar charts
+- **Pizza Charts**: Performance breakdown visualizations
+- **Interactive Dashboards**: Embedded comparison interfaces
+- **Export Capabilities**: Download charts and data
+
+### 📰 News Integration
+- **Player News**: Latest news about specific players
+- **News Summarization**: AI-powered news summaries
+- **Semantic Search**: Find relevant news using natural language
 
 # 🧱 Project Structure
 
@@ -39,13 +63,15 @@ cp .env.example .env
 
 After running `make up`, the services are accessible at:
 
-| Service        | URL                                              |
-| -------------- | ------------------------------------------------ |
-| Frontend (web) | [https://localhost:8000](https://localhost:8000) |
-| API (FastAPI)  | [http://localhost:8001](http://localhost:8001)   |
-| Jupyter Lab    | [http://localhost:8888](http://localhost:8888)   |
-| PostgreSQL     | localhost:5432 (internal only)                   |
-| Redis          | localhost:6379 (internal only)                   |
+| Service | URL | Description |
+|---------|-----|-------------|
+| Frontend (web) | [https://localhost:8000](https://localhost:8000) | Main application interface |
+| Player Search | [https://localhost:8000/dashboard/search/](https://localhost:8000/dashboard/search/) | Manual player search dashboard |
+| User Reports | [https://localhost:8000/chat/](https://localhost:8000/chat/) | AI-powered scouting reports |
+| API (FastAPI) | [http://localhost:8001](http://localhost:8001) | Backend API endpoints |
+| Jupyter Lab | [http://localhost:8888](http://localhost:8888) | Development environment |
+| PostgreSQL | localhost:5432 (internal only) | Database |
+| Redis | localhost:6379 (internal only) | Cache layer |
 
 > Note: The Jupyter container is useful for testing tools, exploring player stats, or running analytics manually.
 
@@ -231,6 +257,10 @@ flowchart TD
         F7[dashboard_inline]
         F8[build_report_pdf]
         F9[build_scouting_report]
+        F10[dashboard_radar_single]
+        F11[dashboard_radar_comparison]
+        F12[get_available_metrics]
+        F13[get_metrics_percentiles_95]
     end
 
     C --> F1
@@ -242,6 +272,10 @@ flowchart TD
     C --> F7
     C --> F8
     C --> F9
+    C --> F10
+    C --> F11
+    C --> F12
+    C --> F13
 
     F4 -->|HTML table| G1[UI Output]
     F5 -->|Chart image| G1
@@ -254,14 +288,18 @@ flowchart TD
 
 Here are some useful prompts to try with the Smart Scout Agent:
 
-| Prompt                                                                              | Expected Output                                                                   |
-| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| "We are looking for midfielders similar to Pedri under 25 years old"                | Returns a list of candidates with similar profiles using `similar_players`        |
-| "Can you create a radar chart for Florian Wirtz?"                                   | Returns a radar chart image with performance metrics for Florian Wirtz            |
-| "Generate a comparison table between Jamal Musiala and Jude Bellingham"             | Returns an HTML stats table comparing both players, with key metrics highlighted  |
-| "What are the latest news about Arda Güler?"                                        | Fetches recent football news mentioning Arda Güler, including summaries and links |
-| "Create an interactive dashboard for defenders similar to Antonio Rüdiger under 26" | Returns an embedded dashboard with top similar defenders and comparison options   |
-| "Generate a PDF report for left-backs similar to Alphonso Davies under 25"          | Returns a download link to a detailed scouting report in PDF format including strengths, weaknesses, and final recommendation.               |
+| Prompt | Expected Output |
+|--------|----------------|
+| "We are looking for midfielders similar to Pedri under 25 years old" | Returns a list of candidates with similar profiles using `similar_players` |
+| "Can you create a radar chart for Florian Wirtz?" | Returns a radar chart image with performance metrics for Florian Wirtz |
+| "Generate a comparison table between Jamal Musiala and Jude Bellingham" | Returns an HTML stats table comparing both players, with key metrics highlighted |
+| "What are the latest news about Arda Güler?" | Fetches recent football news mentioning Arda Güler, including summaries and links |
+| "Create an interactive dashboard for defenders similar to Antonio Rüdiger under 26" | Returns an embedded dashboard with top similar defenders and comparison options |
+| "Generate a PDF report for left-backs similar to Alphonso Davies under 25" | Returns a download link to a detailed scouting report in PDF format including strengths, weaknesses, and final recommendation |
+| "Open the manual search dashboard" | Redirects to the player search interface with filtering options |
+| "Find all Spanish midfielders under 25 in La Liga" | Returns filtered results with Spanish midfielders from La Liga |
+| "Compare the top 3 similar players to Pedri" | Shows comparison radar chart with 3 most similar players |
+| "Save this search as 'Young Spanish Midfielders'" | Saves the current search configuration for future use |
 
 > The agent responds in the same language you use. You can write prompts in English or Spanish.
 
@@ -287,6 +325,26 @@ Here are some useful prompts to try with the Smart Scout Agent:
   <!-- Replace the src below with your real file path -->
   <img src="./static/img/user_reports_page.PNG" alt="User Reports Page" width="800">
 </p>
+
+## 🔍 Manual Player Search Dashboard
+
+The application now includes a comprehensive manual search interface that allows users to:
+
+- **Search players by name** with real-time filtering
+- **Apply multiple filters**: position, age range, league, club, nationality, minutes played
+- **Compare up to 3 players** with interactive radar charts
+- **Save search configurations** for future use
+- **Export comparison data** for further analysis
+
+### Key Features:
+- **Advanced Filtering**: Filter by position (GK, DF, MF, FW), age range, league, club, and playing time
+- **Real-time Search**: Instant results as you type player names
+- **Visual Comparisons**: Side-by-side radar charts for up to 3 players
+- **Saved Searches**: Store and reuse complex search configurations
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
+
+### Access:
+Navigate to the "Search Players" option from the main dashboard to access the manual search interface.
 
 
 # 📸 Example Outputs (Visuals)
@@ -326,4 +384,61 @@ Here are some useful prompts to try with the Smart Scout Agent:
   <!-- Replace the src below with your real file path -->
   <img src="./static/img/example_dashboard.PNG" alt="Dashboard Example" width="800">
 </p>
+
+# 🛠️ Technical Improvements
+
+## Code Quality & Documentation
+- **Complete English Translation**: All code comments, docstrings, and documentation translated to English
+- **Improved Code Documentation**: Enhanced function descriptions and parameter documentation
+- **Consistent Code Style**: Standardized naming conventions and code structure
+
+## User Experience Enhancements
+- **Accessibility Improvements**: Enhanced keyboard navigation and screen reader support
+- **Responsive Design**: Optimized layouts for all device sizes
+- **Visual Feedback**: Improved loading states and user interaction feedback
+
+## Performance Optimizations
+- **Efficient Data Processing**: Optimized database queries and data serialization
+- **Caching Strategies**: Implemented smart caching for frequently accessed data
+- **Memory Management**: Improved memory usage in data processing pipelines
+
+# 📋 Release Notes - Version 1.0
+
+## 🎉 Initial Release Features
+
+### Core Functionality
+- ✅ **AI-Powered Scouting Agent**: Intelligent player analysis and recommendations
+- ✅ **Manual Player Search**: Advanced filtering and comparison tools
+- ✅ **Data Visualization**: Radar charts, pizza charts, and interactive dashboards
+- ✅ **News Integration**: Player news with AI-powered summarization
+- ✅ **PDF Report Generation**: Comprehensive scouting reports with recommendations
+
+### Technical Features
+- ✅ **Multi-language Support**: English and Spanish interface
+- ✅ **Responsive Design**: Works on desktop, tablet, and mobile devices
+- ✅ **Accessibility**: Screen reader support and keyboard navigation
+- ✅ **Docker Containerization**: Easy deployment and development setup
+- ✅ **Real-time Search**: Instant filtering and search results
+
+### Data & Analytics
+- ✅ **Player Database**: Comprehensive player statistics and metrics
+- ✅ **News Scraping**: Automated football news collection and processing
+- ✅ **Semantic Search**: AI-powered content discovery
+- ✅ **Saved Searches**: Store and reuse search configurations
+- ✅ **Export Capabilities**: Download charts, reports, and data
+
+## 🚀 Getting Started
+
+1. **Clone the repository**
+2. **Set up environment variables** (copy `.env.example` to `.env`)
+3. **Run the application**: `make up`
+4. **Access the interface**: [https://localhost:8000](https://localhost:8000)
+
+## 📞 Support
+
+For questions, issues, or feature requests, please refer to the project documentation or create an issue in the repository.
+
+---
+
+**Smart Scout App v1.0** - Empowering football teams with intelligent player scouting technology.
 
