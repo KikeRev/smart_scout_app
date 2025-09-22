@@ -466,6 +466,175 @@ Navigate to the "Search Players" option from the main dashboard to access the ma
 - **Caching Strategies**: Implemented smart caching for frequently accessed data
 - **Memory Management**: Improved memory usage in data processing pipelines
 
+# 🧪 Testing
+
+## Overview
+
+The Smart Scout App includes comprehensive testing strategies to ensure reliability and data quality across all components.
+
+## Testing Strategy
+
+### 1. **Unit Tests** (Django Test Framework)
+- **Location**: `apps/*/tests.py`
+- **Coverage**: Models, views, and business logic
+- **Run**: `python manage.py test`
+
+### 2. **Data Validation Tests** (Custom Validation)
+- **Location**: `apps/agent_service/validation.py`
+- **Purpose**: Prevent AI hallucinations and ensure data integrity
+- **Coverage**: Player data, news data, and parameter validation
+
+### 3. **Integration Tests** (Jupyter Notebooks)
+- **Location**: `notebooks/`
+- **Purpose**: End-to-end testing of data pipelines
+- **Files**: 
+  - `ingest_news_tests.ipynb` - News ingestion testing
+  - `db_checks.ipynb` - Database integrity checks
+
+### 4. **API Tests** (FastAPI TestClient)
+- **Location**: `apps/agent_service/`
+- **Purpose**: API endpoint validation
+- **Coverage**: All REST endpoints and agent tools
+
+## Running Tests
+
+### Django Tests
+```bash
+# Run all tests
+python manage.py test
+
+# Run specific app tests
+python manage.py test apps.dashboard
+python manage.py test apps.users
+
+# Run with coverage
+coverage run --source='.' manage.py test
+coverage report
+```
+
+### Data Validation Tests
+```bash
+# Test validation functions
+python -c "from apps.agent_service.validation import *; print('Validation tests passed')"
+```
+
+### Integration Tests
+```bash
+# Run Jupyter notebooks for integration testing
+jupyter notebook notebooks/
+```
+
+## Test Categories
+
+### 🔍 **Data Quality Tests**
+- **Player Data Validation**: Ensures player information is complete and coherent
+- **News Data Validation**: Validates news articles and summaries
+- **Database Integrity**: Checks data consistency and relationships
+
+### 🤖 **AI Agent Tests**
+- **Tool Functionality**: Tests all LangChain tools work correctly
+- **Prompt Validation**: Ensures prompts generate expected outputs
+- **Response Formatting**: Validates HTML and JSON output formats
+
+### 🌐 **API Tests**
+- **Endpoint Availability**: All API endpoints respond correctly
+- **Authentication**: User authentication and authorization
+- **Data Serialization**: Proper JSON serialization/deserialization
+
+### 🎨 **UI Tests**
+- **Template Rendering**: All Django templates render without errors
+- **Form Validation**: User input forms validate correctly
+- **Responsive Design**: UI works across different screen sizes
+
+## Continuous Integration
+
+### GitHub Actions (Recommended)
+```yaml
+name: Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: python manage.py test
+```
+
+## Test Data
+
+### Sample Data
+- **Players**: Test dataset with 100+ players
+- **News**: Sample news articles for testing
+- **Charts**: Pre-generated chart examples
+
+### Mock Data
+- **API Responses**: Mocked external API calls
+- **File Uploads**: Test file uploads and processing
+- **User Sessions**: Mock user authentication
+
+## Performance Testing
+
+### Load Testing
+- **Concurrent Users**: Test with multiple simultaneous users
+- **Database Queries**: Optimize slow queries
+- **Memory Usage**: Monitor memory consumption
+
+### Stress Testing
+- **Large Datasets**: Test with maximum data volumes
+- **Long-running Processes**: Test ingestion and processing
+- **Error Handling**: Test failure scenarios
+
+## Best Practices
+
+### 1. **Test Naming**
+- Use descriptive test names
+- Follow pattern: `test_<function>_<scenario>_<expected_result>`
+
+### 2. **Test Organization**
+- Group related tests in classes
+- Use fixtures for common test data
+- Keep tests independent and isolated
+
+### 3. **Assertions**
+- Use specific assertions
+- Test both positive and negative cases
+- Include edge cases and error conditions
+
+### 4. **Documentation**
+- Document test purpose and expected behavior
+- Include setup and teardown instructions
+- Maintain test data documentation
+
+## Troubleshooting
+
+### Common Issues
+- **Database Connection**: Ensure test database is properly configured
+- **File Permissions**: Check file access for test data
+- **Environment Variables**: Verify all required env vars are set
+
+### Debug Mode
+```bash
+# Run tests with debug output
+python manage.py test --verbosity=2
+
+# Run specific test with debug
+python manage.py test apps.dashboard.tests.TestPlayerSearch.test_search_functionality
+```
+
+## Coverage Goals
+
+- **Unit Tests**: >80% code coverage
+- **Integration Tests**: >90% critical path coverage
+- **API Tests**: 100% endpoint coverage
+- **Validation Tests**: 100% validation function coverage
+
 # 📋 Release Notes - Version 1.0
 
 ## 🎉 Initial Release Features
