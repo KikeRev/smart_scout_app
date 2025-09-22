@@ -209,31 +209,31 @@ def get_filter_options_fallback() -> Dict[str, List[str]]:
 
 def get_comparison_data(players: List[Dict[str, Any]], metrics: List[str] = None) -> Dict[str, Any]:
     """
-    Prepara datos para la comparación de jugadores
+    Prepares data for player comparison
     
     Parameters
     ----------
     players : List[Dict[str, Any]]
-        Lista de datos de jugadores
+        List of player data
     metrics : List[str]
-        Lista de métricas seleccionadas
+        List of selected metrics
         
     Returns
     -------
     Dict[str, Any]
-        Datos preparados para la comparación
+        Prepared data for comparison
     """
     if not players:
-        return {"error": "No hay jugadores para comparar"}
+        return {"error": "No players to compare"}
     
     if len(players) > 3:
-        return {"error": "Máximo 3 jugadores para comparar"}
+        return {"error": "Maximum 3 players to compare"}
     
-    # Si no se especifican métricas, usar las por defecto
+    # If no metrics specified, use defaults
     if not metrics:
         metrics = ['age', 'goals', 'assists', 'minutes_90s', 'goals_per90']
     
-    # Preparar datos de comparación
+    # Prepare comparison data
     comparison_data = {
         "players": players,
         "metrics": metrics,
@@ -245,35 +245,35 @@ def get_comparison_data(players: List[Dict[str, Any]], metrics: List[str] = None
 
 def build_search_filters(request_data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Construye filtros de búsqueda a partir de los datos del request
+    Builds search filters from request data
     
     Parameters
     ----------
     request_data : Dict[str, Any]
-        Datos del request del usuario
+        User request data
         
     Returns
     -------
     Dict[str, Any]
-        Filtros construidos
+        Built filters
     """
     filters = {}
     
-    # Búsqueda por texto
+    # Text search
     if request_data.get('query'):
         filters['query'] = request_data['query']
     
-    # Filtros por listas
+    # List filters
     for filter_name in ['leagues', 'clubs', 'positions']:
         if request_data.get(filter_name):
             filters[filter_name] = request_data[filter_name]
     
-    # Filtros numéricos
+    # Numeric filters
     for filter_name in ['age_min', 'age_max', 'min_minutes']:
         if request_data.get(filter_name):
             filters[filter_name] = int(request_data[filter_name])
     
-    # Paginación
+    # Pagination
     filters['page'] = int(request_data.get('page', 1))
     filters['per_page'] = int(request_data.get('per_page', 20))
     
@@ -281,17 +281,17 @@ def build_search_filters(request_data: Dict[str, Any]) -> Dict[str, Any]:
 
 def serialize_player_for_card(player: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Serializa un jugador para mostrar en tarjeta
+    Serializes a player for card display
     
     Parameters
     ----------
     player : Dict[str, Any]
-        Datos del jugador
+        Player data
         
     Returns
     -------
     Dict[str, Any]
-        Datos serializados para la tarjeta
+        Serialized data for the card
     """
     return {
         "id": player.get("id"),
@@ -308,22 +308,22 @@ def serialize_player_for_card(player: Dict[str, Any]) -> Dict[str, Any]:
 
 def get_available_metrics() -> List[str]:
     """
-    Obtiene todas las métricas disponibles de la base de datos
+    Gets all available metrics from the database
     
     Returns
     -------
     List[str]
-        Lista de métricas disponibles
+        List of available metrics
     """
     try:
-        # Obtener un jugador de ejemplo para ver qué métricas están disponibles
+        # Get an example player to see what metrics are available
         response = requests.get(f"{API_BASE_URL}/players/search", params={"limit": 1})
         response.raise_for_status()
         data = response.json()
         
         if data.get('players') and len(data['players']) > 0:
             player = data['players'][0]
-            # Excluir campos que no son métricas
+            # Exclude fields that are not metrics
             exclude_fields = {'id', 'full_name', 'club', 'nationality', 'age', 'position', 'team_logo', 'feature_vector'}
             metrics = [key for key in player.keys() if key not in exclude_fields]
             return sorted(metrics)
@@ -331,32 +331,32 @@ def get_available_metrics() -> List[str]:
         return []
         
     except Exception as e:
-        # Todas las métricas disponibles por defecto si hay error
+        # All available metrics by default if there's an error
         return [
-            # Métricas básicas
+            # Basic metrics
             'age', 'minutes', 'minutes_90s',
             
-            # Goles y asistencias
+            # Goals and assists
             'goals', 'assists', 'goals_per90', 'assists_per90', 'goals_assists_per90',
             
             # Expected Goals
             'expected_goals', 'expected_assists', 'expected_goals_per90', 'expected_assists_per90',
             'expected_goals_assists_per90', 'no_penalty_expected_goals_plus_expected_assists',
             
-            # Pases
+            # Passes
             'passes_completed', 'passes', 'passes_pct', 'passes_progressive_distance',
             'passes_completed_long', 'passes_long', 'passes_pct_long',
             'progressive_passes', 'progressive_passes_received',
             
-            # Regates y carreras
+            # Dribbles and carries
             'progressive_carries',
             
-            # Defensivas
+            # Defensive
             'tackles', 'tackles_won', 'challenge_tackles', 'challenges', 'challenge_tackles_pct',
             'challenges_lost', 'blocks', 'blocked_shots', 'blocked_passes',
             'interceptions', 'tackles_interceptions', 'clearances', 'errors',
             
-            # Porteros
+            # Goalkeepers
             'gk_goals_against', 'gk_pens_allowed', 'gk_free_kick_goals_against',
             'gk_corner_kick_goals_against', 'gk_own_goals_against', 'gk_psxg',
             'gk_psnpxg_per_shot_on_target_against'
@@ -364,17 +364,17 @@ def get_available_metrics() -> List[str]:
 
 def serialize_saved_search(search) -> Dict[str, Any]:
     """
-    Serializa una búsqueda guardada
+    Serializes a saved search
     
     Parameters
     ----------
     search : SavedSearch
-        Instancia de búsqueda guardada
+        Saved search instance
         
     Returns
     -------
     Dict[str, Any]
-        Datos serializados de la búsqueda
+        Serialized search data
     """
     return {
         "id": search.id,

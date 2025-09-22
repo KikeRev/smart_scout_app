@@ -203,10 +203,10 @@ def validate_age_range(age: int, min_age: int = 16, max_age: int = 45) -> bool:
 
 def validate_minutes_played(minutes: int) -> bool:
     """
-    Valida que los minutos jugados sean razonables.
+    Validate that minutes played are reasonable.
     
     Args:
-        minutes: Minutos jugados
+        minutes: Minutes played
         
     Returns:
         bool: True if minutes are valid, False otherwise

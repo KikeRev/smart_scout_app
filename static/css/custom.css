@@ -1,7 +1,7 @@
 /* ==========================================================================
-   0) Importaciones y fuentes
+   0) Imports and fonts
    ========================================================================== */
-/* 1) Import Montserrat para todo el sitio */
+/* 1) Import Montserrat for the entire site */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
 
 body, h1, h2, h3, h4, h5, h6, .btn, .card {
@@ -10,14 +10,14 @@ body, h1, h2, h3, h4, h5, h6, .btn, .card {
 
 
 /* ==========================================================================
-   1) RESET / UTILIDADES GENERALES
+   1) RESET / GENERAL UTILITIES
    ========================================================================== */
-/* Bordes genéricos */
+/* Generic borders */
 .border {
   border: 2px solid #222 !important;
 }
 
-/* Anchor genérico “registro/entrar” */
+/* Generic "register/login" anchor */
 .link-register {
   color: #0b3d0b;
   font-weight: bold;
@@ -28,7 +28,7 @@ body, h1, h2, h3, h4, h5, h6, .btn, .card {
   text-decoration: underline;
 }
 
-/* Botón submit genérico */
+/* Generic submit button */
 .btn-submit {
   background-color: #0b3d0b;
   color: #fff !important;
@@ -43,9 +43,9 @@ body, h1, h2, h3, h4, h5, h6, .btn, .card {
 
 
 /* ==========================================================================
-   2) BACKGROUND GENERAL Y EFECTOS
+   2) GENERAL BACKGROUND AND EFFECTS
    ========================================================================== */
-/* Capa de fondo con césped */
+/* Background layer with grass */
 body {
   position: relative;
   z-index: 0;
@@ -56,29 +56,29 @@ body::before {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: url("../img/grass.jpg") center center / cover no-repeat;
-  opacity: 0.15;          /* ajusta la transparencia */
-  z-index: -1;            /* detrás de todo */
-  pointer-events: none;   /* no interfiere con clicks */
+  opacity: 0.15;          /* adjust transparency */
+  z-index: -1;            /* behind everything */
+  pointer-events: none;   /* doesn't interfere with clicks */
 }
 
 /* ==========================================================================
    3) NAVBAR
    ========================================================================== */
 .navbar.bg-primary {
-  background-color: #0b3d0b !important;  /* verde oscuro */
-  border-color: #064009 !important;      /* borde más oscuro opcional */
+  background-color: #0b3d0b !important;  /* dark green */
+  border-color: #064009 !important;      /* darker border optional */
 }
 .navbar .navbar-brand,
 .navbar .nav-link {
-  color: #f8f9fa !important;             /* texto claro */
+  color: #f8f9fa !important;             /* light text */
 }
 .navbar .nav-link:hover {
-  color: #c4e1c4 !important;             /* hover suave */
+  color: #c4e1c4 !important;             /* soft hover */
 }
 
 
 /* ==========================================================================
-   4) LOGO CON EFECTO CRISTAL LÍQUIDO
+   4) LOGO WITH LIQUID GLASS EFFECT
    ========================================================================== */
 .logo-container {
   position: relative;
@@ -132,7 +132,7 @@ body::before {
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
 }
 
-/* Efecto de brillo en el logo */
+/* Shine effect on logo */
 .logo-container::after {
   content: '';
   position: absolute;
@@ -154,7 +154,7 @@ body::before {
 }
 
 /* ==========================================================================
-   5) TOOLTIPS CON EFECTO CRISTAL LÍQUIDO
+   5) TOOLTIPS WITH LIQUID GLASS EFFECT
    ========================================================================== */
 .glass-tooltip .tooltip-inner {
   background: linear-gradient(135deg, 
@@ -178,9 +178,9 @@ body::before {
 }
 
 /* ==========================================================================
-   6) BOTONES GLOBALES CON EFECTO CRISTAL LÍQUIDO
+   6) GLOBAL BUTTONS WITH LIQUID GLASS EFFECT
    ========================================================================== */
-/* Estilos base para todos los botones */
+/* Base styles for all buttons */
 .btn {
   position: relative;
   overflow: hidden;
@@ -225,7 +225,7 @@ body::before {
   outline-offset: 2px;
 }
 
-/* Botones primarios - Verde oscuro */
+/* Primary buttons - Dark green */
 .btn-primary {
   background: linear-gradient(135deg, 
     rgba(11, 61, 11, 0.9) 0%, 
@@ -244,7 +244,7 @@ body::before {
   color: white;
 }
 
-/* Botones de éxito - Verde medio */
+/* Success buttons - Medium green */
 .btn-success {
   background: linear-gradient(135deg, 
     rgba(20, 90, 20, 0.9) 0%, 
@@ -263,7 +263,7 @@ body::before {
   color: white;
 }
 
-/* Botones de información - Verde azulado */
+/* Info buttons - Bluish green */
 .btn-info {
   background: linear-gradient(135deg, 
     rgba(13, 202, 240, 0.9) 0%, 
@@ -282,7 +282,7 @@ body::before {
   color: white;
 }
 
-/* Botones outline - Verde claro */
+/* Outline buttons - Light green */
 .btn-outline-primary {
   background: linear-gradient(135deg, 
     rgba(11, 61, 11, 0.1) 0%, 
@@ -317,7 +317,7 @@ body::before {
   color: #6c757d;
 }
 
-/* Botones de enlace */
+/* Link buttons */
 .btn-link {
   background: transparent;
   border: none;
@@ -336,7 +336,7 @@ body::before {
   transform: none;
 }
 
-/* Botones de envío personalizados */
+/* Custom submit buttons */
 .btn-submit {
   background: linear-gradient(135deg, 
     rgba(11, 61, 11, 0.9) 0%, 
@@ -355,14 +355,14 @@ body::before {
   color: white;
 }
 
-/* Botones pequeños */
+/* Small buttons */
 .btn-sm {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   border-radius: 0.375rem;
 }
 
-/* Botones de cierre */
+/* Close buttons */
 .btn-close {
   background: linear-gradient(135deg, 
     rgba(108, 117, 125, 0.1) 0%, 
@@ -379,7 +379,7 @@ body::before {
 }
 
 /* ==========================================================================
-   7) BÚSQUEDAS GUARDADAS
+   7) SAVED SEARCHES
    ========================================================================== */
 .saved-search-item {
   background: linear-gradient(135deg, 
@@ -453,9 +453,9 @@ body::before {
 }
 
 /* ==========================================================================
-   8) ACCESIBILIDAD
+   8) ACCESSIBILITY
    ========================================================================== */
-/* Clase para contenido solo para lectores de pantalla */
+/* Class for screen reader only content */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -468,7 +468,7 @@ body::before {
   border: 0 !important;
 }
 
-/* Mejorar el foco para navegación por teclado */
+/* Improve focus for keyboard navigation */
 .action-btn:focus {
   outline: 3px solid #ffd700;
   outline-offset: 2px;
@@ -480,7 +480,7 @@ body::before {
   outline-offset: 2px;
 }
 
-/* Mejorar contraste para mejor legibilidad */
+/* Improve contrast for better readability */
 .btn-title {
   font-size: 1.4rem;
   font-weight: 700;
@@ -491,12 +491,12 @@ body::before {
   line-height: 1.3;
 }
 
-/* Asegurar que los iconos no interfieran con lectores de pantalla */
+/* Ensure icons don't interfere with screen readers */
 .btn-icon[aria-hidden="true"] {
   pointer-events: none;
 }
 
-/* Mejorar la navegación por teclado */
+/* Improve keyboard navigation */
 .action-btn:focus .btn-icon {
   transform: scale(1.05);
   background: rgba(255, 255, 255, 0.4);
@@ -523,9 +523,9 @@ footer.site-footer img:hover {
 
 
 /* ==========================================================================
-   5) TIPOGRAFÍA / TÍTULOS Y BOTONES PRINCIPALES
+   5) TYPOGRAPHY / TITLES AND MAIN BUTTONS
    ========================================================================== */
-/* Títulos uppercase, centrados y verde oscuro */
+/* Uppercase titles, centered and dark green */
 h1.display-5, h2, h4 {
   text-transform: uppercase;
   text-align: center;
@@ -533,13 +533,13 @@ h1.display-5, h2, h4 {
   font-weight: 700;
   margin-bottom: 1rem;
 }
-/* Subtítulos (p.lead) */
+/* Subtitles (p.lead) */
 .lead {
   text-align: center;
   color: rgba(0,0,0,0.7);
   margin-bottom: 2rem;
 }
-/* Botones principales */
+/* Main buttons */
 .btn-outline-primary {
   border-color: #0b3d0b !important;
   color: #0b3d0b !important;
@@ -555,15 +555,15 @@ h1.display-5, h2, h4 {
 
 
 /* ==========================================================================
-   6) GALERÍA DE FOTOS (HOME)
+   6) PHOTO GALLERY (HOME)
    ========================================================================== */
-/* Aumenta la altura de las imágenes en móviles */
+/* Increase image height on mobile */
 @media (max-width: 576px) {
   #galleryCarousel .carousel-item img {
     height: 200px !important;
   }
 }
-/* Box-shadow ligero */
+/* Light box-shadow */
 #galleryCarousel .carousel-item img {
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
@@ -573,14 +573,14 @@ h1.display-5, h2, h4 {
    7) NEWS TICKER
    ========================================================================== */
 #newsCarousel .carousel-item .bg-dark {
-  background-color: rgba(11, 61, 11, 0.85) !important; /* semitransparente */
+  background-color: rgba(11, 61, 11, 0.85) !important; /* semitransparent */
 }
 
 
 /* ==========================================================================
-   8) HOME – ÚLTIMOS INFORMES
+   8) HOME – LATEST REPORTS
    ========================================================================== */
-/* Título “Tus últimos informes” */
+/* Title "Your latest reports" */
 .home-reports-title {
   display: flex;
   align-items: center;
@@ -594,7 +594,7 @@ h1.display-5, h2, h4 {
   font-size: 1.5rem;
   color: #0b3d0b;
 }
-/* Link bajo la imagen */
+/* Link below image */
 a.report-link {
   color: #0b3d0b;
   font-weight: 700;
@@ -604,7 +604,7 @@ a.report-link {
 a.report-link:hover {
   color: #2a5c2a;
 }
-/* Overlay y zoom en hover */
+/* Overlay and zoom on hover */
 .report-thumb {
   position: relative;
   overflow: hidden;
@@ -636,7 +636,7 @@ a.report-link:hover {
    ========================================================================== */
 .login-wrapper {
   display: flex;
-  align-items: flex-start; /* empuja hacia arriba */
+  align-items: flex-start; /* pushes up */
   justify-content: center;
   padding-top: 1vh;
   padding-bottom: 5vh;
@@ -797,7 +797,7 @@ a.report-link:hover {
 
 
 /* ==========================================================================
-   12) GENERIC FORM CARD (REPORT FORM, REGISTER FORM…)
+   12) GENERIC FORM CARD (REPORT FORM, REGISTER FORM...)
    ========================================================================== */
 .form-wrapper {
   display: flex;
@@ -865,19 +865,19 @@ select[multiple] { min-height: 150px; }
 }
 .btn-submit:hover { background:#007900; }
 
-/* --- REPORTS: LISTA --- */
+/* --- REPORTS: LIST --- */
 .reports-list-title   { font-family: 'Montserrat', sans-serif; }
 .reports-badge        { font-size: .75rem; max-width: 40ch; }
 
-/* --- REPORTS: DETALLE --- */
+/* --- REPORTS: DETAIL --- */
 #candidates-table thead th { text-transform: uppercase; font-size: .8rem; }
 
-/* Botón primario coherente */
+/* Consistent primary button */
 .btn-submit { background:#0b3d0b; border-color:#0b3d0b; }
 .btn-submit:hover { background:#094a09; border-color:#094a09; }
 
-/*------------------- Menu Perfil ----------------------*/
-/* 1. Asegúrate de usar la misma familia y pesos de fuente */
+/*------------------- Profile Menu ----------------------*/
+/* 1. Make sure to use the same font family and weights */
 .navbar-nav .nav-link,
 .navbar-brand,
 .navbar-nav .dropdown-item {
@@ -885,30 +885,30 @@ select[multiple] { min-height: 150px; }
   font-weight: 600;
 }
 
-/* 2. Dropdown: fondo y bordes coherentes con la navbar */
+/* 2. Dropdown: background and borders consistent with navbar */
 .navbar-dark .dropdown-menu {
   background-color: #0b3d0b !important;
   border: none;
   box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
 }
 
-/* 3. Items del dropdown: texto y hover */
+/* 3. Dropdown items: text and hover */
 .navbar-dark .dropdown-menu .dropdown-item {
-  color: #fff;                              /* texto blanco */
+  color: #fff;                              /* white text */
   padding: 0.5rem 1rem;
 }
 .navbar-dark .dropdown-menu .dropdown-item:hover,
 .navbar-dark .dropdown-menu .dropdown-item:focus {
-  background-color: rgba(255,255,255,0.1);  /* aclarar ligeramente al pasar el ratón */
+  background-color: rgba(255,255,255,0.1);  /* slightly lighten on hover */
   color: #fff;
 }
 
-/* 4. Separador más suave (si lo usas) */
+/* 4. Softer separator (if you use it) */
 .navbar-dark .dropdown-menu .dropdown-divider {
   border-color: rgba(255,255,255,0.2);
 }
 
-/* 5. Cuadro del toggle igual que nav-link pero con cursor pointer */
+/* 5. Toggle box same as nav-link but with pointer cursor */
 .navbar-dark .nav-link.dropdown-toggle {
   color: #fff;
 }
@@ -917,19 +917,19 @@ select[multiple] { min-height: 150px; }
   color: rgba(255,255,255,0.75);
 }
 
-/* 6. Ajuste de padding para mayor espacio */
+/* 6. Padding adjustment for more space */
 .navbar-nav .nav-item {
   margin-left: 1rem;
 }
 
-/* limita el form de logout dentro de la navbar a comportarse como un enlace */
+/* limits the logout form within the navbar to behave like a link */
 .navbar .logout-form {
-    display: inline-flex;          /* se comporta como <a> */
+    display: inline-flex;          /* behaves like <a> */
     margin: 0;    
 }
 .navbar .logout-form button {
-    padding: 0;                    /* que parezca texto */
-    color: var(--bs-navbar-color); /* mismo color que nav-link */
+    padding: 0;                    /* looks like text */
+    color: var(--bs-navbar-color); /* same color as nav-link */
     background: none;
     border: none;
     line-height: 1;
@@ -937,7 +937,7 @@ select[multiple] { min-height: 150px; }
 .navbar .logout-form button:hover,
 .navbar .logout-form button:focus {
     color: var(--bs-navbar-hover-color);
-    text-decoration: underline;    /* imita a <a> al pasar el ratón */
+    text-decoration: underline;    /* mimics <a> on hover */
 }
 
 /* ==========================================================================

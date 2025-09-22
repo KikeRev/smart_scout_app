@@ -1,5 +1,5 @@
 {% load static %}
-<!-- Logo de la aplicación -->
+<!-- Application logo -->
 <section class="text-center py-3">
     <img src="{% static 'img/app_logo_6.png' %}"    
          alt="Smart Scout logo"
@@ -8,19 +8,19 @@
 
 <div class="row g-4">
 
-    <!-- tabla comparativa -->
+    <!-- comparison table -->
     <div class="col-12 col-lg-6 order-lg-1 order-2">
         {{ table_html|safe }}
     </div>
 
-    <!-- radares + pizza -->
+    <!-- radars + pizza -->
     <div class="col-12 col-lg-6 order-lg-2 order-1">
         <div class="row gy-4">
 
-            <!-- radares -->
+            <!-- radars -->
             <div class="col-12 d-flex justify-content-between flex-wrap chart-wrapper">
-                <img src="{{ radar_base }}" alt="Radar base" class="flex-grow-1 p-2">
-                <img src="{{ radar_cand }}" alt="Radar candidato" class="flex-grow-1 p-2">
+                <img src="{{ radar_base }}" alt="Base radar" class="flex-grow-1 p-2">
+                <img src="{{ radar_cand }}" alt="Candidate radar" class="flex-grow-1 p-2">
             </div>
 
             <!-- pizza comparison -->
