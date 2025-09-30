@@ -1,0 +1,45 @@
+{% extends "dashboard/base.html" %}
+
+{% block content %}
+<div class="container-85 mt-4">
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% else %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h2 class="mb-0">{{ player.full_name }}</h2>
+        <p class="text-muted mb-0">{{ player.club }} · {{ player.position }} · {{ player.nationality }}</p>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-6">
+        {% if radar_url %}
+          <img src="{{ radar_url }}" alt="Radar chart for {{ player.full_name }}" class="img-fluid rounded shadow-sm">
+        {% else %}
+          <div class="alert alert-warning">Radar not available.</div>
+        {% endif %}
+      </div>
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-header">Key KPIs</div>
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+              <tbody>
+                {% for k, v in kpis.items %}
+                <tr>
+                  <th class="w-50">{{ k|title }}</th>
+                  <td>{{ v }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+

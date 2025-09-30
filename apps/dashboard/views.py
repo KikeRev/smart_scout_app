@@ -307,6 +307,53 @@ def search_api(request):
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
+
+@login_required
+def player_profile(request, player_id: int):
+    """Simple player profile page with radar and key KPIs."""
+    try:
+        stats_map = _fetch_stats([player_id])
+        player = stats_map.get(player_id)
+        if not player:
+            return render(request, "dashboard/profile.html", {"error": "Player not found"})
+
+        # Default metrics depending on position (compact set ~12)
+        pos = player.get("position") or "MF"
+        metrics_by_pos = {
+            "GK": ["gk_psxg", "gk_pens_allowed", "passes_pct", "errors", "clearances", "blocks"],
+            "DF": ["tackles", "tackles_won", "interceptions", "blocks", "clearances", "passes_pct", "progressive_passes"],
+            "MF": ["goals", "assists", "goals_per90", "assists_per90", "expected_goals_per90", "passes_pct", "progressive_passes", "progressive_carries"],
+            "FW": ["goals", "assists", "goals_per90", "assists_per90", "expected_goals_per90", "progressive_passes_received", "passes_pct"],
+        }
+        metrics = metrics_by_pos.get(pos, DEFAULT_METRICS)
+
+        # Radar chart via existing viz tool
+        radar = radar_chart(
+            player_name=player["full_name"],
+            stats=player,
+            team=player["club"],
+            position=pos,
+            nationality=player.get("nationality", ""),
+        )
+        radar_url = None
+        if radar.get("attachments"):
+            radar_url = radar["attachments"][0].get("url")
+
+        # Select compact KPI table (subset)
+        kpi_keys = ["age", "minutes", "goals", "assists", "goals_per90", "assists_per90", "passes_pct"]
+        kpis = {k: player.get(k) for k in kpi_keys}
+
+        ctx = {
+            "player": player,
+            "metrics": metrics,
+            "radar_url": radar_url,
+            "kpis": kpis,
+        }
+        return render(request, "dashboard/player_profile.html", ctx)
+    except Exception as e:
+        logger.exception("player_profile error: %s", e)
+        return render(request, "dashboard/profile.html", {"error": str(e)})
+
 @login_required
 def saved_searches_api(request):
     """API for managing saved searches"""

@@ -168,11 +168,12 @@ def _similar_players_team_fit_table(
     ]
 
     for i, r in enumerate(rows, start=1):
+        profile_href = f"/dashboard/player/{r.get('id')}/"
         html.append(
             """
             <tr>
               <td>{i}</td>
-              <td>{name}</td>
+              <td><a href="{href}" target="_blank" rel="noopener">{name}</a></td>
               <td>{club}</td>
               <td>{pos}</td>
               <td><strong>{succ}</strong></td>
@@ -182,6 +183,7 @@ def _similar_players_team_fit_table(
             """.format(
                 i=i,
                 name=r.get("full_name", "—"),
+                href=profile_href,
                 club=r.get("club", "—"),
                 pos=r.get("position", "—"),
                 succ=pct(r.get("success_index")),
