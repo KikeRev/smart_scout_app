@@ -36,6 +36,21 @@
             </table>
           </div>
         </div>
+        
+        <!-- Team Logo -->
+        {% if player.team_logo %}
+        <div class="card shadow-sm mt-3">
+          <div class="card-header text-center">Team</div>
+          <div class="card-body text-center">
+            <img src="{{ player.team_logo }}" 
+                 alt="{{ player.club }} logo" 
+                 class="img-fluid" 
+                 style="max-height: 120px; max-width: 120px;"
+                 onerror="this.style.display='none'">
+            <h6 class="mt-2 mb-0">{{ player.club }}</h6>
+          </div>
+        </div>
+        {% endif %}
       </div>
     </div>
   {% endif %}
