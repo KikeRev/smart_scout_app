@@ -364,8 +364,14 @@ def player_profile(request, player_id: int):
         }
         metrics = metrics_by_pos.get(pos, DEFAULT_METRICS)
 
-        # Radar chart using dashboard tool that accepts metric list (no age)
-        radar = dashboard_radar_single(player, metrics)
+        # Radar clásico (viz_tools) con máximos fijos predefinidos
+        radar = radar_chart(
+            player_name=player["full_name"],
+            stats=player,
+            team=player["club"],
+            position=pos,
+            nationality=player.get("nationality", ""),
+        )
         radar_url = None
         if radar.get("attachments"):
             radar_url = radar["attachments"][0].get("url")
