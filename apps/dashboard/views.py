@@ -16,6 +16,7 @@ from apps.agent_service.viz_tools import (
     radar_chart,
     pizza_comparison_chart
 )
+from apps.agent_service.dashboard_viz_tools import dashboard_radar_single
 from apps.agent_service.utils import compare_stats_to_html_table
 
 import requests
@@ -319,22 +320,33 @@ def player_profile(request, player_id: int):
 
         # Default metrics depending on position (compact set ~12)
         pos = player.get("position") or "MF"
+        # Exclude "age" and favour actionable performance metrics
         metrics_by_pos = {
-            "GK": ["gk_psxg", "gk_pens_allowed", "passes_pct", "errors", "clearances", "blocks"],
-            "DF": ["tackles", "tackles_won", "interceptions", "blocks", "clearances", "passes_pct", "progressive_passes"],
-            "MF": ["goals", "assists", "goals_per90", "assists_per90", "expected_goals_per90", "passes_pct", "progressive_passes", "progressive_carries"],
-            "FW": ["goals", "assists", "goals_per90", "assists_per90", "expected_goals_per90", "progressive_passes_received", "passes_pct"],
+            "GK": [
+                "gk_psxg", "gk_pens_allowed", "passes_pct", "errors",
+                "clearances", "blocks"
+            ],
+            "DF": [
+                "tackles", "tackles_won", "interceptions", "blocks",
+                "clearances", "tackles_interceptions", "passes_pct",
+                "progressive_passes"
+            ],
+            "MF": [
+                "goals", "assists", "goals_per90", "assists_per90",
+                "expected_goals_per90", "passes_pct",
+                "progressive_passes", "progressive_carries",
+                "progressive_passes_received"
+            ],
+            "FW": [
+                "goals", "assists", "goals_per90", "assists_per90",
+                "expected_goals_per90", "progressive_passes_received",
+                "passes_pct", "progressive_carries"
+            ],
         }
         metrics = metrics_by_pos.get(pos, DEFAULT_METRICS)
 
-        # Radar chart via existing viz tool
-        radar = radar_chart(
-            player_name=player["full_name"],
-            stats=player,
-            team=player["club"],
-            position=pos,
-            nationality=player.get("nationality", ""),
-        )
+        # Radar chart using dashboard tool that accepts metric list (no age)
+        radar = dashboard_radar_single(player, metrics)
         radar_url = None
         if radar.get("attachments"):
             radar_url = radar["attachments"][0].get("url")
