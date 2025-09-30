@@ -212,6 +212,7 @@ similar_players_team_fit_table_tool = StructuredTool.from_function(
     ),
     func=_similar_players_team_fit_table,
     args_schema=SimilarPlayersTeamFitInput,
+    return_direct=True          # allow returning the HTML directly to the chat
 )
 
 
