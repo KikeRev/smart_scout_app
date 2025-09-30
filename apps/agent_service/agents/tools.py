@@ -159,10 +159,21 @@ def _similar_players_team_fit_table(
 
     html = [
         "<div class=\"table-responsive\">",
-        "<table class=\"table table-sm table-striped align-middle\">",
+        "<div class=\"d-flex justify-content-between align-items-center mb-2\">",
+        "<h6 class=\"mb-0\">Player Recommendations</h6>",
+        "<button class=\"btn btn-sm btn-outline-secondary\" onclick=\"copyTableToClipboard()\" title=\"Copy table to clipboard\">",
+        "<i class=\"fas fa-copy\"></i> Copy Table",
+        "</button>",
+        "</div>",
+        "<table id=\"recommendations-table\" class=\"table table-sm table-striped align-middle\">",
         "<thead><tr>",
-        "<th>#</th><th>Player</th><th>Club</th><th>Position</th>",
-        "<th>Success Index</th><th>Overall</th><th>Team Fit</th>",
+        "<th onclick=\"sortTable(0)\" style=\"cursor: pointer;\"># <i class=\"fas fa-sort\"></i></th>",
+        "<th onclick=\"sortTable(1)\" style=\"cursor: pointer;\">Player <i class=\"fas fa-sort\"></i></th>",
+        "<th onclick=\"sortTable(2)\" style=\"cursor: pointer;\">Club <i class=\"fas fa-sort\"></i></th>",
+        "<th onclick=\"sortTable(3)\" style=\"cursor: pointer;\">Position <i class=\"fas fa-sort\"></i></th>",
+        "<th onclick=\"sortTable(4)\" style=\"cursor: pointer;\">Success Index <i class=\"fas fa-sort\"></i></th>",
+        "<th onclick=\"sortTable(5)\" style=\"cursor: pointer;\">Overall <i class=\"fas fa-sort\"></i></th>",
+        "<th onclick=\"sortTable(6)\" style=\"cursor: pointer;\">Team Fit <i class=\"fas fa-sort\"></i></th>",
         "</tr></thead>",
         "<tbody>",
     ]
@@ -192,7 +203,87 @@ def _similar_players_team_fit_table(
             )
         )
 
-    html.extend(["</tbody>", "</table>", "</div>"])
+    html.extend([
+        "</tbody>", 
+        "</table>", 
+        "</div>",
+        """
+        <script>
+        let sortDirection = {};
+        
+        function sortTable(columnIndex) {
+            const table = document.getElementById('recommendations-table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            // Toggle sort direction
+            sortDirection[columnIndex] = sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+            const direction = sortDirection[columnIndex];
+            
+            // Update sort icons
+            const headers = table.querySelectorAll('th');
+            headers.forEach((header, index) => {
+                const icon = header.querySelector('i');
+                if (index === columnIndex) {
+                    icon.className = direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+                } else {
+                    icon.className = 'fas fa-sort';
+                }
+            });
+            
+            // Sort rows
+            rows.sort((a, b) => {
+                let aVal = a.cells[columnIndex].textContent.trim();
+                let bVal = b.cells[columnIndex].textContent.trim();
+                
+                // Handle numeric columns (Success Index, Overall, Team Fit)
+                if (columnIndex >= 4) {
+                    aVal = parseFloat(aVal.replace('%', '')) || 0;
+                    bVal = parseFloat(bVal.replace('%', '')) || 0;
+                }
+                
+                if (direction === 'asc') {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+            
+            // Re-append sorted rows
+            rows.forEach(row => tbody.appendChild(row));
+        }
+        
+        function copyTableToClipboard() {
+            const table = document.getElementById('recommendations-table');
+            const range = document.createRange();
+            range.selectNode(table);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            
+            try {
+                document.execCommand('copy');
+                // Show success feedback
+                const button = event.target.closest('button');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                button.classList.remove('btn-outline-secondary');
+                button.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-outline-secondary');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy table:', err);
+                alert('Failed to copy table. Please try selecting and copying manually.');
+            }
+            
+            window.getSelection().removeAllRanges();
+        }
+        </script>
+        """
+    ])
 
     context = data.get("context", {})
     title = (
