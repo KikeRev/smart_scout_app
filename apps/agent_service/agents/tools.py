@@ -68,6 +68,58 @@ similar_players_tool = StructuredTool.from_function(
 )
 
 
+# ---------------------- 1.1) Similar Players + Team Fit --------------------- #
+class SimilarPlayersTeamFitInput(BaseModel):
+    """Parameters to search for similar players including team-position fit"""
+    player_id: int = Field(..., description="Reference player ID")
+    team: str = Field(..., description="Target team (club) Y for fit computation")
+    position: Optional[str] = Field(None, description="If not provided, base player's position is used")
+    k: int = Field(10, description="Number of candidates to return")
+    min_minutes: int = Field(0, description="Minimum minutes played")
+    max_age: int = Field(45, description="Maximum age")
+    exclude_club: Optional[str] = Field(None, description="Clubs to exclude (comma-separated)")
+    overall_weight: float = Field(0.5, description="Weight for overall similarity in success index (0..1)")
+
+def _similar_players_team_fit(
+    player_id: int,
+    team: str,
+    position: Optional[str] = None,
+    k: int = 10,
+    min_minutes: int = 0,
+    max_age: int = 45,
+    exclude_club: Optional[str] = None,
+    overall_weight: float = 0.5,
+):
+    """Calls /players/{id}/similar_team_fit with the received filters."""
+    params = dict(
+        team=team,
+        k=k,
+        min_minutes=min_minutes,
+        max_age=max_age,
+        overall_weight=overall_weight,
+    )
+    if position:
+        params["position"] = position
+    if exclude_club:
+        params["exclude_club"] = exclude_club
+
+    url = f"http://api:8001/players/{player_id}/similar_team_fit"
+    resp = requests.get(url, params=params, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
+
+similar_players_team_fit_tool = StructuredTool.from_function(
+    name="similar_players_team_fit",
+    description=(
+        "Returns players similar to the base player plus a team-position fit analysis "
+        "against the target team Y's cohort on the same position. Includes a success_index "
+        "that combines overall similarity and team-position similarity."
+    ),
+    func=_similar_players_team_fit,
+    args_schema=SimilarPlayersTeamFitInput,
+)
+
+
 # ----------------------------- 2) Player Lookup ----------------------------- #
 class PlayerLookupInput(BaseModel):
     """Quick player search by name (and optionally position)"""
@@ -484,6 +536,7 @@ TOOLS = [
     radar_chart_tool,             # <-- tool to generate radar charts   
     radar_comparison_chart_tool,  # <-- tool to generate radar comparison charts
     similar_players_tool,         # <-- tool to search for similar players
+    similar_players_team_fit_tool, # <-- tool to search for similar players with team fit
     news_search_tool,             # <-- tool to search for news
     player_news_tool,             # <-- tool to search for news related to a player
     dashboard_inline_tool,        # <-- tool to generate inline dashboard
