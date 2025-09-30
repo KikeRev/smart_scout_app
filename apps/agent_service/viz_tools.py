@@ -75,14 +75,14 @@ RADAR_METRICS: List[Tuple[str, str, Any | None]] = [
     ("Min/Games", None, 100),          # minutes ÷ 90s
     ("Games_90s", "minutes_90s", 50),
     ("Goals", "goals", 50),
-    ("Assists", "assists", 20),
+    ("Asist", "assists", 20),
     ("G+A", None, 50),
     ("%Pass","passes_pct", 100),
     ("Tackles Won","tackles_won",151),
     ("Interceptions","interceptions", 75),
     ("Challenges","challenges", 200),
     ("Progressive Passes","progressive_passes",440),
-    ("Progressive Carries","progressive_carries",213),
+    ("Progressive Passes Received","progressive_passes_received",490),
 ]
 
 # label, df‑column, category

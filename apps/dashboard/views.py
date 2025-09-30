@@ -320,27 +320,46 @@ def player_profile(request, player_id: int):
 
         # Default metrics depending on position (compact set ~12)
         pos = player.get("position") or "MF"
-        # Exclude "age" and favour actionable performance metrics
+        # Exclude stats already shown in the side table (age, minutes,
+        # goals, assists, goals_per90, assists_per90, passes_pct)
+        # and favour informative metrics by position.
         metrics_by_pos = {
             "GK": [
-                "gk_psxg", "gk_pens_allowed", "passes_pct", "errors",
-                "clearances", "blocks"
+                "gk_psxg",
+                "gk_pens_allowed",
+                "gk_free_kick_goals_against",
+                "gk_corner_kick_goals_against",
+                "gk_own_goals_against",
+                "clearances",
+                "blocks",
             ],
             "DF": [
-                "tackles", "tackles_won", "interceptions", "blocks",
-                "clearances", "tackles_interceptions", "passes_pct",
-                "progressive_passes"
+                "tackles",
+                "tackles_won",
+                "tackles_interceptions",
+                "interceptions",
+                "blocked_shots",
+                "clearances",
+                "progressive_passes",
+                "progressive_carries",
             ],
             "MF": [
-                "goals", "assists", "goals_per90", "assists_per90",
-                "expected_goals_per90", "passes_pct",
-                "progressive_passes", "progressive_carries",
-                "progressive_passes_received"
+                "expected_goals_per90",
+                "expected_assists_per90",
+                "goals_assists_per90",
+                "progressive_passes",
+                "progressive_carries",
+                "progressive_passes_received",
+                "interceptions",
+                "tackles_won",
             ],
             "FW": [
-                "goals", "assists", "goals_per90", "assists_per90",
-                "expected_goals_per90", "progressive_passes_received",
-                "passes_pct", "progressive_carries"
+                "expected_goals_per90",
+                "expected_goals_assists_per90",
+                "goals_assists_per90",
+                "progressive_passes_received",
+                "progressive_passes",
+                "progressive_carries",
             ],
         }
         metrics = metrics_by_pos.get(pos, DEFAULT_METRICS)
