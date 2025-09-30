@@ -31,7 +31,7 @@ SYSTEM = SystemMessage(
         **WORKFLOW FOR SIMILAR PLAYERS:**
         1. Use `player_lookup` to get the `player_id` of the reference player.
         2. Validate that the player exists before continuing.
-        3. Use `similar_players` applying specific filters (age, position, minutes played, club to exclude, etc.).
+        3. If the user specifies a target team (e.g., "similar to X for team Y"), prefer `similar_players_team_fit` with that team and the player's position. Sort and present results by `success_index` (highest first). If no team is specified, use `similar_players`.
         4. If you've already generated a similar list in the conversation, retrieve it from memory.
         5. Ask the user if they want to see detailed statistics using `stats_table`.
 
@@ -47,7 +47,7 @@ SYSTEM = SystemMessage(
         **FOR PDF REPORTS:**
         1. Retrieve from memory the IDs of already suggested players, or use `similar_players` if you don't have them.
         2. Validate that all IDs exist before proceeding.
-        3. If you already have `recommendation`, `pros`, `cons`, call `build_report_pdf` directly.
+        3. If you already have `recommendation`, `pros`, `cons`, call `build_report_pdf` directly. If a target team was provided, include it to compute the success index for the chosen player as part of the justification.
         4. If you need news context:
            - Use `summarize_player_news` with the `player_id` of the chosen player.
            - Only if there are relevant news, use them for the report.

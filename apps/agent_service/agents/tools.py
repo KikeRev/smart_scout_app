@@ -288,6 +288,7 @@ class BuildScoutingReportInput(BaseModel):
     chosen_id: int = Field(..., description="ID of the chosen player as recommended signing")
     pros: List[str] = Field(..., description="List of player advantages")
     cons: List[str] = Field(..., description="List of player disadvantages or risks")
+    target_team: Optional[str] = Field(None, description="If provided, compute success_index vs team-position cohort and include it in the recommendation context")
 
 def generate_recommendation_with_news(
     chosen_id: int,
@@ -297,6 +298,7 @@ def generate_recommendation_with_news(
     candidate_ids: List[int],
     pros: List[str],
     cons: List[str],
+    success_index: Optional[float] = None,
 ) -> str:
     # Validate input parameters
     if not validate_parameters({
@@ -349,6 +351,7 @@ def generate_recommendation_with_news(
         - Transfer objective: {objective}
         - Recommended player: {player_name}
         - News summary (if any): {news}
+        - Success index vs target team fit (if available): {success_index}
         
         **REPORT STRUCTURE (HTML FORMAT):**
         Use the following HTML structure:
@@ -382,6 +385,7 @@ def generate_recommendation_with_news(
         "objective": objective,
         "player_name": player_name,
         "news": summary,
+        "success_index": f"{success_index:.3f}" if isinstance(success_index, (int, float)) else "N/A",
     }).strip()
 
 def build_scouting_report(
@@ -391,9 +395,30 @@ def build_scouting_report(
     chosen_id: int,
     pros: List[str],
     cons: List[str],
+    target_team: Optional[str] = None,
 ) -> dict:
     from apps.dashboard.views import _fetch_stats 
     players_map = _fetch_stats(candidate_ids + [base_id])
+
+    # Optionally compute success_index for the chosen player against target team
+    chosen_success_index: Optional[float] = None
+    if target_team:
+        try:
+            # Use base_id as reference and request fit for the same position and team
+            import requests as _rq
+            position = players_map[base_id].get("position") or players_map[base_id].get("role")
+            params = {"team": target_team, "k": 50}
+            if position:
+                params["position"] = position
+            r = _rq.get(f"http://api:8001/players/{base_id}/similar_team_fit", params=params, timeout=20)
+            if r.ok:
+                data = r.json()
+                for item in data.get("candidates", []):
+                    if int(item.get("id")) == int(chosen_id):
+                        chosen_success_index = float(item.get("success_index"))
+                        break
+        except Exception:
+            chosen_success_index = None
 
     recommendation = generate_recommendation_with_news(
         chosen_id=chosen_id,
@@ -403,6 +428,7 @@ def build_scouting_report(
         candidate_ids=candidate_ids,
         pros=pros,
         cons=cons,
+        success_index=chosen_success_index,
     )
 
     return build_report_pdf(
