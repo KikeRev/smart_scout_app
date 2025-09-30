@@ -14,6 +14,7 @@ Welcome to **Smart Scout App v1.0** — an application created to help football 
 - **Intelligent Player Recommendations**: AI agent analyzes player data and provides recommendations
 - **Natural Language Queries**: Ask questions in plain English or Spanish
 - **Comprehensive Reports**: Generate detailed PDF reports with analysis and recommendations
+- **Team Fit Success Index (new)**: When you ask "find a player similar to X for team Y", the system combines overall similarity with similarity to the target team's players in the same position to produce a success index.
 
 ### 🔍 Manual Search & Analysis
 - **Advanced Player Search**: Filter players by multiple criteria
@@ -69,6 +70,24 @@ After running `make up`, the services are accessible at:
 | Player Search | [https://localhost:8000/dashboard/search/](https://localhost:8000/dashboard/search/) | Manual player search dashboard |
 | User Reports | [https://localhost:8000/chat/](https://localhost:8000/chat/) | AI-powered scouting reports |
 | API (FastAPI) | [http://localhost:8001](http://localhost:8001) | Backend API endpoints |
+# 🧭 New: Similarity with Team Fit (success_index)
+
+- Endpoint: `GET /players/{player_id}/similar_team_fit`
+  - Query params:
+    - `team` (required): target club Y
+    - `position` (optional): defaults to base player's position
+    - `k` (default 15): number of candidates
+    - `overall_weight` (default 0.5): weight for overall similarity in `success_index` (team fit weight is `1 - overall_weight`)
+  - Response:
+    - `context`: `{ base_player_id, base_full_name, base_club, position, target_team, base_team_position_similarity, weights, cohort_size }`
+    - `candidates[]`: `{ id, full_name, club, position, overall_similarity, team_position_similarity, success_index }`
+
+- Agent tool: `similar_players_team_fit`
+  - The agent prefers this tool when the user asks "similar to X for team Y" and orders results by `success_index`.
+
+- PDF report
+  - When generating reports and a `target_team` is provided, the agent includes the `success_index` of the chosen candidate as part of the justification.
+
 | Jupyter Lab | [http://localhost:8888](http://localhost:8888) | Development environment |
 | PostgreSQL | localhost:5432 (internal only) | Database |
 | Redis | localhost:6379 (internal only) | Cache layer |

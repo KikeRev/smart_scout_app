@@ -1,8 +1,21 @@
+import types
+import sys
 import pytest
 
 
 def test_similar_players_team_fit_tool_smoke(monkeypatch):
-    # Arrange: stub requests.get to avoid network
+    # Arrange: stub heavy ingestion module BEFORE importing tools to avoid external downloads
+    dummy_ingest = types.ModuleType("apps.ingestion.seed_and_ingest")
+    class DummyPlayer:
+        id: int
+        full_name: str
+        club: str
+        position: str
+        feature_vector: list[float]
+    dummy_ingest.Player = DummyPlayer
+    sys.modules["apps.ingestion.seed_and_ingest"] = dummy_ingest
+
+    # Now import tools (safe)
     import apps.agent_service.agents.tools as tools
 
     class DummyResp:
