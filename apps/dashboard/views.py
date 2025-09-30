@@ -376,9 +376,16 @@ def player_profile(request, player_id: int):
         if radar.get("attachments"):
             radar_url = radar["attachments"][0].get("url")
 
-        # Select compact KPI table (subset)
-        kpi_keys = ["age", "minutes", "goals", "assists", "goals_per90", "assists_per90", "passes_pct"]
-        kpis = {k: player.get(k) for k in kpi_keys}
+        # Select KPI table metrics that don't overlap with radar
+        # Radar has: Min/Games, Games_90s, Goals, Asist, G+A, %Pass, Tackles Won, Interceptions, Challenges, Progressive Passes, Progressive Passes Received
+        kpi_keys_by_pos = {
+            "GK": ["age", "minutes", "gk_psxg", "gk_goals_against", "gk_pens_allowed", "clearances", "blocks"],
+            "DF": ["age", "minutes", "expected_goals_per90", "expected_assists_per90", "tackles", "tackles_interceptions", "blocked_shots", "clearances"],
+            "MF": ["age", "minutes", "expected_goals_per90", "expected_assists_per90", "goals_assists_per90", "progressive_carries", "key_passes", "through_balls"],
+            "FW": ["age", "minutes", "expected_goals_per90", "expected_goals_assists_per90", "goals_assists_per90", "progressive_carries", "key_passes", "through_balls"],
+        }
+        kpi_keys = kpi_keys_by_pos.get(pos, ["age", "minutes", "expected_goals_per90", "expected_assists_per90", "goals_assists_per90"])
+        kpis = {k: player.get(k) for k in kpi_keys if player.get(k) is not None}
 
         ctx = {
             "player": player,
