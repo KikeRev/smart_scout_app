@@ -119,6 +119,101 @@ similar_players_team_fit_tool = StructuredTool.from_function(
     args_schema=SimilarPlayersTeamFitInput,
 )
 
+# ---------------------- 1.2) Team Fit → HTML Table (direct) ----------------- #
+def _similar_players_team_fit_table(
+    player_id: int,
+    team: str,
+    position: Optional[str] = None,
+    k: int = 10,
+    min_minutes: int = 0,
+    max_age: int = 45,
+    exclude_club: Optional[str] = None,
+    overall_weight: float = 0.5,
+):
+    """
+    Calls the team-fit endpoint and returns an HTML table with ordered results
+    by success_index, including overall similarity and team-position similarity.
+    """
+    data = _similar_players_team_fit(
+        player_id=player_id,
+        team=team,
+        position=position,
+        k=k,
+        min_minutes=min_minutes,
+        max_age=max_age,
+        exclude_club=exclude_club,
+        overall_weight=overall_weight,
+    )
+
+    rows = data.get("candidates", [])
+    # sort by success_index descending (defensive)
+    rows = sorted(rows, key=lambda r: r.get("success_index", 0), reverse=True)
+
+    def pct(x: float | None) -> str:
+        if x is None:
+            return "—"
+        try:
+            return f"{float(x)*100:.2f}%"
+        except Exception:
+            return "—"
+
+    html = [
+        "<div class=\"table-responsive\">",
+        "<table class=\"table table-sm table-striped align-middle\">",
+        "<thead><tr>",
+        "<th>#</th><th>Player</th><th>Club</th><th>Position</th>",
+        "<th>Success Index</th><th>Overall</th><th>Team Fit</th>",
+        "</tr></thead>",
+        "<tbody>",
+    ]
+
+    for i, r in enumerate(rows, start=1):
+        html.append(
+            """
+            <tr>
+              <td>{i}</td>
+              <td>{name}</td>
+              <td>{club}</td>
+              <td>{pos}</td>
+              <td><strong>{succ}</strong></td>
+              <td>{ov}</td>
+              <td>{fit}</td>
+            </tr>
+            """.format(
+                i=i,
+                name=r.get("full_name", "—"),
+                club=r.get("club", "—"),
+                pos=r.get("position", "—"),
+                succ=pct(r.get("success_index")),
+                ov=pct(r.get("overall_similarity")),
+                fit=pct(r.get("team_position_similarity")),
+            )
+        )
+
+    html.extend(["</tbody>", "</table>", "</div>"])
+
+    context = data.get("context", {})
+    title = (
+        f"Top {len(rows)} candidates for {context.get('target_team','Team')}"
+        f" · Position {context.get('position','?')}"
+    )
+    return {
+        "text": title,
+        "attachments": [
+            {"type": "table", "html": "".join(html)}
+        ],
+    }
+
+similar_players_team_fit_table_tool = StructuredTool.from_function(
+    name="similar_players_team_fit_table",
+    description=(
+        "Same as similar_players_team_fit but returns a compact HTML table "
+        "sorted by success_index, ideal for chat display or copy to report."
+    ),
+    func=_similar_players_team_fit_table,
+    args_schema=SimilarPlayersTeamFitInput,
+)
+
 
 # ----------------------------- 2) Player Lookup ----------------------------- #
 class PlayerLookupInput(BaseModel):
@@ -563,6 +658,7 @@ TOOLS = [
     radar_comparison_chart_tool,  # <-- tool to generate radar comparison charts
     similar_players_tool,         # <-- tool to search for similar players
     similar_players_team_fit_tool, # <-- tool to search for similar players with team fit
+    similar_players_team_fit_table_tool, # <-- HTML table for team fit results
     news_search_tool,             # <-- tool to search for news
     player_news_tool,             # <-- tool to search for news related to a player
     dashboard_inline_tool,        # <-- tool to generate inline dashboard
