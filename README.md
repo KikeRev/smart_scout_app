@@ -1,4 +1,4 @@
-<h1 align="center">SMART SCOUT APP v1.0</h1>
+<h1 align="center">SMART SCOUT APP v1.1</h1>
 
 <p align="center">
   <img src="./static/img/app_logo_6.png" alt="Logo">
@@ -6,7 +6,7 @@
 
 # 🚀 Welcome
 
-Welcome to **Smart Scout App v1.0** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
+Welcome to **Smart Scout App v1.1** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
 
 ## ✨ Features Overview
 
