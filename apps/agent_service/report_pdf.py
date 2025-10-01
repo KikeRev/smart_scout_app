@@ -134,6 +134,18 @@ def build_report_pdf(
             .to_html(index=False, classes="table table-sm table-striped")
         )
 
+    # Clean possible markdown fences from LLM output (e.g., ```html ... ```)
+    import re
+    def _strip_code_fences(text: str) -> str:
+        if not text:
+            return text
+        cleaned = text.strip()
+        cleaned = re.sub(r"^\s*```(?:[a-zA-Z]+)?\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```\s*$", "", cleaned)
+        return cleaned
+
+    recommendation_clean = _strip_code_fences(recommendation)
+
     # 4) build HTML
     html_str = render_to_string(
         "reports/report.html",
@@ -142,7 +154,7 @@ def build_report_pdf(
             "date":        timezone.now(),        # dd/mm/yyyy hh:mm
             "candidates":  table_alt_html,
             "chosen":      players_map[chosen_id],# complete dict
-            "summary":     recommendation,
+            "summary":     recommendation_clean,
             "pros":        pros,
             "cons":        cons,
             "news":        news_summary,

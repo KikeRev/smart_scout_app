@@ -1,0 +1,92 @@
+[33mtag v1.1.0[m
+Tagger: KikeRev <enrique.revuelta@bain.com>
+Date:   Wed Oct 1 12:10:22 2025 +0200
+
+Release v1.1.0 - Success Index v2.1
+
+Major Features:
+- Success Index v2.1: Enhanced player recommendation system
+- Multi-factor scoring: league, minutes, age, team strength, position
+- Visual profile badges with interactive table
+- Player profile page with radar charts
+- Comprehensive testing suite (50 tests)
+- Full documentation in README
+
+This release significantly enhances the player recommendation system with a sophisticated scoring algorithm that considers multiple contextual factors beyond just playing similarity.
+
+[33mcommit 88fec9452463879972c86f159d6382227c3fe919[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;33mtag: [m[1;33mv1.1.0[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Enrique Revuelta <enrique.revuelta@bain.com>
+Date:   Wed Oct 1 12:07:14 2025 +0200
+
+    Feature/success index v2.1 (#11)
+    
+    * feat(reco): add /players/{id}/similar_team_fit endpoint and agent tool; compute team-position centroid fit and success_index
+    
+    * feat(agent): prefer similar_players_team_fit when team provided; include success_index in report context; add API and tool tests
+    
+    * test(api): remove legacy API tests; keep new success_index endpoint tests only
+    
+    * feat(agent): add similar_players_team_fit_table tool to return HTML table sorted by success_index
+    
+    * fix(agent): return_direct=True in team_fit_table tool so chat renders HTML table
+    
+    * feat(web): add player profile view and template; add route; link chat table names to profile
+    
+    * ux(profile): rename 'Key KPIs' to 'Statistics' in player profile
+    
+    * feat(profile): remove age from radar; add gameplay metrics per position and use dashboard_radar_single
+    
+    * feat(viz): restore original radar style; remove Age; add Progressive Carries; keep max ranges
+    
+    * revert(radar): restore original radar palette and labels; no Age; keep progressive passes received; adjust player_profile to use non-table stats metrics
+    
+    * fix(profile): use viz_tools.radar_chart (fixed max ranges) instead of dashboard_radar_single
+    
+    * fix(profile): eliminate radar-table metric overlap with position-specific KPIs
+    
+    * feat(table): add sorting and copy functionality to recommendations table
+    
+    * feat(profile): add team logo to player profile page
+    
+    * feat: implement success index v2.1 with enhanced recommendation system
+    
+    - Add SuccessIndexCalculator with multiple factors (league, minutes, age, team strength, position)
+    - Implement 34 unit tests for all calculator functions
+    - Integrate v2.1 into similar_team_fit endpoint with breakdown details
+    - Update agent tools to use and display success_index_v2_1
+    - Add visual profile badges in recommendation table (league tier, playing time, age)
+    - Include profile legend with color-coded indicators
+    - Translate all documentation and comments to English for consistency
+    
+    * feat: add integration tests and visual profile badges for success index v2.1
+    
+    - Add 16 comprehensive integration tests covering all v2.1 functionality
+    - Test league weights, minutes weights, age weights, team strength, and position adjustments
+    - Test sorting, filtering, edge cases, and real-world scenarios
+    - Add visual profile badges to recommendation table (league tier, playing time, age)
+    - Add profile legend with color-coded indicators (green/yellow/orange/red)
+    - Sort endpoint results by success_index_v2_1 descending
+    - Add test_client fixture to API tests conftest
+    - All 16 integration tests passing
+    
+    * docs: add comprehensive documentation for success index v2.1
+    
+    - Replace basic success_index section with detailed v2.1 documentation
+    - Add complete explanation of all weight factors (league, minutes, age, team, position)
+    - Include tier system for 30 leagues across 5 tiers
+    - Document API endpoint with full request/response examples
+    - Add agent integration details and visual badge system
+    - Include 3 practical examples with calculations
+    - Add testing section with commands
+    - Provide best practices and interpretation guidelines
+    - Update features overview to highlight v2.1 capabilities
+    - Total documentation: ~280 lines covering all aspects
+    
+    * chore: bump version to v1.1.0
+    
+    - Update version from 1.0.1 to 1.1.0 in pyproject.toml
+    - Update README title to reflect v1.1
+    - Update project description to include Success Index v2.1
+    
+    This minor version bump reflects the addition of the Success Index v2.1
+    feature, which significantly enhances the player recommendation system.
