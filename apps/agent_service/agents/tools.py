@@ -640,7 +640,10 @@ def build_scouting_report(
     players_map = _fetch_stats(candidate_ids + [base_id])
 
     # Optionally compute success_index_v2_1 for the chosen player against target team
+    # and get full candidates data with Success Index
     chosen_success_index: Optional[float] = None
+    candidates_data: Optional[List[dict]] = None
+    
     if target_team:
         try:
             # Use base_id as reference and request fit for the same position and team
@@ -652,13 +655,24 @@ def build_scouting_report(
             r = _rq.get(f"http://api:8001/players/{base_id}/similar_team_fit", params=params, timeout=20)
             if r.ok:
                 data = r.json()
-                for item in data.get("candidates", []):
+                all_candidates = data.get("candidates", [])
+                
+                # Filter to only include candidates in candidate_ids
+                candidates_data = [
+                    c for c in all_candidates 
+                    if int(c.get("id")) in candidate_ids
+                ]
+                
+                # Find chosen player's success index
+                for item in all_candidates:
                     if int(item.get("id")) == int(chosen_id):
                         # Usar success_index_v2_1 si está disponible, sino fallback a success_index
                         chosen_success_index = float(item.get("success_index_v2_1", item.get("success_index")))
                         break
-        except Exception:
+        except Exception as e:
+            print(f"Error fetching success index data: {e}")
             chosen_success_index = None
+            candidates_data = None
 
     recommendation = generate_recommendation_with_news(
         chosen_id=chosen_id,
@@ -679,6 +693,8 @@ def build_scouting_report(
         recommendation=recommendation,
         pros=pros,
         cons=cons,
+        target_team=target_team,
+        candidates_data=candidates_data,
     )
 
 
