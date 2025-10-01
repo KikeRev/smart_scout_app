@@ -1,4 +1,4 @@
-<h1 align="center">SMART SCOUT APP v1.1</h1>
+<h1 align="center">SMART SCOUT APP v1.2</h1>
 
 <p align="center">
   <img src="./static/img/app_logo_6.png" alt="Logo">
@@ -6,7 +6,7 @@
 
 # 🚀 Welcome
 
-Welcome to **Smart Scout App v1.1** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
+Welcome to **Smart Scout App v1.2** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
 
 ## ✨ Features Overview
 
@@ -21,6 +21,10 @@ Welcome to **Smart Scout App v1.1** — an application created to help football 
   - Team strength (dynamically calculated)
   - Position-specific adjustments (GK, FW, DF, MF)
   - Interactive visual indicators (🟢🟡🟠🔴) for quick assessment
+- **Viability Score** (⭐ NEW): Final ranking metric that combines Success Index with transfer feasibility:
+  - Formula: `Viability Score = Success Index v2.1 × Feasibility Multiplier`
+  - Considers club rivalry, player status, market value, and transfer difficulty
+  - Primary selection criteria for AI recommendations
 
 ### 🔍 Manual Search & Analysis
 - **Advanced Player Search**: Filter players by multiple criteria
@@ -171,6 +175,69 @@ Different positions have different performance curves:
 
 ---
 
+## 🎯 Viability Score - Transfer Feasibility System
+
+The **Viability Score** is the final ranking metric that combines the Success Index v2.1 with transfer feasibility factors to determine the most realistic signing options.
+
+### Formula
+```
+Viability Score = Success Index v2.1 × Feasibility Multiplier
+```
+
+### 🚦 Feasibility Multipliers
+
+The system evaluates transfer difficulty based on multiple factors:
+
+#### 🟢 HIGH FEASIBILITY (1.0 - 1.2)
+- **Tier 2-3 league players** (Eredivisie, Primeira Liga, Championship): **1.2×**
+- **Rotation/backup players** from any league (minutes < 1500): **1.1×**
+- **Young players** (≤23y) from mid-table clubs: **1.1×**
+- **Starter from tier 2 league** (non-Top 5): **1.0×**
+
+#### 🟡 MEDIUM FEASIBILITY (0.75 - 0.9)
+- **Starter from mid-table Top 5 league club**: **0.85×**
+- **Star player from competitive club** (e.g., Declan Rice at Arsenal): **0.75×**
+- **Player from same country** but different club (non-rival): **0.80×**
+
+#### 🟠 LOW FEASIBILITY (0.3 - 0.5)
+- **Starter from direct rival club** (e.g., Barcelona → Real Madrid): **0.3×**
+- **Undisputed star from Champions League giant**: **0.4×**
+- **Player who just signed** (< 1 year in current club): **0.5×**
+
+#### 🔴 VERY LOW FEASIBILITY (0.1 - 0.2)
+- **Club legend or captain from rival**: **0.1×**
+- **Player in peak form at rival during title race**: **0.2×**
+
+### 🏆 Rivalry Matrix
+
+The system automatically identifies and penalizes impossible transfers:
+
+| Rival Pairs | Multiplier |
+|-------------|------------|
+| Barcelona ↔ Real Madrid | 0.3× |
+| Manchester United ↔ Manchester City | 0.3× |
+| Arsenal ↔ Tottenham | 0.3× |
+| Liverpool ↔ Everton | 0.3× |
+| AC Milan ↔ Inter Milan | 0.3× |
+| Juventus ↔ Inter Milan | 0.3× |
+| Atletico Madrid ↔ Real Madrid | 0.3× |
+| Bayern Munich ↔ Borussia Dortmund | 0.3× |
+
+### 📊 How It Works in Practice
+
+1. **Calculate Success Index v2.1** for all candidates
+2. **Apply Feasibility Multiplier** based on transfer difficulty
+3. **Rank by Viability Score** (highest = most recommended)
+4. **AI selects the most viable option** for the report
+
+**Example:**
+- Player A: Success Index 91.2% × Feasibility 0.95 = **Viability Score 86.6%**
+- Player B: Success Index 63.7% × Feasibility 1.2 = **Viability Score 76.4%**
+
+Player A would be recommended despite having a lower Success Index, because they're more feasible to sign.
+
+---
+
 ## 🔌 API Endpoint
 
 ### `GET /players/{player_id}/similar_team_fit`
@@ -223,6 +290,9 @@ Find players similar to a base player, optimized for a target team.
     }
   ]
 }
+```
+
+**Note:** The response is automatically sorted by `success_index_v2_1` in descending order. The **Viability Score** is calculated client-side as `success_index_v2_1 × feasibility_multiplier` and displayed in the recommendation table.
 ```
 
 **Example Usage:**
@@ -886,9 +956,41 @@ docker-compose exec api python -m pytest tests/ --cov=. --cov-report=html
 ```
 
 
-# 📋 Release Notes - Version 1.0
+# 📋 Release Notes
 
-## 🎉 Initial Release Features
+## 🚀 Version 1.2 - Viability Score & Enhanced Recommendations (October 2025)
+
+### ✨ New Features
+- **Viability Score System**: New final ranking metric that combines Success Index v2.1 with transfer feasibility
+- **Feasibility Multipliers**: Intelligent transfer difficulty assessment based on club rivalry, player status, and market value
+- **Enhanced Recommendation Table**: Added Viability Score column with visual indicators and sorting capabilities
+- **Intelligent AI Selection**: Agent now reasons about the most viable signing option, not just the highest-scored one
+- **Rivalry Matrix**: Automatic detection and penalization of impossible transfers between rival clubs
+
+### 🔧 Improvements
+- **Cache Persistence**: Fixed context loss between agent calls with dual cache system
+- **PDF Report Generation**: Cleaned HTML rendering and improved Success Index v2.1 integration
+- **Feasibility Multipliers**: Adjusted weights for more realistic Top 5 league player recommendations
+- **Debug Logging**: Added comprehensive logging for better troubleshooting
+- **Table Interactivity**: Enhanced sorting and copy functionality for recommendation tables
+
+### 🐛 Bug Fixes
+- Fixed NameError in feasibility calculation (using 'team' parameter correctly)
+- Resolved cache persistence issues between multiple agent calls
+- Fixed HTML fence rendering in PDF reports
+- Corrected decimal/float type errors in team strength calculations
+
+### 📊 Technical Details
+- **Formula**: `Viability Score = Success Index v2.1 × Feasibility Multiplier`
+- **Feasibility Ranges**: 0.1× (nearly impossible) to 1.2× (very feasible)
+- **Rival Penalties**: 0.3× multiplier for direct rival club transfers
+- **Cache System**: Dual-layer persistence with primary and backup caches
+
+---
+
+## 🎉 Version 1.1 - Success Index v2.1 (September 2025)
+
+### ✨ New Features
 
 ### Core Functionality
 - ✅ **AI-Powered Scouting Agent**: Intelligent player analysis and recommendations

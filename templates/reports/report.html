@@ -79,7 +79,7 @@
 
             <h2>3. Recommendation</h2>
             <p><strong>Chosen player:</strong> {{ chosen.full_name }} ({{ chosen.club }})</p>
-            <p>{{ summary }}</p>
+            {{ summary|safe }}
 
             <div class="row g-4">
                 <div class="col-md-6">

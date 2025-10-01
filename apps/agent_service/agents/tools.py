@@ -4,12 +4,21 @@ from langchain.tools import StructuredTool
 from apps.agent_service.viz_tools import radar_chart, pizza_chart, radar_comparison_chart, pizza_comparison_chart
 from apps.agent_service.players_service import player_stats
 from apps.agent_service.utils import stats_to_html_table, compare_stats_to_html_table
-from typing import List, Optional, Annotated
+from typing import List, Optional, Annotated, Dict
 from apps.agent_service.dash_tools import dashboard_inline
 from apps.agent_service.report_pdf import build_report_pdf
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from apps.agent_service.llm_provider import get_llm
+
+# Global cache for last search context (simple in-memory storage)
+# This allows build_scouting_report to access the last search metadata
+# Key: user_id, Value: search context
+_user_search_contexts: Dict[str, Dict] = {}
+
+# Alternative: Use a more persistent cache approach
+# Store the last search context in a way that survives between agent calls
+_last_search_context: Dict = {}
 from apps.agent_service.validation import (
     validate_player_data, 
     validate_similar_players_data, 
@@ -171,10 +180,11 @@ def _similar_players_team_fit_table(
         "<th onclick=\"sortTable(1)\" style=\"cursor: pointer;\">Player <i class=\"fas fa-sort\"></i></th>",
         "<th onclick=\"sortTable(2)\" style=\"cursor: pointer;\">Club <i class=\"fas fa-sort\"></i></th>",
         "<th onclick=\"sortTable(3)\" style=\"cursor: pointer;\">Position <i class=\"fas fa-sort\"></i></th>",
-        "<th onclick=\"sortTable(4)\" style=\"cursor: pointer;\">Success Index <i class=\"fas fa-sort\"></i></th>",
-        "<th onclick=\"sortTable(5)\" style=\"cursor: pointer;\">Overall <i class=\"fas fa-sort\"></i></th>",
-        "<th onclick=\"sortTable(6)\" style=\"cursor: pointer;\">Team Fit <i class=\"fas fa-sort\"></i></th>",
-        "<th>Profile <i class=\"fas fa-info-circle\"></i></th>",
+           "<th onclick=\"sortTable(4)\" style=\"cursor: pointer;\">Success Index <i class=\"fas fa-sort\"></i></th>",
+           "<th onclick=\"sortTable(5)\" style=\"cursor: pointer;\">Viability Score <i class=\"fas fa-sort\"></i></th>",
+           "<th onclick=\"sortTable(6)\" style=\"cursor: pointer;\">Overall <i class=\"fas fa-sort\"></i></th>",
+           "<th onclick=\"sortTable(7)\" style=\"cursor: pointer;\">Team Fit <i class=\"fas fa-sort\"></i></th>",
+           "<th>Profile <i class=\"fas fa-info-circle\"></i></th>",
         "</tr></thead>",
         "<tbody>",
     ]
@@ -224,17 +234,24 @@ def _similar_players_team_fit_table(
             r.get("league", "")
         )
         
+        # Calculate viability score for display
+        success_idx = r.get("success_index_v2_1", r.get("success_index", 0))
+        # Use provided team argument as target team for feasibility calc
+        feasibility = _feasibility_multiplier(r, team)
+        viability = float(success_idx) * feasibility
+        
         html.append(
             """
             <tr>
-              <td>{i}</td>
-              <td><a href="{href}" target="_blank" rel="noopener">{name}</a></td>
-              <td>{club}</td>
-              <td>{pos}</td>
-              <td><strong>{succ}</strong></td>
-              <td>{ov}</td>
-              <td>{fit}</td>
-              <td style="font-size: 0.85em; line-height: 1.4;">{profile}</td>
+                <td>{i}</td>
+                <td><a href="{href}" target="_blank" rel="noopener">{name}</a></td>
+                <td>{club}</td>
+                <td>{pos}</td>
+                <td><strong>{succ}</strong></td>
+                <td><strong style="color: #28a745;">{viab}</strong></td>
+                <td>{ov}</td>
+                <td>{fit}</td>
+                <td style="font-size: 0.85em; line-height: 1.4;">{profile}</td>
             </tr>
             """.format(
                 i=i,
@@ -242,7 +259,8 @@ def _similar_players_team_fit_table(
                 href=profile_href,
                 club=r.get("club", "—"),
                 pos=r.get("position", "—"),
-                succ=pct(r.get("success_index_v2_1", r.get("success_index"))),
+                succ=pct(success_idx),
+                viab=pct(viability),
                 ov=pct(r.get("overall_similarity")),
                 fit=pct(r.get("team_position_similarity")),
                 profile=profile_info,
@@ -286,8 +304,8 @@ def _similar_players_team_fit_table(
                 let aVal = a.cells[columnIndex].textContent.trim();
                 let bVal = b.cells[columnIndex].textContent.trim();
                 
-                // Handle numeric columns (Success Index, Overall, Team Fit) - excluding Profile (column 7)
-                if (columnIndex >= 4 && columnIndex <= 6) {
+                   // Handle numeric columns (Success Index, Viability Score, Overall, Team Fit) - excluding Profile (column 8)
+                   if (columnIndex >= 4 && columnIndex <= 7) {
                     aVal = parseFloat(aVal.replace('%', '')) || 0;
                     bVal = parseFloat(bVal.replace('%', '')) || 0;
                 }
@@ -340,22 +358,43 @@ def _similar_players_team_fit_table(
         f"Top {len(rows)} candidates for {context.get('target_team','Team')}"
         f" · Position {context.get('position','?')}"
     )
+    
+    # Store candidate IDs for report generation
+    candidate_ids = [r.get("id") for r in rows]
+    
+    # Save context globally for build_scouting_report to access
+    # Always overwrite to ensure we use the latest list in the same chat session
+    global _user_search_contexts, _last_search_context
+    context_data = {
+        "base_id": player_id,
+        "candidate_ids": candidate_ids,
+        "target_team": team,
+        "position": position or context.get("position"),
+        "candidates_data": rows  # Full data with success_index_v2_1
+    }
+    _user_search_contexts["current"] = context_data
+    _last_search_context = context_data  # Backup cache
+    
+    # Debug: print to logs to verify context is being saved
+    print(f"DEBUG: Saved search context: {len(candidate_ids)} candidates, base_id={player_id}, target_team={team}")
+    
     return {
         "text": title,
         "attachments": [
             {"type": "table", "html": "".join(html)}
-        ],
+        ]
     }
 
 similar_players_team_fit_table_tool = StructuredTool.from_function(
     name="similar_players_team_fit_table",
     description=(
         "Same as similar_players_team_fit but returns a compact HTML table "
-        "sorted by success_index, ideal for chat display or copy to report."
+        "sorted by success_index, ideal for chat display or copy to report. "
+        "Also stores search context (base_id, candidate_ids, target_team) for later report generation."
     ),
     func=_similar_players_team_fit_table,
     args_schema=SimilarPlayersTeamFitInput,
-    return_direct=True          # allow returning the HTML directly to the chat
+    return_direct=True          # Back to True to display table correctly
 )
 
 
@@ -520,13 +559,90 @@ summarize_player_news_tool = StructuredTool.from_function(
 
 # -------------------------- 4.2) Recommendation with news ------------------- #
 
+def _feasibility_multiplier(candidate: dict, target_team: Optional[str]) -> float:
+    """Compute feasibility multiplier based on simple, explicit rules.
+
+    Rules (from agent instructions):
+      - HIGH (1.0-1.2): tier2/3 leagues, rotation players, young from mid-table
+      - MED (0.75-0.9): starter mid-table Top5, star in competitive club
+      - LOW (0.3-0.5): direct rival, undisputed star UCL giant, just signed
+
+    Inputs available in candidate row: club, league, minutes, age, success_index_v2_1.
+    """
+    if not candidate:
+        return 0.75
+
+    club = (candidate.get("club") or "").lower()
+    league = (candidate.get("league") or "").lower()
+    minutes = int(candidate.get("minutes") or 0)
+    age = int(candidate.get("age") or 0)
+
+    # Rivalry matrix (basic hardcoded set)
+    target = (target_team or "").lower()
+    rivals_map = {
+        "real madrid": {"barcelona", "atlético madrid", "atletico madrid"},
+        "barcelona": {"real madrid"},
+        "manchester city": {"manchester united"},
+        "manchester united": {"manchester city"},
+        "arsenal": {"tottenham"},
+        "tottenham": {"arsenal"},
+        "liverpool": {"everton"},
+        "everton": {"liverpool"},
+        "inter": {"milan"},
+        "milan": {"inter"},
+        "roma": {"lazio"},
+        "lazio": {"roma"},
+        "juventus": {"torino"},
+        "torino": {"juventus"},
+        "bayern": {"dortmund"},
+        "borussia dortmund": {"bayern"},
+    }
+
+    # Rival penalty (not zero, but strong)
+    if target and any(target in k for k in rivals_map.keys()):
+        for k, rivals in rivals_map.items():
+            if target.startswith(k) and any(r in club for r in rivals):
+                return 0.30
+
+    # League tiers (approx)
+    tier1 = {"premier", "la liga", "bundesliga", "serie a", "ligue 1"}
+    tier2 = {"eredivisie", "primeira", "belgian", "liga mx", "brasileirao"}
+
+    league_mult = 1.0
+    if any(t in league for t in tier2):
+        league_mult = 1.2
+    elif any(t in league for t in tier1):
+        league_mult = 1.0  # Top 5 leagues - neutral (not penalized)
+    else:
+        league_mult = 1.1  # emerging leagues
+
+    # Minutes-based role (less penalizing for starters)
+    role_mult = 1.0
+    if minutes >= 2000:
+        role_mult = 0.95  # undisputed starter → slightly harder but not much
+    elif minutes >= 1000:
+        role_mult = 1.0
+    else:
+        role_mult = 1.1  # rotation → easier
+
+    # Young bonus
+    age_mult = 1.0
+    if 18 <= age <= 23:
+        age_mult = 1.1
+
+    # Cap and compose
+    mult = league_mult * role_mult * age_mult
+    # Clamp within 0.3 - 1.2
+    return max(0.3, min(1.2, round(mult, 2)))
+
 class BuildScoutingReportInput(BaseModel):
     objective: str = Field(..., description="Report objective (e.g. 'Find young left-back')")
-    base_id: int = Field(..., description="Base player ID for comparison")
-    candidate_ids: List[int] = Field(..., description="List of candidate player IDs")
+    # Optional fields - will be filled from cached context if not provided
+    base_id: Optional[int] = Field(None, description="Base player ID for comparison (optional, uses cached context if missing)")
+    candidate_ids: Optional[List[int]] = Field(None, description="List of candidate player IDs (optional, uses cached context if missing)")
     chosen_id: int = Field(..., description="ID of the chosen player as recommended signing")
-    pros: List[str] = Field(..., description="List of player advantages")
-    cons: List[str] = Field(..., description="List of player disadvantages or risks")
+    pros: Optional[List[str]] = Field(None, description="List of player advantages (optional)")
+    cons: Optional[List[str]] = Field(None, description="List of player disadvantages or risks (optional)")
     target_team: Optional[str] = Field(None, description="If provided, compute success_index vs team-position cohort and include it in the recommendation context")
 
 def generate_recommendation_with_news(
@@ -538,6 +654,8 @@ def generate_recommendation_with_news(
     pros: List[str],
     cons: List[str],
     success_index: Optional[float] = None,
+    feasibility_multiplier: Optional[float] = None,
+    viability_score: Optional[float] = None,
 ) -> str:
     # Validate input parameters
     if not validate_parameters({
@@ -585,29 +703,47 @@ def generate_recommendation_with_news(
         
         **REPORT OBJECTIVE:**
         Write a professional technical report to recommend a transfer based ONLY on the provided data.
+        This report should justify why THIS player is the most viable option, not just the highest-scored one.
         
         **AVAILABLE DATA:**
         - Transfer objective: {objective}
         - Recommended player: {player_name}
         - News summary (if any): {news}
-        - Success index v2.1 (probability of successful signing considering league, minutes, age, team strength, and position): {success_index}
+        - Success index v2.1 (probability of tactical fit considering league, minutes, age, team strength, position): {success_index}
+        - Feasibility multiplier (transfer difficulty): {feasibility}
+        - Viability score (success_index × feasibility): {viability}
+        
+        **CONTEXT:**
+        This player was selected after analyzing multiple candidates and considering:
+        1) Tactical fit (success_index_v2_1)
+        2) Transfer feasibility (club rivalry, player status, market value)
+        3) Risk-benefit balance
         
         **REPORT STRUCTURE (HTML FORMAT):**
-        Use the following HTML structure:
+        Write ONLY the content HTML, starting directly with the first <h3> tag.
+        DO NOT include <html>, <body>, <head> or any document-level tags.
         
-        <div class="scouting-report">
-            <h3>Technical Analysis</h3>
-            <p>Player's strengths based on real data, identified areas for improvement, and playing style characteristics.</p>
-            
-            <h3>Market Context</h3>
-            <p>Only include if news contains relevant and verifiable information. If no relevant news, omit this section.</p>
-            
-            <h3>Transfer Justification</h3>
-            <p>Why this player fits the stated objective and coherence with team needs.</p>
-        </div>
+        Structure example:
+        
+        <h3>Technical Analysis</h3>
+        <p>Player's strengths based on real data, identified areas for improvement, and playing style characteristics.</p>
+        
+        <h3>Market Context</h3>
+        <p>Only include if news contains relevant and verifiable information. If no relevant news, omit this section.</p>
+        
+        <h3>Transfer Justification</h3>
+        <p>Why THIS player is the most viable option considering:
+           - Tactical fit (success_index as indicator)
+           - Transfer feasibility (is this a realistic target given club dynamics?)
+           - Value proposition (cost-benefit balance)</p>
+        
+        <h3>Why This Player Over Alternatives</h3>
+        <p>If there were higher-scored candidates, explain why they were not selected (e.g., club rivalry, unrealistic target, excessive cost). 
+           Justify why this recommendation is the most practical and achievable option.</p>
         
         **WRITING RULES:**
-        - Use proper HTML tags: <h3> for section headers, <p> for paragraphs
+        - Start directly with <h3>, NOT with <html> or <div>
+        - Use <h3> for section headers, <p> for paragraphs
         - Maximum 4 paragraphs in total
         - Technical and professional style
         - Only verifiable information
@@ -615,33 +751,102 @@ def generate_recommendation_with_news(
         - Use <strong> tags for emphasis on key points
         - Use <ul> and <li> for lists when appropriate
 
-        Report (HTML format):
+        Report (HTML content only, no document tags):
         """
     )
 
     chain = LLMChain(llm=get_llm(), prompt=prompt)
+    
     return chain.run({
-        "objective": objective,
-        "player_name": player_name,
-        "news": summary,
+    "objective": objective,
+    "player_name": player_name,
+    "news": summary,
         "success_index": f"{success_index:.3f}" if isinstance(success_index, (int, float)) else "N/A",
+        "feasibility": f"{feasibility_multiplier:.2f}" if isinstance(feasibility_multiplier, (int, float)) else "N/A",
+        "viability": f"{viability_score:.3f}" if isinstance(viability_score, (int, float)) else "N/A",
     }).strip()
 
 def build_scouting_report(
     objective: str,
-    base_id: int,
-    candidate_ids: List[int],
-    chosen_id: int,
-    pros: List[str],
-    cons: List[str],
+    base_id: Optional[int] = None,
+    candidate_ids: Optional[List[int]] = None,
+    chosen_id: int = None,
+    pros: Optional[List[str]] = None,
+    cons: Optional[List[str]] = None,
     target_team: Optional[str] = None,
 ) -> dict:
+    global _user_search_contexts
+    
+    # If parameters not provided, try to use cached context
+    if not base_id or not candidate_ids:
+        print(f"DEBUG: Looking for cached context. Available keys: {list(_user_search_contexts.keys())}")
+        
+        # Try primary cache first
+        if "current" in _user_search_contexts:
+            cached_context = _user_search_contexts["current"]
+            print(f"DEBUG: Found cached context: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
+        # Fallback to backup cache
+        elif _last_search_context:
+            cached_context = _last_search_context
+            print(f"DEBUG: Using backup cache: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
+        else:
+            return {
+                "text": "Error: No previous search context found. Please run similar_players_team_fit_table first.",
+                "attachments": []
+            }
+            
+        base_id = base_id or cached_context.get("base_id")
+        candidate_ids = candidate_ids or cached_context.get("candidate_ids")
+        target_team = target_team or cached_context.get("target_team")
+    
     from apps.dashboard.views import _fetch_stats 
-    players_map = _fetch_stats(candidate_ids + [base_id])
+    # Ensure the chosen_id is included when fetching stats to avoid KeyError
+    ids_to_fetch = list({*(candidate_ids or []), base_id, chosen_id})
+    # Filter invalid/None and cast to int
+    ids_to_fetch = [int(i) for i in ids_to_fetch if isinstance(i, (int, float))]
+    players_map = _fetch_stats(ids_to_fetch)
 
     # Optionally compute success_index_v2_1 for the chosen player against target team
+    # and get full candidates data with Success Index
     chosen_success_index: Optional[float] = None
-    if target_team:
+    candidates_data: Optional[List[dict]] = None
+    
+    # Try to use cached candidates_data first (also compute feasibility & viability)
+    if ("current" in _user_search_contexts and _user_search_contexts["current"].get("candidates_data")) or _last_search_context.get("candidates_data"):
+        candidates_data = _user_search_contexts["current"].get("candidates_data") or _last_search_context.get("candidates_data")
+        # Normalize candidate_ids as ints and fallback to cached ids if missing
+        cached_ids = [int(c.get("id")) for c in (candidates_data or []) if c.get("id") is not None]
+        if not candidate_ids:
+            candidate_ids = cached_ids
+        else:
+            candidate_ids = [int(cid) for cid in candidate_ids]
+
+        # If chosen_id not provided or not in cached ids, fallback to best candidate
+        if chosen_id is None or int(chosen_id) not in cached_ids:
+            if candidates_data:
+                # Compute feasibility & viability for each candidate
+                for c in candidates_data:
+                    c["feasibility_multiplier"] = _feasibility_multiplier(c, target_team)
+                    base_si = float(c.get("success_index_v2_1", c.get("success_index", 0)))
+                    c["viability_score"] = base_si * c["feasibility_multiplier"]
+                best = sorted(
+                    candidates_data,
+                    key=lambda x: x.get("viability_score", x.get("success_index_v2_1", x.get("success_index", 0))),
+                    reverse=True,
+                )[0]
+                chosen_id = int(best.get("id"))
+                chosen_success_index = float(best.get("success_index_v2_1", best.get("success_index", 0)))
+                chosen_feas = float(best.get("feasibility_multiplier", 1.0))
+                chosen_viab = float(best.get("viability_score", chosen_success_index * chosen_feas))
+        else:
+            # Find chosen player's success index from cached data
+            for item in candidates_data:
+                if int(item.get("id")) == int(chosen_id):
+                    chosen_success_index = float(item.get("success_index_v2_1", item.get("success_index", 0)))
+                    chosen_feas = _feasibility_multiplier(item, target_team)
+                    chosen_viab = chosen_success_index * chosen_feas
+                    break
+    elif target_team:
         try:
             # Use base_id as reference and request fit for the same position and team
             import requests as _rq
@@ -652,13 +857,24 @@ def build_scouting_report(
             r = _rq.get(f"http://api:8001/players/{base_id}/similar_team_fit", params=params, timeout=20)
             if r.ok:
                 data = r.json()
-                for item in data.get("candidates", []):
+                all_candidates = data.get("candidates", [])
+                
+                # Filter to only include candidates in candidate_ids
+                candidates_data = [
+                    c for c in all_candidates 
+                    if int(c.get("id")) in candidate_ids
+                ]
+                
+                # Find chosen player's success index
+                for item in all_candidates:
                     if int(item.get("id")) == int(chosen_id):
                         # Usar success_index_v2_1 si está disponible, sino fallback a success_index
                         chosen_success_index = float(item.get("success_index_v2_1", item.get("success_index")))
                         break
-        except Exception:
+        except Exception as e:
+            print(f"Error fetching success index data: {e}")
             chosen_success_index = None
+            candidates_data = None
 
     recommendation = generate_recommendation_with_news(
         chosen_id=chosen_id,
@@ -669,6 +885,8 @@ def build_scouting_report(
         pros=pros,
         cons=cons,
         success_index=chosen_success_index,
+        feasibility_multiplier=locals().get("chosen_feas", None),
+        viability_score=locals().get("chosen_viab", None),
     )
 
     return build_report_pdf(
@@ -679,6 +897,8 @@ def build_scouting_report(
         recommendation=recommendation,
         pros=pros,
         cons=cons,
+        target_team=target_team,
+        candidates_data=candidates_data,
     )
 
 
@@ -773,11 +993,30 @@ build_report_pdf_tool = StructuredTool.from_function(
     return_direct=True          #  <<–– Important: allows returning the table directly to the chat
 )
 
+def _dashboard_inline_with_context(base_player_id: Optional[int] = None, candidate_ids: Optional[List[int]] = None) -> dict:
+    """Wrapper that defaults to the latest candidate list from cache if not provided."""
+    global _user_search_contexts, _last_search_context
+    if (not base_player_id or not candidate_ids):
+        # Try primary cache first
+        if "current" in _user_search_contexts:
+            ctx = _user_search_contexts["current"]
+        # Fallback to backup cache
+        elif _last_search_context:
+            ctx = _last_search_context
+        else:
+            ctx = {}
+            
+        base_player_id = base_player_id or ctx.get("base_id")
+        candidate_ids = candidate_ids or ctx.get("candidate_ids")
+    # Safety: ensure list of ints
+    candidate_ids = [int(i) for i in (candidate_ids or []) if isinstance(i, (int, float))]
+    return dashboard_inline(base_player_id, candidate_ids)
+
 dashboard_inline_tool = StructuredTool.from_function(
-    func=dashboard_inline,
+    func=_dashboard_inline_with_context,
     name="dashboard_inline",
-    description="Generates an interactive dashboard with the base player and candidates",
-    return_direct=True          #  <<–– Important: allows returning the URL directly to the chat
+    description="Generates an interactive dashboard with the base player and candidates. If no candidate_ids/base_id are provided, uses the latest recommendation list from this chat session.",
+    return_direct=True
 )
 
 build_scouting_report_tool = StructuredTool.from_function(
@@ -785,8 +1024,11 @@ build_scouting_report_tool = StructuredTool.from_function(
     name="build_scouting_report",
     description=(
         "Generates a professional PDF scouting report using statistical data and current market context "
-        "(recent news). The report includes technical analysis, pros, cons, and final recommendation."
+        "(recent news). The report includes technical analysis, pros, cons, and final recommendation. "
+        "IMPORTANT: Use candidate_ids from the previous similar_players search, and pass target_team "
+        "if the user specified a team to compute Success Index v2.1."
     ),
+    args_schema=BuildScoutingReportInput,
     return_direct=True
 )
 

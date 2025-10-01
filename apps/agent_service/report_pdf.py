@@ -45,6 +45,8 @@ def build_report_pdf(
     recommendation: str,
     pros: List[str],
     cons: List[str],
+    target_team: str = None,
+    candidates_data: List[dict] = None,
 ) -> dict:
     """
     Returns {"file_url": "/media/reports/<uuid>.pdf"}
@@ -86,14 +88,63 @@ def build_report_pdf(
 
     news_summary = [item["summary"] for item in news_items]
 
-    # ---  candidates table --------------------------------
+    # ---  candidates table with Success Index v2.1 --------------------------------
     import pandas as pd
-    df_alt = pd.DataFrame(alt_players)[["id", "full_name", "club", "age"]]
-    table_alt_html = (
-        df_alt.rename(columns={
-            "id": "ID", "full_name": "Player", "club": "Club", "age": "Age"})
-        .to_html(index=False, classes="table table-sm table-striped")
-    )
+    
+    # If we have rich candidates_data (with success_index_v2_1), use it
+    if candidates_data:
+        # Filter out the chosen player from candidates
+        alt_candidates_data = [c for c in candidates_data if c.get("id") != chosen_id]
+        
+        # Sort by success_index_v2_1 descending
+        alt_candidates_data = sorted(
+            alt_candidates_data, 
+            key=lambda x: x.get("success_index_v2_1", x.get("success_index", 0)), 
+            reverse=True
+        )
+        
+        # Build HTML table manually with Success Index
+        table_alt_html = '<table class="table table-sm table-striped">'
+        table_alt_html += '<thead><tr>'
+        table_alt_html += '<th>ID</th><th>Player</th><th>Club</th><th>Age</th>'
+        if target_team:
+            table_alt_html += '<th>Success Index</th><th>League</th><th>Minutes</th>'
+        table_alt_html += '</tr></thead><tbody>'
+        
+        for c in alt_candidates_data:
+            table_alt_html += '<tr>'
+            table_alt_html += f'<td>{c.get("id", "")}</td>'
+            table_alt_html += f'<td>{c.get("full_name", "")}</td>'
+            table_alt_html += f'<td>{c.get("club", "")}</td>'
+            table_alt_html += f'<td>{c.get("age", "")}</td>'
+            if target_team:
+                success = c.get("success_index_v2_1", c.get("success_index", 0))
+                table_alt_html += f'<td><strong>{success:.1%}</strong></td>'
+                table_alt_html += f'<td>{c.get("league", "")}</td>'
+                table_alt_html += f'<td>{c.get("minutes", "")}</td>'
+            table_alt_html += '</tr>'
+        
+        table_alt_html += '</tbody></table>'
+    else:
+        # Fallback to simple table if no rich data available
+        df_alt = pd.DataFrame(alt_players)[["id", "full_name", "club", "age"]]
+        table_alt_html = (
+            df_alt.rename(columns={
+                "id": "ID", "full_name": "Player", "club": "Club", "age": "Age"})
+            .to_html(index=False, classes="table table-sm table-striped")
+        )
+
+    # Clean possible markdown fences from LLM output (e.g., ```html ... ```)
+    import re
+    def _strip_code_fences(text: str) -> str:
+        if not text:
+            return text
+        cleaned = text.strip()
+        cleaned = re.sub(r"^\s*```(?:[a-zA-Z]+)?\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```\s*$", "", cleaned)
+        return cleaned
+
+    recommendation_clean = _strip_code_fences(recommendation)
 
     # 4) build HTML
     html_str = render_to_string(
@@ -103,7 +154,7 @@ def build_report_pdf(
             "date":        timezone.now(),        # dd/mm/yyyy hh:mm
             "candidates":  table_alt_html,
             "chosen":      players_map[chosen_id],# complete dict
-            "summary":     recommendation,
+            "summary":     recommendation_clean,
             "pros":        pros,
             "cons":        cons,
             "news":        news_summary,

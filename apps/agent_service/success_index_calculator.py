@@ -168,7 +168,7 @@ class SuccessIndexCalculator:
                 func.avg(Player.tackles).label('avg_tackles'),
                 func.avg(Player.interceptions).label('avg_interceptions'),
                 func.avg(Player.passes_pct).label('avg_passes_pct')
-            ).filter(
+                   ).filter(
                 Player.club == club,
                 Player.minutes >= 500
             ).first()
@@ -176,14 +176,21 @@ class SuccessIndexCalculator:
             if not team_stats or team_stats.avg_goals is None:
                 return 0.80  # Default for teams without sufficient data
             
+            # Cast Decimals to float safely
+            avg_goals = float(team_stats.avg_goals or 0)
+            avg_assists = float(team_stats.avg_assists or 0)
+            avg_tackles = float(team_stats.avg_tackles or 0)
+            avg_interceptions = float(team_stats.avg_interceptions or 0)
+            avg_passes_pct = float(team_stats.avg_passes_pct or 0)
+
             # Calculate team strength score components
-            offensive = (team_stats.avg_goals or 0) + (team_stats.avg_assists or 0)
-            defensive = ((team_stats.avg_tackles or 0) + (team_stats.avg_interceptions or 0))
-            control = (team_stats.avg_passes_pct or 0)
+            offensive = avg_goals + avg_assists
+            defensive = (avg_tackles + avg_interceptions)
+            control = avg_passes_pct
             
             # Weighted formula for team score
             # Offensive has more weight (×20), defensive and control normalized
-            team_score = (offensive * 20) + (defensive * 0.5) + (control * 0.5)
+            team_score = (offensive * 20.0) + (defensive * 0.5) + (control * 0.5)
             
             # Convert score to categorized weight
             if team_score >= 80:
