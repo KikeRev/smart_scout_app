@@ -1,4 +1,4 @@
-<h1 align="center">SMART SCOUT APP v1.0</h1>
+<h1 align="center">SMART SCOUT APP v1.1</h1>
 
 <p align="center">
   <img src="./static/img/app_logo_6.png" alt="Logo">
@@ -6,7 +6,7 @@
 
 # 🚀 Welcome
 
-Welcome to **Smart Scout App v1.0** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
+Welcome to **Smart Scout App v1.1** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
 
 ## ✨ Features Overview
 
@@ -14,6 +14,13 @@ Welcome to **Smart Scout App v1.0** — an application created to help football 
 - **Intelligent Player Recommendations**: AI agent analyzes player data and provides recommendations
 - **Natural Language Queries**: Ask questions in plain English or Spanish
 - **Comprehensive Reports**: Generate detailed PDF reports with analysis and recommendations
+- **Success Index v2.1** (⭐ NEW): Advanced scoring system that evaluates signing probability by considering:
+  - League quality (30 tiers from Top 5 to minor leagues)
+  - Playing time (starter vs rotation vs backup)
+  - Age & career stage (optimal vs risk profiles)
+  - Team strength (dynamically calculated)
+  - Position-specific adjustments (GK, FW, DF, MF)
+  - Interactive visual indicators (🟢🟡🟠🔴) for quick assessment
 
 ### 🔍 Manual Search & Analysis
 - **Advanced Player Search**: Filter players by multiple criteria
@@ -69,6 +76,288 @@ After running `make up`, the services are accessible at:
 | Player Search | [https://localhost:8000/dashboard/search/](https://localhost:8000/dashboard/search/) | Manual player search dashboard |
 | User Reports | [https://localhost:8000/chat/](https://localhost:8000/chat/) | AI-powered scouting reports |
 | API (FastAPI) | [http://localhost:8001](http://localhost:8001) | Backend API endpoints |
+# 🎯 Success Index v2.1 - Enhanced Player Recommendation System
+
+The **Success Index v2.1** is an advanced scoring system that evaluates the probability of a successful player signing by considering multiple factors beyond just playing similarity.
+
+## 📊 How It Works
+
+### Formula
+```
+success_index_v2.1 = base_similarity × league_weight × minutes_weight 
+                     × age_weight × team_strength_weight × position_adjustment
+```
+
+Where:
+- **base_similarity**: Combination of overall player similarity and team-position fit
+- **league_weight**: Quality tier of the player's current league (0.40 - 1.0)
+- **minutes_weight**: Playing time indicator (0.30 - 1.0)
+- **age_weight**: Age-based projection factor (0.55 - 1.0)
+- **team_strength_weight**: Performance level of player's current team (0.70 - 1.0)
+- **position_adjustment**: Position-specific bonus/penalty (0.95 - 1.15)
+
+---
+
+## 🏆 Weight Factors Explained
+
+### 1️⃣ League Weight (Tier System)
+
+| Tier | Weight | Leagues | Examples |
+|------|--------|---------|----------|
+| **Tier 1** | 1.0 | Top 5 European Leagues | Premier League, La Liga, Bundesliga, Serie A, Ligue 1 |
+| **Tier 2** | 0.85 | Competitive 1st Division | Eredivisie, Primeira Liga, Brasileirao, Liga MX |
+| **Tier 3** | 0.70 | Emerging & 2nd Tier | Championship, Liga Hipermotion, Serie B, Saudi Pro League |
+| **Tier 4** | 0.55 | Developing Leagues | Danish Superliga, Croatian League, Czech League |
+| **Tier 5** | 0.40 | Minor Leagues | MLS, J1 League, Korean League, Chinese Super League |
+
+### 2️⃣ Minutes Weight (Playing Time)
+
+| Minutes Range | Weight | Status | Description |
+|--------------|--------|--------|-------------|
+| ≥ 2000 | 1.00 | 🟢 Starter | Undisputed starter (22+ full matches) |
+| 1500-1999 | 0.90 | 🟢 Starter | Regular starter (17-22 matches) |
+| 1000-1499 | 0.75 | 🟡 Rotation | Important rotation player (11-16 matches) |
+| 700-999 | 0.60 | 🟡 Rotation | Substitute with minutes (8-11 matches) |
+| 400-699 | 0.45 | 🔴 Backup | Occasional substitute (5-8 matches) |
+| < 400 | 0.30 | 🔴 Backup | Very limited minutes (< 5 matches) |
+
+### 3️⃣ Age Weight (Career Stage)
+
+| Age Range | Weight | Category | Considerations |
+|-----------|--------|----------|----------------|
+| 21-27 | 1.00 | 🟢 Optimal | Peak performance + potential |
+| 18-20 | 0.95 | 🟢 Young | High potential, adaptation risk |
+| 28-29 | 0.95 | 🟢 Experience | Consolidated experience |
+| 30-31 | 0.85 | 🟡 Veteran | Reliable, less improvement margin |
+| 32-33 | 0.70 | 🟠 Risk | Moderate physical risk (2-3 years) |
+| ≥ 34 | 0.55 | 🔴 High Risk | High physical risk (short term) |
+| ≤ 17 | 0.75 | 🟡 Very Young | High uncertainty |
+
+### 4️⃣ Team Strength Weight (Dynamic Calculation)
+
+Calculated automatically based on team's aggregated player metrics:
+- **Offensive**: Average goals + assists per 90 minutes
+- **Defensive**: Average tackles + interceptions
+- **Control**: Pass completion percentage
+
+| Team Score | Weight | Classification |
+|------------|--------|----------------|
+| ≥ 80 | 1.00 | Elite teams |
+| 60-79 | 0.90 | Competitive teams |
+| 40-59 | 0.80 | Mid-table teams |
+| < 40 | 0.70 | Struggling teams |
+
+### 5️⃣ Position Adjustment (Specific Bonuses)
+
+Different positions have different performance curves:
+
+**🥅 Goalkeepers (GK)**
+- Later performance peak (28-35 years): +10% bonus
+- Continuity importance (≥2000 min): +5% bonus
+
+**⚽ Forwards (FW, FWMF)**
+- Elite scorer (≥0.5 goals/90): +10% bonus
+- Good scorer (≥0.3 goals/90): +5% bonus
+- Playing rhythm (≥1500 min): +3% bonus
+
+**🛡️ Defenders (DF, DFMF)**
+- Optimal age (27-32 years): +8% bonus
+- Strong defensive numbers (≥100 tackles+interceptions): +5% bonus
+
+**⚙️ Midfielders (MF, MFFW, MFDF)**
+- Versatility (≥85% pass completion + ≥50 tackles): +5% bonus
+
+*Maximum adjustment cap: 1.15 (15% bonus)*
+
+---
+
+## 🔌 API Endpoint
+
+### `GET /players/{player_id}/similar_team_fit`
+
+Find players similar to a base player, optimized for a target team.
+
+**Query Parameters:**
+- `team` *(required)*: Target club name (e.g., "Real Madrid")
+- `position` *(optional)*: Position filter (defaults to base player's position)
+- `k` *(default: 15)*: Number of candidates to return (1-100)
+- `min_minutes` *(default: 0)*: Minimum minutes played filter
+- `max_age` *(optional)*: Maximum age filter
+- `exclude_club` *(optional)*: Comma-separated clubs to exclude
+- `overall_weight` *(default: 0.5)*: Weight for overall similarity (0.0-1.0)
+
+**Response Structure:**
+```json
+{
+  "context": {
+    "base_player_id": 1,
+    "base_full_name": "Player Name",
+    "base_club": "Current Club",
+    "position": "MF",
+    "target_team": "Target Club",
+    "base_team_position_similarity": 0.85,
+    "weights": {"overall": 0.5, "team_fit": 0.5},
+    "cohort_size": 12
+  },
+  "candidates": [
+    {
+      "id": 123,
+      "full_name": "Candidate Name",
+      "club": "Current Club",
+      "league": "Premier League",
+      "position": "MF",
+      "age": 25,
+      "minutes": 2500,
+      "overall_similarity": 0.92,
+      "team_position_similarity": 0.88,
+      "success_index": 0.85,
+      "success_index_v2_1": 0.78,
+      "success_breakdown": {
+        "base": 0.85,
+        "league_weight": 1.0,
+        "minutes_weight": 1.0,
+        "age_weight": 1.0,
+        "team_strength_weight": 0.9,
+        "position_adjustment": 1.05
+      }
+    }
+  ]
+}
+```
+
+**Example Usage:**
+```bash
+curl "http://localhost:8001/players/1/similar_team_fit?team=FC%20Barcelona&k=10&min_minutes=1500"
+```
+
+---
+
+## 🤖 Agent Integration
+
+### Agent Tool: `similar_players_team_fit_table`
+
+The AI agent automatically uses this tool when you ask questions like:
+- *"Find players similar to Pedri for Real Madrid"*
+- *"Who can replace Modric at Manchester City?"*
+- *"Recommend midfielders like De Bruyne for Barcelona"*
+
+The agent will:
+1. ✅ Call the endpoint with appropriate filters
+2. ✅ Sort results by `success_index_v2_1` descending
+3. ✅ Display results in an **interactive HTML table** with:
+   - Sortable columns (click headers)
+   - Copy-to-clipboard button
+   - Visual profile badges (🟢🟡🟠🔴)
+   - Links to detailed player profiles
+4. ✅ Include the success index in PDF reports as justification
+
+### Visual Profile Badges
+
+Each player in the recommendation table shows visual indicators:
+
+```
+🟢 Top5        ← League tier (Top 5 European leagues)
+🟢 Starter     ← Playing time (≥2000 minutes)
+🟢 25y         ← Age factor (optimal age range)
+```
+
+**Legend:**
+- 🟢 **Green**: Optimal/Best case
+- 🟡 **Yellow**: Good/Acceptable
+- 🟠 **Orange**: Moderate concern
+- 🔴 **Red**: Risk factor/Concern
+
+---
+
+## 📈 Practical Examples
+
+### Example 1: Optimal Profile
+**Player**: 25 years old, Premier League starter (2500 min), top club
+```
+Base similarity: 0.90
+├─ League (Top 5):        1.0   ✓
+├─ Minutes (Starter):     1.0   ✓
+├─ Age (Optimal):         1.0   ✓
+├─ Team (Elite):          1.0   ✓
+└─ Position (Bonus):      1.05  ✓
+══════════════════════════════
+Success Index v2.1:       0.95  🟢 Excellent signing probability
+```
+
+### Example 2: Moderate Profile
+**Player**: 32 years old, Eredivisie rotation (1200 min), mid-table team
+```
+Base similarity: 0.85
+├─ League (Tier 2):       0.85  ⚠️
+├─ Minutes (Rotation):    0.75  ⚠️
+├─ Age (Risk):            0.70  ⚠️
+├─ Team (Medium):         0.80  ⚠️
+└─ Position (Neutral):    1.00  ─
+══════════════════════════════
+Success Index v2.1:       0.31  🟡 Moderate risk
+```
+
+### Example 3: High Risk Profile
+**Player**: 34 years old, J1 League backup (400 min), weak team
+```
+Base similarity: 0.80
+├─ League (Tier 5):       0.40  ❌
+├─ Minutes (Backup):      0.45  ❌
+├─ Age (High Risk):       0.55  ❌
+├─ Team (Weak):           0.70  ❌
+└─ Position (Neutral):    1.00  ─
+══════════════════════════════
+Success Index v2.1:       0.07  🔴 Very high risk
+```
+
+---
+
+## 🧪 Testing
+
+The Success Index v2.1 system includes comprehensive test coverage:
+
+- **34 unit tests** for calculator functions
+- **16 integration tests** for end-to-end functionality
+- **50 total tests** covering all scenarios
+
+Run tests:
+```bash
+# Unit tests
+docker exec scouting-api pytest tests/unit/test_success_index_calculator.py -v
+
+# Integration tests
+docker exec scouting-api pytest tests/api/test_success_index_v2_1_integration.py -v
+
+# All tests
+docker exec scouting-api pytest tests/ -v
+```
+
+---
+
+## 💡 Best Practices
+
+### For Optimal Results:
+1. ✅ Always specify a `target_team` for realistic success index
+2. ✅ Use `min_minutes=1000` to filter out unreliable profiles
+3. ✅ Combine with manual analysis of the player profile page
+4. ✅ Review the breakdown to understand why a score is high/low
+5. ✅ Consider multiple candidates (top 5-10) instead of just #1
+
+### Interpreting Success Index v2.1:
+- **≥ 0.70**: 🟢 Excellent probability, low risk
+- **0.50 - 0.69**: 🟡 Good candidate, acceptable risk
+- **0.30 - 0.49**: 🟠 Moderate risk, requires careful evaluation
+- **< 0.30**: 🔴 High risk, consider other options
+
+---
+
+## 📚 Additional Resources
+
+- **Player Profile Pages**: Click on player names in results to see detailed stats and radar charts
+- **PDF Reports**: Generate comprehensive scouting reports with the `build_scouting_report` tool
+- **Manual Search**: Use `/dashboard/search/` for custom filtering and comparison
+- **API Documentation**: Visit `http://localhost:8001/docs` for interactive API explorer
+
 | Jupyter Lab | [http://localhost:8888](http://localhost:8888) | Development environment |
 | PostgreSQL | localhost:5432 (internal only) | Database |
 | Redis | localhost:6379 (internal only) | Cache layer |

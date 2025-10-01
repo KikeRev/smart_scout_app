@@ -72,7 +72,6 @@ TEXT_CLR = "#000000"
 # Metric definitions
 # ────────────────────────────────────────────────────────────────────────────
 RADAR_METRICS: List[Tuple[str, str, Any | None]] = [
-    ("Age", "age", 45),
     ("Min/Games", None, 100),          # minutes ÷ 90s
     ("Games_90s", "minutes_90s", 50),
     ("Goals", "goals", 50),

@@ -9,6 +9,7 @@ from typing import List
 from decimal import Decimal
 from pgvector.sqlalchemy import Vector as PGVector
 from pydantic import BaseModel
+from apps.agent_service.success_index_calculator import SuccessIndexCalculator
 
 
 class PlayerBatchRequest(BaseModel):
@@ -112,6 +113,172 @@ def similar_players(
         }
         for p, dist in rows
     ]
+
+@router.get("/{player_id}/similar_team_fit", summary="Similar players with team-position fit index")
+def similar_players_with_team_fit(
+    player_id: int,
+    team: str = Query(..., description="Target team (club) Y for fit computation"),
+    position: str | None = Query(None, description="If not provided, base player's position is used"),
+    k: int = Query(15, ge=1, le=100),
+    min_minutes: int = Query(0, ge=0),
+    max_age: int | None = Query(None, ge=0),
+    exclude_club: str | None = Query(None, description="List of clubs to exclude, comma-separated"),
+    overall_weight: float = Query(0.5, ge=0.0, le=1.0, description="Weight for overall similarity in success index"),
+    db: Session = Depends(get_session),
+):
+    """
+    Returns similar players to X and computes an additional similarity to the centroid of
+    players from team Y who share the same position. The response includes an estimated
+    success_index combining overall similarity and team-position fit similarity.
+    """
+    base = db.get(Player, player_id)
+    if not base:
+        raise HTTPException(404, "Player not found")
+
+    pos = position or base.position
+    if pos is None:
+        raise HTTPException(400, "Position not provided and base player has no position")
+
+    # Build cohort: players in target team Y with same position
+    cohort_q = (
+        db.query(Player.feature_vector)
+          .filter(
+              Player.club == team,
+              Player.position == pos,
+              Player.feature_vector.isnot(None)
+          )
+    )
+    cohort = [fv[0] for fv in cohort_q.all()]
+    if not cohort:
+        # If no cohort found, we cannot compute team fit; degrade gracefully
+        cohort_centroid = None
+    else:
+        # Compute centroid as mean of vectors
+        # Ensure list of lists
+        arr = np.vstack([
+            fv if not isinstance(fv, np.ndarray) else fv.tolist() for fv in cohort
+        ])
+        centroid = arr.mean(axis=0)
+        cohort_centroid = centroid.tolist() if isinstance(centroid, np.ndarray) else centroid
+
+    # Fetch overall similar candidates (excluding same club by default)
+    base_vec = base.feature_vector
+    if isinstance(base_vec, np.ndarray):
+        base_vec = base_vec.tolist()
+
+    filters = [Player.id != player_id]
+
+    # Exclude base player's club by default
+    filters.append(Player.club != base.club)
+
+    if exclude_club:
+        clubs_to_exclude = [c.strip() for c in exclude_club.split(",") if c.strip()]
+        if clubs_to_exclude:
+            filters.append(Player.club.notin_(clubs_to_exclude))
+
+    # Inclusion filters
+    if pos:
+        filters.append(Player.position == pos)
+    if min_minutes:
+        filters.append(Player.minutes >= min_minutes)
+    if max_age is not None:
+        filters.append(Player.age <= max_age)
+
+    dist_expr = func.cosine_distance(
+        Player.feature_vector,
+        cast(literal(base_vec), Vector(43))
+    )
+    overall_sim = 1 - dist_expr
+
+    stmt = (
+        select(Player, overall_sim.label("overall_similarity"))
+        .where(*filters)
+        .order_by(overall_sim.desc())
+        .limit(k)
+    )
+
+    rows = db.execute(stmt).all()
+
+    def cosine_sim_to_centroid(vec: list[float] | np.ndarray, centroid_vec: list[float] | None) -> float | None:
+        if centroid_vec is None or vec is None:
+            return None
+        v = vec.tolist() if isinstance(vec, np.ndarray) else vec
+        # Compute cosine similarity
+        a = np.array(v, dtype=float)
+        b = np.array(centroid_vec, dtype=float)
+        na = np.linalg.norm(a)
+        nb = np.linalg.norm(b)
+        if na == 0 or nb == 0:
+            return None
+        return float(np.dot(a, b) / (na * nb))
+
+    # Base player's own fit to team Y position cohort
+    base_team_fit = cosine_sim_to_centroid(base_vec, cohort_centroid)
+
+    overall_w = overall_weight
+    fit_w = 1.0 - overall_w
+
+    results = []
+    for p, ov_sim in rows:
+        # p.feature_vector may be ndarray or list
+        cand_vec = p.feature_vector.tolist() if isinstance(p.feature_vector, np.ndarray) else p.feature_vector
+        team_fit = cosine_sim_to_centroid(cand_vec, cohort_centroid)
+        # Success index base: weighted combination. If team_fit is None, fall back to overall only
+        if team_fit is None:
+            success_base = float(ov_sim)
+        else:
+            success_base = float(overall_w * ov_sim + fit_w * team_fit)
+
+        # Calcular success_index v2.1 con todos los factores adicionales
+        player_data = {
+            'league': p.league,
+            'minutes': p.minutes or 0,
+            'age': p.age or 25,
+            'club': p.club,
+            'position': p.position,
+            'goals_per90': p.goals_per90 or 0.0,
+            'tackles': p.tackles or 0,
+            'interceptions': p.interceptions or 0,
+            'passes_pct': p.passes_pct or 0.0
+        }
+        
+        success_v2_1 = SuccessIndexCalculator.calculate_success_index_v2_1(
+            success_index_base=success_base,
+            player_data=player_data,
+            db=db
+        )
+
+        results.append({
+            "id": p.id,
+            "full_name": p.full_name,
+            "club": p.club,
+            "league": p.league,
+            "position": p.position,
+            "age": p.age,
+            "minutes": p.minutes,
+            "overall_similarity": float(ov_sim),
+            "team_position_similarity": team_fit if team_fit is None else float(team_fit),
+            "success_index": success_base,  # Mantener para retrocompatibilidad
+            "success_index_v2_1": success_v2_1['success_index_v2_1'],
+            "success_breakdown": success_v2_1['breakdown']
+        })
+    
+    # Sort results by success_index_v2_1 descending
+    results.sort(key=lambda x: x['success_index_v2_1'], reverse=True)
+
+    return {
+        "context": {
+            "base_player_id": base.id,
+            "base_full_name": base.full_name,
+            "base_club": base.club,
+            "position": pos,
+            "target_team": team,
+            "base_team_position_similarity": base_team_fit if base_team_fit is None else float(base_team_fit),
+            "weights": {"overall": overall_w, "team_fit": fit_w},
+            "cohort_size": len(cohort) if cohort else 0,
+        },
+        "candidates": results,
+    }
 
 @router.post("/batch", summary="Returns all metrics for multiple players")
 def players_batch(

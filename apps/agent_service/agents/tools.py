@@ -68,6 +68,297 @@ similar_players_tool = StructuredTool.from_function(
 )
 
 
+# ---------------------- 1.1) Similar Players + Team Fit --------------------- #
+class SimilarPlayersTeamFitInput(BaseModel):
+    """Parameters to search for similar players including team-position fit"""
+    player_id: int = Field(..., description="Reference player ID")
+    team: str = Field(..., description="Target team (club) Y for fit computation")
+    position: Optional[str] = Field(None, description="If not provided, base player's position is used")
+    k: int = Field(10, description="Number of candidates to return")
+    min_minutes: int = Field(0, description="Minimum minutes played")
+    max_age: int = Field(45, description="Maximum age")
+    exclude_club: Optional[str] = Field(None, description="Clubs to exclude (comma-separated)")
+    overall_weight: float = Field(0.5, description="Weight for overall similarity in success index (0..1)")
+
+def _similar_players_team_fit(
+    player_id: int,
+    team: str,
+    position: Optional[str] = None,
+    k: int = 10,
+    min_minutes: int = 0,
+    max_age: int = 45,
+    exclude_club: Optional[str] = None,
+    overall_weight: float = 0.5,
+):
+    """Calls /players/{id}/similar_team_fit with the received filters."""
+    params = dict(
+        team=team,
+        k=k,
+        min_minutes=min_minutes,
+        max_age=max_age,
+        overall_weight=overall_weight,
+    )
+    if position:
+        params["position"] = position
+    if exclude_club:
+        params["exclude_club"] = exclude_club
+
+    url = f"http://api:8001/players/{player_id}/similar_team_fit"
+    resp = requests.get(url, params=params, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
+
+similar_players_team_fit_tool = StructuredTool.from_function(
+    name="similar_players_team_fit",
+    description=(
+        "Returns players similar to the base player plus a team-position fit analysis "
+        "against the target team Y's cohort on the same position. Includes a success_index "
+        "that combines overall similarity and team-position similarity."
+    ),
+    func=_similar_players_team_fit,
+    args_schema=SimilarPlayersTeamFitInput,
+)
+
+# ---------------------- 1.2) Team Fit → HTML Table (direct) ----------------- #
+def _similar_players_team_fit_table(
+    player_id: int,
+    team: str,
+    position: Optional[str] = None,
+    k: int = 10,
+    min_minutes: int = 0,
+    max_age: int = 45,
+    exclude_club: Optional[str] = None,
+    overall_weight: float = 0.5,
+):
+    """
+    Calls the team-fit endpoint and returns an HTML table with ordered results
+    by success_index, including overall similarity and team-position similarity.
+    """
+    data = _similar_players_team_fit(
+        player_id=player_id,
+        team=team,
+        position=position,
+        k=k,
+        min_minutes=min_minutes,
+        max_age=max_age,
+        exclude_club=exclude_club,
+        overall_weight=overall_weight,
+    )
+
+    rows = data.get("candidates", [])
+    # sort by success_index_v2_1 descending (primary), fallback to success_index
+    rows = sorted(rows, key=lambda r: r.get("success_index_v2_1", r.get("success_index", 0)), reverse=True)
+
+    def pct(x: float | None) -> str:
+        if x is None:
+            return "—"
+        try:
+            return f"{float(x)*100:.2f}%"
+        except Exception:
+            return "—"
+
+    html = [
+        "<div class=\"table-responsive\">",
+        "<div class=\"d-flex justify-content-between align-items-center mb-2\">",
+        "<h6 class=\"mb-0\">Player Recommendations</h6>",
+        "<button class=\"btn btn-sm btn-outline-secondary\" onclick=\"copyTableToClipboard()\" title=\"Copy table to clipboard\">",
+        "<i class=\"fas fa-copy\"></i> Copy Table",
+        "</button>",
+        "</div>",
+        "<table id=\"recommendations-table\" class=\"table table-sm table-striped align-middle\">",
+        "<thead><tr>",
+        "<th onclick=\"sortTable(0)\" style=\"cursor: pointer;\"># <i class=\"fas fa-sort\"></i></th>",
+        "<th onclick=\"sortTable(1)\" style=\"cursor: pointer;\">Player <i class=\"fas fa-sort\"></i></th>",
+        "<th onclick=\"sortTable(2)\" style=\"cursor: pointer;\">Club <i class=\"fas fa-sort\"></i></th>",
+        "<th onclick=\"sortTable(3)\" style=\"cursor: pointer;\">Position <i class=\"fas fa-sort\"></i></th>",
+        "<th onclick=\"sortTable(4)\" style=\"cursor: pointer;\">Success Index <i class=\"fas fa-sort\"></i></th>",
+        "<th onclick=\"sortTable(5)\" style=\"cursor: pointer;\">Overall <i class=\"fas fa-sort\"></i></th>",
+        "<th onclick=\"sortTable(6)\" style=\"cursor: pointer;\">Team Fit <i class=\"fas fa-sort\"></i></th>",
+        "<th>Profile <i class=\"fas fa-info-circle\"></i></th>",
+        "</tr></thead>",
+        "<tbody>",
+    ]
+
+    def get_profile_badges(breakdown: dict, age: int, minutes: int, league: str) -> str:
+        """Generate visual badges based on success index breakdown"""
+        badges = []
+        
+        # League badge
+        league_w = breakdown.get('league_weight', 0)
+        if league_w >= 1.0:
+            badges.append("🟢 Top5")
+        elif league_w >= 0.85:
+            badges.append("🟡 Tier2")
+        elif league_w >= 0.70:
+            badges.append("🟠 Tier3")
+        else:
+            badges.append("🔴 Minor")
+        
+        # Minutes badge
+        minutes_w = breakdown.get('minutes_weight', 0)
+        if minutes_w >= 1.0:
+            badges.append("🟢 Starter")
+        elif minutes_w >= 0.75:
+            badges.append("🟡 Rotation")
+        else:
+            badges.append("🔴 Backup")
+        
+        # Age badge
+        age_w = breakdown.get('age_weight', 0)
+        if age_w >= 0.95:
+            badges.append(f"🟢 {age}y")
+        elif age_w >= 0.85:
+            badges.append(f"🟡 {age}y")
+        else:
+            badges.append(f"🔴 {age}y")
+        
+        return "<br>".join(badges)
+
+    for i, r in enumerate(rows, start=1):
+        profile_href = f"/dashboard/player/{r.get('id')}/"
+        breakdown = r.get("success_breakdown", {})
+        profile_info = get_profile_badges(
+            breakdown, 
+            r.get("age", 0), 
+            r.get("minutes", 0),
+            r.get("league", "")
+        )
+        
+        html.append(
+            """
+            <tr>
+              <td>{i}</td>
+              <td><a href="{href}" target="_blank" rel="noopener">{name}</a></td>
+              <td>{club}</td>
+              <td>{pos}</td>
+              <td><strong>{succ}</strong></td>
+              <td>{ov}</td>
+              <td>{fit}</td>
+              <td style="font-size: 0.85em; line-height: 1.4;">{profile}</td>
+            </tr>
+            """.format(
+                i=i,
+                name=r.get("full_name", "—"),
+                href=profile_href,
+                club=r.get("club", "—"),
+                pos=r.get("position", "—"),
+                succ=pct(r.get("success_index_v2_1", r.get("success_index"))),
+                ov=pct(r.get("overall_similarity")),
+                fit=pct(r.get("team_position_similarity")),
+                profile=profile_info,
+            )
+        )
+
+    html.extend([
+        "</tbody>", 
+        "</table>",
+        "<div class=\"mt-2\" style=\"font-size: 0.85em; color: #6c757d;\">",
+        "<strong>Profile Legend:</strong> ",
+        "🟢 Optimal | 🟡 Good | 🟠 Moderate | 🔴 Risk/Concern",
+        "</div>",
+        "</div>",
+        """
+        <script>
+        let sortDirection = {};
+        
+        function sortTable(columnIndex) {
+            const table = document.getElementById('recommendations-table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            // Toggle sort direction
+            sortDirection[columnIndex] = sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+            const direction = sortDirection[columnIndex];
+            
+            // Update sort icons
+            const headers = table.querySelectorAll('th');
+            headers.forEach((header, index) => {
+                const icon = header.querySelector('i');
+                if (index === columnIndex) {
+                    icon.className = direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+                } else {
+                    icon.className = 'fas fa-sort';
+                }
+            });
+            
+            // Sort rows
+            rows.sort((a, b) => {
+                let aVal = a.cells[columnIndex].textContent.trim();
+                let bVal = b.cells[columnIndex].textContent.trim();
+                
+                // Handle numeric columns (Success Index, Overall, Team Fit) - excluding Profile (column 7)
+                if (columnIndex >= 4 && columnIndex <= 6) {
+                    aVal = parseFloat(aVal.replace('%', '')) || 0;
+                    bVal = parseFloat(bVal.replace('%', '')) || 0;
+                }
+                
+                if (direction === 'asc') {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+            
+            // Re-append sorted rows
+            rows.forEach(row => tbody.appendChild(row));
+        }
+        
+        function copyTableToClipboard() {
+            const table = document.getElementById('recommendations-table');
+            const range = document.createRange();
+            range.selectNode(table);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            
+            try {
+                document.execCommand('copy');
+                // Show success feedback
+                const button = event.target.closest('button');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                button.classList.remove('btn-outline-secondary');
+                button.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-outline-secondary');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy table:', err);
+                alert('Failed to copy table. Please try selecting and copying manually.');
+            }
+            
+            window.getSelection().removeAllRanges();
+        }
+        </script>
+        """
+    ])
+
+    context = data.get("context", {})
+    title = (
+        f"Top {len(rows)} candidates for {context.get('target_team','Team')}"
+        f" · Position {context.get('position','?')}"
+    )
+    return {
+        "text": title,
+        "attachments": [
+            {"type": "table", "html": "".join(html)}
+        ],
+    }
+
+similar_players_team_fit_table_tool = StructuredTool.from_function(
+    name="similar_players_team_fit_table",
+    description=(
+        "Same as similar_players_team_fit but returns a compact HTML table "
+        "sorted by success_index, ideal for chat display or copy to report."
+    ),
+    func=_similar_players_team_fit_table,
+    args_schema=SimilarPlayersTeamFitInput,
+    return_direct=True          # allow returning the HTML directly to the chat
+)
+
+
 # ----------------------------- 2) Player Lookup ----------------------------- #
 class PlayerLookupInput(BaseModel):
     """Quick player search by name (and optionally position)"""
@@ -236,6 +527,7 @@ class BuildScoutingReportInput(BaseModel):
     chosen_id: int = Field(..., description="ID of the chosen player as recommended signing")
     pros: List[str] = Field(..., description="List of player advantages")
     cons: List[str] = Field(..., description="List of player disadvantages or risks")
+    target_team: Optional[str] = Field(None, description="If provided, compute success_index vs team-position cohort and include it in the recommendation context")
 
 def generate_recommendation_with_news(
     chosen_id: int,
@@ -245,6 +537,7 @@ def generate_recommendation_with_news(
     candidate_ids: List[int],
     pros: List[str],
     cons: List[str],
+    success_index: Optional[float] = None,
 ) -> str:
     # Validate input parameters
     if not validate_parameters({
@@ -297,6 +590,7 @@ def generate_recommendation_with_news(
         - Transfer objective: {objective}
         - Recommended player: {player_name}
         - News summary (if any): {news}
+        - Success index v2.1 (probability of successful signing considering league, minutes, age, team strength, and position): {success_index}
         
         **REPORT STRUCTURE (HTML FORMAT):**
         Use the following HTML structure:
@@ -330,6 +624,7 @@ def generate_recommendation_with_news(
         "objective": objective,
         "player_name": player_name,
         "news": summary,
+        "success_index": f"{success_index:.3f}" if isinstance(success_index, (int, float)) else "N/A",
     }).strip()
 
 def build_scouting_report(
@@ -339,9 +634,31 @@ def build_scouting_report(
     chosen_id: int,
     pros: List[str],
     cons: List[str],
+    target_team: Optional[str] = None,
 ) -> dict:
     from apps.dashboard.views import _fetch_stats 
     players_map = _fetch_stats(candidate_ids + [base_id])
+
+    # Optionally compute success_index_v2_1 for the chosen player against target team
+    chosen_success_index: Optional[float] = None
+    if target_team:
+        try:
+            # Use base_id as reference and request fit for the same position and team
+            import requests as _rq
+            position = players_map[base_id].get("position") or players_map[base_id].get("role")
+            params = {"team": target_team, "k": 50}
+            if position:
+                params["position"] = position
+            r = _rq.get(f"http://api:8001/players/{base_id}/similar_team_fit", params=params, timeout=20)
+            if r.ok:
+                data = r.json()
+                for item in data.get("candidates", []):
+                    if int(item.get("id")) == int(chosen_id):
+                        # Usar success_index_v2_1 si está disponible, sino fallback a success_index
+                        chosen_success_index = float(item.get("success_index_v2_1", item.get("success_index")))
+                        break
+        except Exception:
+            chosen_success_index = None
 
     recommendation = generate_recommendation_with_news(
         chosen_id=chosen_id,
@@ -351,6 +668,7 @@ def build_scouting_report(
         candidate_ids=candidate_ids,
         pros=pros,
         cons=cons,
+        success_index=chosen_success_index,
     )
 
     return build_report_pdf(
@@ -484,6 +802,8 @@ TOOLS = [
     radar_chart_tool,             # <-- tool to generate radar charts   
     radar_comparison_chart_tool,  # <-- tool to generate radar comparison charts
     similar_players_tool,         # <-- tool to search for similar players
+    similar_players_team_fit_tool, # <-- tool to search for similar players with team fit
+    similar_players_team_fit_table_tool, # <-- HTML table for team fit results
     news_search_tool,             # <-- tool to search for news
     player_news_tool,             # <-- tool to search for news related to a player
     dashboard_inline_tool,        # <-- tool to generate inline dashboard

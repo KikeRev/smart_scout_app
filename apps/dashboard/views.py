@@ -16,6 +16,7 @@ from apps.agent_service.viz_tools import (
     radar_chart,
     pizza_comparison_chart
 )
+from apps.agent_service.dashboard_viz_tools import dashboard_radar_single
 from apps.agent_service.utils import compare_stats_to_html_table
 
 import requests
@@ -306,6 +307,96 @@ def search_api(request):
             return JsonResponse({'error': str(e)}, status=400)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@login_required
+def player_profile(request, player_id: int):
+    """Simple player profile page with radar and key KPIs."""
+    try:
+        stats_map = _fetch_stats([player_id])
+        player = stats_map.get(player_id)
+        if not player:
+            return render(request, "dashboard/profile.html", {"error": "Player not found"})
+
+        # Default metrics depending on position (compact set ~12)
+        pos = player.get("position") or "MF"
+        # Exclude stats already shown in the side table (age, minutes,
+        # goals, assists, goals_per90, assists_per90, passes_pct)
+        # and favour informative metrics by position.
+        metrics_by_pos = {
+            "GK": [
+                "gk_psxg",
+                "gk_pens_allowed",
+                "gk_free_kick_goals_against",
+                "gk_corner_kick_goals_against",
+                "gk_own_goals_against",
+                "clearances",
+                "blocks",
+            ],
+            "DF": [
+                "tackles",
+                "tackles_won",
+                "tackles_interceptions",
+                "interceptions",
+                "blocked_shots",
+                "clearances",
+                "progressive_passes",
+                "progressive_carries",
+            ],
+            "MF": [
+                "expected_goals_per90",
+                "expected_assists_per90",
+                "goals_assists_per90",
+                "progressive_passes",
+                "progressive_carries",
+                "progressive_passes_received",
+                "interceptions",
+                "tackles_won",
+            ],
+            "FW": [
+                "expected_goals_per90",
+                "expected_goals_assists_per90",
+                "goals_assists_per90",
+                "progressive_passes_received",
+                "progressive_passes",
+                "progressive_carries",
+            ],
+        }
+        metrics = metrics_by_pos.get(pos, DEFAULT_METRICS)
+
+        # Radar clásico (viz_tools) con máximos fijos predefinidos
+        radar = radar_chart(
+            player_name=player["full_name"],
+            stats=player,
+            team=player["club"],
+            position=pos,
+            nationality=player.get("nationality", ""),
+        )
+        radar_url = None
+        if radar.get("attachments"):
+            radar_url = radar["attachments"][0].get("url")
+
+        # Select KPI table metrics that don't overlap with radar
+        # Radar has: Min/Games, Games_90s, Goals, Asist, G+A, %Pass, Tackles Won, Interceptions, Challenges, Progressive Passes, Progressive Passes Received
+        kpi_keys_by_pos = {
+            "GK": ["age", "minutes", "gk_psxg", "gk_goals_against", "gk_pens_allowed", "clearances", "blocks"],
+            "DF": ["age", "minutes", "expected_goals_per90", "expected_assists_per90", "tackles", "tackles_interceptions", "blocked_shots", "clearances"],
+            "MF": ["age", "minutes", "expected_goals_per90", "expected_assists_per90", "goals_assists_per90", "progressive_carries", "key_passes", "through_balls"],
+            "FW": ["age", "minutes", "expected_goals_per90", "expected_goals_assists_per90", "goals_assists_per90", "progressive_carries", "key_passes", "through_balls"],
+        }
+        kpi_keys = kpi_keys_by_pos.get(pos, ["age", "minutes", "expected_goals_per90", "expected_assists_per90", "goals_assists_per90"])
+        kpis = {k: player.get(k) for k in kpi_keys if player.get(k) is not None}
+
+        ctx = {
+            "player": player,
+            "metrics": metrics,
+            "radar_url": radar_url,
+            "kpis": kpis,
+        }
+        return render(request, "dashboard/player_profile.html", ctx)
+    except Exception as e:
+        logger.exception("player_profile error: %s", e)
+        return render(request, "dashboard/profile.html", {"error": str(e)})
 
 @login_required
 def saved_searches_api(request):

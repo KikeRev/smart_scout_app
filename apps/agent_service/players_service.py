@@ -1,7 +1,6 @@
 
 from typing import Dict, Any
 from apps.agent_service.db import get_session
-from apps.ingestion.seed_and_ingest import Player       # your player model
 from langchain.tools import tool
 
 @tool(description="Returns role and stats of a player (PostgreSQL)")
@@ -17,6 +16,8 @@ def player_stats(player_name: str) -> Dict[str, any]:
     #with get_session() as db:
     db = get_session()
     try:
+        # Lazy import to avoid heavy side-effects at module import time
+        from apps.ingestion.seed_and_ingest import Player
         row = (
             db.query(Player)
                 .filter(Player.full_name.ilike(player_name))
