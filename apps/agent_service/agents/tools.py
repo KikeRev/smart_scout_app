@@ -146,8 +146,8 @@ def _similar_players_team_fit_table(
     )
 
     rows = data.get("candidates", [])
-    # sort by success_index descending (defensive)
-    rows = sorted(rows, key=lambda r: r.get("success_index", 0), reverse=True)
+    # sort by success_index_v2_1 descending (primary), fallback to success_index
+    rows = sorted(rows, key=lambda r: r.get("success_index_v2_1", r.get("success_index", 0)), reverse=True)
 
     def pct(x: float | None) -> str:
         if x is None:
@@ -174,12 +174,56 @@ def _similar_players_team_fit_table(
         "<th onclick=\"sortTable(4)\" style=\"cursor: pointer;\">Success Index <i class=\"fas fa-sort\"></i></th>",
         "<th onclick=\"sortTable(5)\" style=\"cursor: pointer;\">Overall <i class=\"fas fa-sort\"></i></th>",
         "<th onclick=\"sortTable(6)\" style=\"cursor: pointer;\">Team Fit <i class=\"fas fa-sort\"></i></th>",
+        "<th>Profile <i class=\"fas fa-info-circle\"></i></th>",
         "</tr></thead>",
         "<tbody>",
     ]
 
+    def get_profile_badges(breakdown: dict, age: int, minutes: int, league: str) -> str:
+        """Generate visual badges based on success index breakdown"""
+        badges = []
+        
+        # League badge
+        league_w = breakdown.get('league_weight', 0)
+        if league_w >= 1.0:
+            badges.append("🟢 Top5")
+        elif league_w >= 0.85:
+            badges.append("🟡 Tier2")
+        elif league_w >= 0.70:
+            badges.append("🟠 Tier3")
+        else:
+            badges.append("🔴 Minor")
+        
+        # Minutes badge
+        minutes_w = breakdown.get('minutes_weight', 0)
+        if minutes_w >= 1.0:
+            badges.append("🟢 Starter")
+        elif minutes_w >= 0.75:
+            badges.append("🟡 Rotation")
+        else:
+            badges.append("🔴 Backup")
+        
+        # Age badge
+        age_w = breakdown.get('age_weight', 0)
+        if age_w >= 0.95:
+            badges.append(f"🟢 {age}y")
+        elif age_w >= 0.85:
+            badges.append(f"🟡 {age}y")
+        else:
+            badges.append(f"🔴 {age}y")
+        
+        return "<br>".join(badges)
+
     for i, r in enumerate(rows, start=1):
         profile_href = f"/dashboard/player/{r.get('id')}/"
+        breakdown = r.get("success_breakdown", {})
+        profile_info = get_profile_badges(
+            breakdown, 
+            r.get("age", 0), 
+            r.get("minutes", 0),
+            r.get("league", "")
+        )
+        
         html.append(
             """
             <tr>
@@ -190,6 +234,7 @@ def _similar_players_team_fit_table(
               <td><strong>{succ}</strong></td>
               <td>{ov}</td>
               <td>{fit}</td>
+              <td style="font-size: 0.85em; line-height: 1.4;">{profile}</td>
             </tr>
             """.format(
                 i=i,
@@ -197,15 +242,20 @@ def _similar_players_team_fit_table(
                 href=profile_href,
                 club=r.get("club", "—"),
                 pos=r.get("position", "—"),
-                succ=pct(r.get("success_index")),
+                succ=pct(r.get("success_index_v2_1", r.get("success_index"))),
                 ov=pct(r.get("overall_similarity")),
                 fit=pct(r.get("team_position_similarity")),
+                profile=profile_info,
             )
         )
 
     html.extend([
         "</tbody>", 
-        "</table>", 
+        "</table>",
+        "<div class=\"mt-2\" style=\"font-size: 0.85em; color: #6c757d;\">",
+        "<strong>Profile Legend:</strong> ",
+        "🟢 Optimal | 🟡 Good | 🟠 Moderate | 🔴 Risk/Concern",
+        "</div>",
         "</div>",
         """
         <script>
@@ -236,8 +286,8 @@ def _similar_players_team_fit_table(
                 let aVal = a.cells[columnIndex].textContent.trim();
                 let bVal = b.cells[columnIndex].textContent.trim();
                 
-                // Handle numeric columns (Success Index, Overall, Team Fit)
-                if (columnIndex >= 4) {
+                // Handle numeric columns (Success Index, Overall, Team Fit) - excluding Profile (column 7)
+                if (columnIndex >= 4 && columnIndex <= 6) {
                     aVal = parseFloat(aVal.replace('%', '')) || 0;
                     bVal = parseFloat(bVal.replace('%', '')) || 0;
                 }
@@ -540,7 +590,7 @@ def generate_recommendation_with_news(
         - Transfer objective: {objective}
         - Recommended player: {player_name}
         - News summary (if any): {news}
-        - Success index vs target team fit (if available): {success_index}
+        - Success index v2.1 (probability of successful signing considering league, minutes, age, team strength, and position): {success_index}
         
         **REPORT STRUCTURE (HTML FORMAT):**
         Use the following HTML structure:
@@ -589,7 +639,7 @@ def build_scouting_report(
     from apps.dashboard.views import _fetch_stats 
     players_map = _fetch_stats(candidate_ids + [base_id])
 
-    # Optionally compute success_index for the chosen player against target team
+    # Optionally compute success_index_v2_1 for the chosen player against target team
     chosen_success_index: Optional[float] = None
     if target_team:
         try:
@@ -604,7 +654,8 @@ def build_scouting_report(
                 data = r.json()
                 for item in data.get("candidates", []):
                     if int(item.get("id")) == int(chosen_id):
-                        chosen_success_index = float(item.get("success_index"))
+                        # Usar success_index_v2_1 si está disponible, sino fallback a success_index
+                        chosen_success_index = float(item.get("success_index_v2_1", item.get("success_index")))
                         break
         except Exception:
             chosen_success_index = None

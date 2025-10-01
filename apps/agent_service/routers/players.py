@@ -9,6 +9,7 @@ from typing import List
 from decimal import Decimal
 from pgvector.sqlalchemy import Vector as PGVector
 from pydantic import BaseModel
+from apps.agent_service.success_index_calculator import SuccessIndexCalculator
 
 
 class PlayerBatchRequest(BaseModel):
@@ -222,20 +223,44 @@ def similar_players_with_team_fit(
         # p.feature_vector may be ndarray or list
         cand_vec = p.feature_vector.tolist() if isinstance(p.feature_vector, np.ndarray) else p.feature_vector
         team_fit = cosine_sim_to_centroid(cand_vec, cohort_centroid)
-        # Success index: weighted combination. If team_fit is None, fall back to overall only
+        # Success index base: weighted combination. If team_fit is None, fall back to overall only
         if team_fit is None:
-            success = float(ov_sim)
+            success_base = float(ov_sim)
         else:
-            success = float(overall_w * ov_sim + fit_w * team_fit)
+            success_base = float(overall_w * ov_sim + fit_w * team_fit)
+
+        # Calcular success_index v2.1 con todos los factores adicionales
+        player_data = {
+            'league': p.league,
+            'minutes': p.minutes or 0,
+            'age': p.age or 25,
+            'club': p.club,
+            'position': p.position,
+            'goals_per90': p.goals_per90 or 0.0,
+            'tackles': p.tackles or 0,
+            'interceptions': p.interceptions or 0,
+            'passes_pct': p.passes_pct or 0.0
+        }
+        
+        success_v2_1 = SuccessIndexCalculator.calculate_success_index_v2_1(
+            success_index_base=success_base,
+            player_data=player_data,
+            db=db
+        )
 
         results.append({
             "id": p.id,
             "full_name": p.full_name,
             "club": p.club,
+            "league": p.league,
             "position": p.position,
+            "age": p.age,
+            "minutes": p.minutes,
             "overall_similarity": float(ov_sim),
             "team_position_similarity": team_fit if team_fit is None else float(team_fit),
-            "success_index": success,
+            "success_index": success_base,  # Mantener para retrocompatibilidad
+            "success_index_v2_1": success_v2_1['success_index_v2_1'],
+            "success_breakdown": success_v2_1['breakdown']
         })
 
     return {
