@@ -262,6 +262,9 @@ def similar_players_with_team_fit(
             "success_index_v2_1": success_v2_1['success_index_v2_1'],
             "success_breakdown": success_v2_1['breakdown']
         })
+    
+    # Sort results by success_index_v2_1 descending
+    results.sort(key=lambda x: x['success_index_v2_1'], reverse=True)
 
     return {
         "context": {

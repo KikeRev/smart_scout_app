@@ -52,3 +52,13 @@ sys.modules["transformers"] = dummy_transformers
 sys.modules["sentence_transformers"] = dummy_sentence_transformers
 
 
+import pytest
+from fastapi.testclient import TestClient
+
+
+@pytest.fixture(scope="module")
+def test_client():
+    """FastAPI test client for integration tests"""
+    from apps.agent_service.main import app
+    return TestClient(app)
+
