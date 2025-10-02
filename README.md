@@ -10,6 +10,13 @@ Welcome to **Smart Scout App v1.2** — an application created to help football 
 
 ## ✨ Features Overview
 
+### 📊 Historical Data Integration (⭐ NEW)
+- **Multi-Season Analysis**: Player data from 2020-2025 (5 seasons)
+- **Historical Context**: 19,184+ players with complete historical profiles
+- **Active vs Retired Filtering**: Distinguish between current and former players
+- **Weighted Performance**: Recent seasons weighted more heavily in analysis
+- **Career Trajectory**: Track player development over multiple seasons
+
 ### 🤖 AI-Powered Scouting
 - **Intelligent Player Recommendations**: AI agent analyzes player data and provides recommendations
 - **Natural Language Queries**: Ask questions in plain English or Spanish
@@ -42,6 +49,33 @@ Welcome to **Smart Scout App v1.2** — an application created to help football 
 - **Player News**: Latest news about specific players
 - **News Summarization**: AI-powered news summaries
 - **Semantic Search**: Find relevant news using natural language
+
+# 📁 Data Management
+
+## Historical Data Structure
+- **Source**: fbref.com (Top 5 European leagues)
+- **Period**: 2020-21 to 2024-25 seasons
+- **Players**: 19,184 total (16,827 active, 2,357 retired/inactive)
+- **Update Frequency**: End of each season
+
+## Data Files
+- **Primary Dataset**: `data/processed/players_with_historical_data.csv`
+- **Backup Strategy**: Automated backups with timestamps
+- **Version Control**: Git + optional DVC for data versioning
+
+## Data Update Process
+```bash
+# 1. Update data (when new season available)
+python scripts/update_data.py --season 2025-26
+
+# 2. Ingest to database
+python -m apps.ingestion.seed_and_ingest --players-csv data/processed/players_with_historical_data.csv --verbose --refresh-embs --replace
+```
+
+## Future Data Versioning
+- **DVC Implementation**: See `docs/DVC_IMPLEMENTATION.md` for advanced data versioning
+- **Benefits**: Reproducible experiments, team collaboration, data lineage tracking
+- **When to Use**: Multi-developer teams, frequent data updates, research projects
 
 # 🧱 Project Structure
 

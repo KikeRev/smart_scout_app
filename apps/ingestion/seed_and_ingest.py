@@ -147,6 +147,9 @@ class Player(Base):
     clearances = sa.Column(sa.Integer)
     errors = sa.Column(sa.Integer)
 
+    # Historical player field (only one kept in CSV)
+    player_status = sa.Column(sa.String(20), default='active')
+
     # optional: pgvector column for aggregated numerical vector
     feature_vector = sa.Column(Vector(DIM))
 
@@ -240,6 +243,8 @@ CSV_COLUMN_MAP = {
     "tackles_interceptions": "tackles_interceptions",
     "clearances": "clearances",
     "errors": "errors",
+    # Historical field (only one expected in CSV)
+    "player_status": "player_status",
 }
 
 REQUIRED_COLUMNS = set(CSV_COLUMN_MAP.keys())
@@ -262,7 +267,15 @@ def _to_int(x):
 
 def clean_name(name: str) -> str:
     """Normalize tildes, remove rare characters and collapse spaces."""
+    # Guard against non-string values and NaN
     if pd.isna(name):
+        return ""
+    if not isinstance(name, str):
+        try:
+            name = str(name)
+        except Exception:
+            return ""
+    if name.lower() in {"nan", "none", "null"}:
         return ""
     # 1) Normalize to NFKD and remove diacritics
     name_ascii = (
@@ -319,7 +332,11 @@ def load_players(engine: sa.Engine, csv_path: Path,  if_exists: str = "append"):
     for col in int_cols:
         df[col] = df[col].apply(_to_int)
 
-    float_cols = list(set(df.columns) - set(int_cols) - {"full_name", "nationality", "position", "club", "team_logo", "league"})
+    float_cols = list(
+        set(df.columns)
+        - set(int_cols)
+        - {"full_name", "nationality", "position", "club", "team_logo", "league", "player_status"}
+    )
     for col in float_cols:
         df[col] = df[col].apply(_to_float)
 

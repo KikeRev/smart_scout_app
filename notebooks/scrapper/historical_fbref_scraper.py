@@ -335,12 +335,14 @@ def main():
             print(f"Found {len(team_links)} teams")
             
             # Scrape each team
+            league_team_dfs = []
             for j, (team_name, team_url, lg, year) in enumerate(team_links):
                 print(f"  [{j+1}/{len(team_links)}] Scraping: {team_name}...")
                 try:
                     df_team = scrape_team_stats(team_name, team_url, lg, season)
                     if not df_team.empty:
                         all_team_data.append(df_team)
+                        league_team_dfs.append(df_team)
                         print(f"    ✓ {len(df_team)} players obtained")
                     else:
                         print(f"    ✗ No data")
@@ -349,6 +351,30 @@ def main():
                 
                 # Pause between teams (4-10 seconds)
                 time.sleep(random.uniform(4, 10))
+
+            # Per-league/season summary and safeguard save
+            if league_team_dfs:
+                df_league = pd.concat(league_team_dfs, ignore_index=True, sort=False)
+                out_dir = 'data/per_league_season'
+                out_path = f"{out_dir}/{league_name}/{season}.csv"
+                try:
+                    import os
+                    os.makedirs(f"{out_dir}/{league_name}", exist_ok=True)
+                    df_league.to_csv(out_path, index=False)
+                    print(f"Saved league-season CSV → {out_path} ({len(df_league)} rows)")
+                except Exception as e:
+                    print(f"Warning: could not save {out_path}: {e}")
+
+                # Team counts for this league-season
+                try:
+                    team_counts = (
+                        df_league.groupby('Team').size().sort_values(ascending=False)
+                    )
+                    print("Team counts (players) for this league-season:")
+                    for team, cnt in team_counts.items():
+                        print(f"  - {team}: {cnt}")
+                except Exception as e:
+                    print(f"Warning: could not compute team counts: {e}")
             
         except Exception as e:
             print(f"Error processing {league_name} - {season}: {e}")

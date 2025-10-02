@@ -1,0 +1,132 @@
+{
+    "Premier League Links":[
+        
+        {
+            "league_name": "Premier League",
+            "season": "2020-21", 
+            "url": "https://fbref.com/en/comps/9/2020-2021/Premier-League-Stats",
+            "table_id": "results2020-202191_overall"
+        },
+        {
+            "league_name": "Premier League",
+            "season": "2021-22", 
+            "url": "https://fbref.com/en/comps/9/2021-2022/Premier-League-Stats",
+            "table_id": "results2021-202291_overall"
+        },
+        {
+            "league_name": "Premier League",
+            "season": "2022-23", 
+            "url": "https://fbref.com/en/comps/9/2022-2023/Premier-League-Stats",
+            "table_id": "results2022-202391_overall"
+        },
+        {
+            "league_name": "Premier League",
+            "season": "2023-24", 
+            "url": "https://fbref.com/en/comps/9/2023-2024/Premier-League-Stats",
+            "table_id": "results2023-202491_overall"
+        }],
+    "La Liga Links":[
+        
+        {
+            "league_name": "La Liga",
+            "season": "2020-21", 
+            "url": "https://fbref.com/en/comps/12/2020-2021/2020-2021-La-Liga-Stats",
+            "table_id": "results2020-2021121_overall"
+        },
+        {
+            "league_name": "La Liga",
+            "season": "2021-22", 
+            "url": "https://fbref.com/en/comps/12/2021-2022/2021-2022-La-Liga-Stats",
+            "table_id": "results2021-2022121_overall"
+        },
+        {
+            "league_name": "La Liga",
+            "season": "2022-23", 
+            "url": "https://fbref.com/en/comps/12/2022-2023/2022-2023-La-Liga-Stats",
+            "table_id": "results2022-2023121_overall"
+        },
+        {
+            "league_name": "La Liga",
+            "season": "2023-24", 
+            "url": "https://fbref.com/en/comps/12/2023-2024/2023-2024-La-Liga-Stats",
+            "table_id": "results2023-2024121_overall"
+        }],
+    "Serie A Links":[
+        
+        {
+            "league_name": "Serie A",
+            "season": "2020-21", 
+            "url": "https://fbref.com/en/comps/11/2020-2021/2020-2021-Serie-A-Stats",
+            "table_id": "results2020-2021111_overall"
+        },  
+        {
+            "league_name": "Serie A",
+            "season": "2021-22", 
+            "url": "https://fbref.com/en/comps/10/2021-2022/2021-2022-Serie-A-Stats",
+            "table_id": "results2021-2022111_overall"
+        },
+        {
+            "league_name": "Serie A",
+            "season": "2022-23", 
+            "url": "https://fbref.com/en/comps/11/2022-2023/2022-2023-Serie-A-Stats",
+            "table_id": "results2022-2023111_overall"
+        },
+        {
+            "league_name": "Serie A",
+            "season": "2023-24", 
+            "url": "https://fbref.com/en/comps/11/2023-2024/2023-2024-Serie-A-Stats",
+            "table_id": "results2023-2024111_overall"
+        }],
+    "Bundesliga Links":[
+        
+        {
+            "league_name": "Bundesliga",
+            "season": "2020-21", 
+            "url": "https://fbref.com/en/comps/20/2020-2021/2020-2021-Bundesliga-Stats",
+            "table_id": "results2020-2021201_overall"
+        },
+        {
+            "league_name": "Bundesliga",
+            "season": "2021-22", 
+            "url": "https://fbref.com/en/comps/20/2021-2022/2021-2022-Bundesliga-Stats",
+            "table_id": "results2021-2022201_overall"
+        },
+        {
+            "league_name": "Bundesliga",
+            "season": "2022-23", 
+            "url": "https://fbref.com/en/comps/20/2022-2023/2022-2023-Bundesliga-Stats",
+            "table_id": "results2022-2023201_overall"
+        },
+        {
+            "league_name": "Bundesliga",
+            "season": "2023-24", 
+            "url": "https://fbref.com/en/comps/20/2023-2024/2023-2024-Bundesliga-Stats",
+            "table_id": "results2023-2024201_overall"
+        }],
+    "Ligue 1 Links":[
+        
+        {
+            "league_name": "Ligue 1",
+            "season": "2020-21", 
+            "url": "https://fbref.com/en/comps/13/2020-2021/2020-2021-Ligue-1-Stats",
+            "table_id": "results2020-2021131_overall"
+        },
+        {
+            "league_name": "Ligue 1",
+            "season": "2021-22", 
+            "url": "https://fbref.com/en/comps/13/2021-2022/2021-2022-Ligue-1-Stats",
+            "table_id": "results2021-2022131_overall"
+        },
+        {
+            "league_name": "Ligue 1",
+            "season": "2022-23", 
+            "url": "https://fbref.com/en/comps/13/2022-2023/2022-2023-Ligue-1-Stats",
+            "table_id": "results2022-2023131_overall"
+        },
+        {
+            "league_name": "Ligue 1",
+            "season": "2023-24", 
+            "url": "https://fbref.com/en/comps/13/2023-2024/2023-2024-Ligue-1-Stats",
+            "table_id": "results2023-2024131_overall"
+        }]
+}
