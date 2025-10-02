@@ -109,7 +109,7 @@ def get_team_links(league_name: str, league_url: str, table_id: str) -> List[Tup
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    wrapper = soup.find("div", {"id": f"all_{table_id}"})
+    wrapper = soup.find("div", {"id": f"div_{table_id}"})
     table = wrapper and wrapper.find("table", {"id": table_id}) 
     if not table or not table.tbody:
         raise RuntimeError(f"Table {table_id} not found. Check ID or wrapper.")
