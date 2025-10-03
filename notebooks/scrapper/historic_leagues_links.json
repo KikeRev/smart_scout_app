@@ -1,5 +1,41 @@
 {
     "Premier League Links":[
+        {
+            "league_name": "Premier League",
+            "season": "2014-15", 
+            "url": "https://fbref.com/en/comps/9/2014-2015/Premier-League-Stats",
+            "table_id": "results2014-201591_overall"
+        },
+        {
+            "league_name": "Premier League",
+            "season": "2015-16", 
+            "url": "https://fbref.com/en/comps/9/2015-2016/Premier-League-Stats",
+            "table_id": "results2015-201691_overall"
+        },
+        {
+            "league_name": "Premier League",
+            "season": "2016-17", 
+            "url": "https://fbref.com/en/comps/9/2016-2017/Premier-League-Stats",
+            "table_id": "results2016-201791_overall"
+        },
+        {
+            "league_name": "Premier League",
+            "season": "2017-18", 
+            "url": "https://fbref.com/en/comps/9/2017-2018/Premier-League-Stats",
+            "table_id": "results2017-201891_overall"
+        },
+        {
+            "league_name": "Premier League",
+            "season": "2018-19", 
+            "url": "https://fbref.com/en/comps/9/2018-2019/Premier-League-Stats",
+            "table_id": "results2018-201991_overall"
+        },
+        {
+            "league_name": "Premier League",
+            "season": "2019-20", 
+            "url": "https://fbref.com/en/comps/9/2019-2020/Premier-League-Stats",
+            "table_id": "results2019-202091_overall"
+        },
         
         {
             "league_name": "Premier League",
@@ -26,7 +62,42 @@
             "table_id": "results2023-202491_overall"
         }],
     "La Liga Links":[
-        
+        {
+            "league_name": "La Liga",
+            "season": "2014-15", 
+            "url": "https://fbref.com/en/comps/12/2014-2015/2014-2015-La-Liga-Stats",
+            "table_id": "results2014-2015121_overall"
+        },
+        {
+            "league_name": "La Liga",
+            "season": "2015-16", 
+            "url": "https://fbref.com/en/comps/12/2015-2016/2015-2016-La-Liga-Stats",
+            "table_id": "results2015-2016121_overall"
+        },
+        {
+            "league_name": "La Liga",
+            "season": "2016-17", 
+            "url": "https://fbref.com/en/comps/12/2016-2017/2016-2017-La-Liga-Stats",
+            "table_id": "results2016-2017121_overall"
+        },
+        {
+            "league_name": "La Liga",
+            "season": "2017-18", 
+            "url": "https://fbref.com/en/comps/12/2017-2018/2017-2018-La-Liga-Stats",
+            "table_id": "results2017-2018121_overall"
+        },
+        {
+            "league_name": "La Liga",
+            "season": "2018-19", 
+            "url": "https://fbref.com/en/comps/12/2018-2019/2018-2019-La-Liga-Stats",
+            "table_id": "results2018-2019121_overall"
+        },
+        {
+            "league_name": "La Liga",
+            "season": "2019-20", 
+            "url": "https://fbref.com/en/comps/12/2019-2020/2019-2020-La-Liga-Stats",
+            "table_id": "results2019-2020121_overall"
+        },
         {
             "league_name": "La Liga",
             "season": "2020-21", 
@@ -52,7 +123,42 @@
             "table_id": "results2023-2024121_overall"
         }],
     "Serie A Links":[
-        
+        {
+            "league_name": "Serie A",
+            "season": "2014-15", 
+            "url": "https://fbref.com/en/comps/11/2014-2015/2014-2015-Serie-A-Stats",
+            "table_id": "results2014-2015111_overall"
+        },
+        {
+            "league_name": "Serie A",
+            "season": "2015-16", 
+            "url": "https://fbref.com/en/comps/11/2015-2016/2015-2016-Serie-A-Stats",
+            "table_id": "results2015-2016111_overall"
+        },
+        {
+            "league_name": "Serie A",
+            "season": "2016-17", 
+            "url": "https://fbref.com/en/comps/11/2016-2017/2016-2017-Serie-A-Stats",
+            "table_id": "results2016-2017111_overall"
+        },
+        {
+            "league_name": "Serie A",
+            "season": "2017-18", 
+            "url": "https://fbref.com/en/comps/11/2017-2018/2017-2018-Serie-A-Stats",
+            "table_id": "results2017-2018111_overall"
+        },
+        {
+            "league_name": "Serie A",
+            "season": "2018-19", 
+            "url": "https://fbref.com/en/comps/11/2018-2019/2018-2019-Serie-A-Stats",
+            "table_id": "results2018-2019111_overall"
+        },
+        {
+            "league_name": "Serie A",
+            "season": "2019-20", 
+            "url": "https://fbref.com/en/comps/11/2019-2020/2019-2020-Serie-A-Stats",
+            "table_id": "results2019-2020111_overall"
+        },
         {
             "league_name": "Serie A",
             "season": "2020-21", 
@@ -62,7 +168,7 @@
         {
             "league_name": "Serie A",
             "season": "2021-22", 
-            "url": "https://fbref.com/en/comps/10/2021-2022/2021-2022-Serie-A-Stats",
+            "url": "https://fbref.com/en/comps/11/2021-2022/2021-2022-Serie-A-Stats",
             "table_id": "results2021-2022111_overall"
         },
         {
@@ -78,7 +184,42 @@
             "table_id": "results2023-2024111_overall"
         }],
     "Bundesliga Links":[
-        
+        {
+            "league_name": "Bundesliga",
+            "season": "2014-15", 
+            "url": "https://fbref.com/en/comps/20/2014-2015/2014-2015-Bundesliga-Stats",
+            "table_id": "results2014-2015201_overall"
+        },
+        {
+            "league_name": "Bundesliga",
+            "season": "2015-16", 
+            "url": "https://fbref.com/en/comps/20/2015-2016/2015-2016-Bundesliga-Stats",
+            "table_id": "results2015-2016201_overall"
+        },
+        {
+            "league_name": "Bundesliga",
+            "season": "2016-17", 
+            "url": "https://fbref.com/en/comps/20/2016-2017/2016-2017-Bundesliga-Stats",
+            "table_id": "results2016-2017201_overall"
+        },
+        {
+            "league_name": "Bundesliga",
+            "season": "2017-18", 
+            "url": "https://fbref.com/en/comps/20/2017-2018/2017-2018-Bundesliga-Stats",
+            "table_id": "results2017-2018201_overall"
+        },
+        {
+            "league_name": "Bundesliga",
+            "season": "2018-19", 
+            "url": "https://fbref.com/en/comps/20/2018-2019/2018-2019-Bundesliga-Stats",
+            "table_id": "results2018-2019201_overall"
+        },
+        {
+            "league_name": "Bundesliga",
+            "season": "2019-20", 
+            "url": "https://fbref.com/en/comps/20/2019-2020/2019-2020-Bundesliga-Stats",
+            "table_id": "results2019-2020201_overall"
+        },
         {
             "league_name": "Bundesliga",
             "season": "2020-21", 
@@ -104,7 +245,42 @@
             "table_id": "results2023-2024201_overall"
         }],
     "Ligue 1 Links":[
-        
+        {
+            "league_name": "Ligue 1",
+            "season": "2014-15", 
+            "url": "https://fbref.com/en/comps/13/2014-2015/2014-2015-Ligue-1-Stats",
+            "table_id": "results2014-2015131_overall"
+        },
+        {
+            "league_name": "Ligue 1",
+            "season": "2015-16", 
+            "url": "https://fbref.com/en/comps/13/2015-2016/2015-2016-Ligue-1-Stats",
+            "table_id": "results2015-2016131_overall"
+        },
+        {
+            "league_name": "Ligue 1",
+            "season": "2016-17", 
+            "url": "https://fbref.com/en/comps/13/2016-2017/2016-2017-Ligue-1-Stats",
+            "table_id": "results2016-2017131_overall"
+        },
+        {
+            "league_name": "Ligue 1",
+            "season": "2017-18", 
+            "url": "https://fbref.com/en/comps/13/2017-2018/2017-2018-Ligue-1-Stats",
+            "table_id": "results2017-2018131_overall"
+        },
+        {
+            "league_name": "Ligue 1",
+            "season": "2018-19", 
+            "url": "https://fbref.com/en/comps/13/2018-2019/2018-2019-Ligue-1-Stats",
+            "table_id": "results2018-2019131_overall"
+        },
+        {
+            "league_name": "Ligue 1",
+            "season": "2019-20", 
+            "url": "https://fbref.com/en/comps/13/2019-2020/2019-2020-Ligue-1-Stats",
+            "table_id": "results2019-2020131_overall"
+        },
         {
             "league_name": "Ligue 1",
             "season": "2020-21", 

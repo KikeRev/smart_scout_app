@@ -355,11 +355,13 @@ def main():
             # Per-league/season summary and safeguard save
             if league_team_dfs:
                 df_league = pd.concat(league_team_dfs, ignore_index=True, sort=False)
-                out_dir = 'data/per_league_season'
-                out_path = f"{out_dir}/{league_name}/{season}.csv"
+                
+                # Save in new historical_raw directory
+                out_dir = 'notebooks/scrapper/data'
+                out_path = f"{out_dir}/{league_name}_{season.replace('-', '_')}.csv"
                 try:
                     import os
-                    os.makedirs(f"{out_dir}/{league_name}", exist_ok=True)
+                    os.makedirs(out_dir, exist_ok=True)
                     df_league.to_csv(out_path, index=False)
                     print(f"Saved league-season CSV → {out_path} ({len(df_league)} rows)")
                 except Exception as e:
@@ -390,12 +392,12 @@ def main():
     if all_team_data:
         # Save raw data by season
         df_raw = pd.concat(all_team_data, ignore_index=True, sort=False)
-        df_raw.to_csv('data/historical_players_raw.csv', index=False)
+        df_raw.to_csv('notebooks/scrapper/data/historical_players_raw.csv', index=False)
         print(f"Raw data saved: {len(df_raw)} records")
         
         # Aggregate by player
         df_aggregated = process_historical_data(all_team_data)
-        df_aggregated.to_csv('data/historical_players_aggregated.csv', index=False)
+        df_aggregated.to_csv('notebooks/scrapper/data/historical_players_aggregated.csv', index=False)
         print(f"Aggregated data saved: {len(df_aggregated)} unique players")
         
         # Statistics
