@@ -2,7 +2,8 @@
 """
 aggregate_historical_only.py
 
-Script to aggregate ONLY the historical files (2014-15 to 2023-24) from historical_2014_2024 directory.
+Script to aggregate historical files (2014-15 to 2023-24) from historical_2014_2024 directory
+and add the current season (2024-25) to create a complete historical dataset.
 
 Usage:
     python aggregate_historical_only.py
@@ -52,24 +53,54 @@ def main():
         # Remove duplicate columns
         df_raw = df_raw.loc[:, ~df_raw.columns.duplicated()]
         
-        # Save
-        output_file = f"{data_dir}/ALL_HISTORICAL_RAW_2014_2024.csv"
-        df_raw.to_csv(output_file, index=False)
+        print(f"\nHistorical data (2014-2024): {len(df_raw)} records")
+        
+        # === Add current season (2024-25) ===
+        print(f"\n=== ADDING CURRENT SEASON (2024-25) ===")
+        current_season_file = "data/all_players_cleaned.csv"
+        
+        if os.path.exists(current_season_file):
+            df_current = pd.read_csv(current_season_file)
+            df_current['Season'] = '2024-25'
+            
+            # Rename nationality column if needed to match historical
+            if 'nationalit' in df_raw.columns and 'nationality' in df_current.columns:
+                df_raw.rename(columns={'nationalit': 'nationality'}, inplace=True)
+            
+            print(f"Current season (2024-25): {len(df_current)} records")
+            
+            # Align columns - use outer join
+            all_columns = sorted(set(df_raw.columns) | set(df_current.columns))
+            df_raw_aligned = df_raw.reindex(columns=all_columns)
+            df_current_aligned = df_current.reindex(columns=all_columns)
+            
+            # Concatenate
+            df_complete = pd.concat([df_raw_aligned, df_current_aligned], ignore_index=True)
+            
+            print(f"Complete historical data: {len(df_complete)} records")
+        else:
+            print(f"Warning: Current season file not found at {current_season_file}")
+            print(f"Proceeding with historical data only (2014-2024)")
+            df_complete = df_raw
+        
+        # Save complete historical file
+        output_file = "notebooks/scrapper/data/historical_players_raw.csv"
+        df_complete.to_csv(output_file, index=False)
         
         print(f"\n✓✓✓ SUCCESS ✓✓✓")
         print(f"File: {output_file}")
-        print(f"Total records: {len(df_raw)}")
-        print(f"Total columns: {len(df_raw.columns)}")
-        print(f"Unique players: {df_raw['player'].nunique()}")
+        print(f"Total records: {len(df_complete)}")
+        print(f"Total columns: {len(df_complete.columns)}")
+        print(f"Unique players: {df_complete['player'].nunique()}")
         
         # Show seasons
         print(f"\nRecords by season:")
-        season_counts = df_raw['Season'].value_counts().sort_index()
+        season_counts = df_complete['Season'].value_counts().sort_index()
         for season, count in season_counts.items():
             print(f"  {season}: {count} records")
         
         print(f"\nRecords by league:")
-        league_counts = df_raw['League'].value_counts()
+        league_counts = df_complete['League'].value_counts()
         for league, count in league_counts.items():
             print(f"  {league}: {count} records")
             
