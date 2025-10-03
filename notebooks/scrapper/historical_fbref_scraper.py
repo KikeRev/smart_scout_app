@@ -369,9 +369,11 @@ def main():
                 # Use concat with join='outer' to handle different column sets
                 df_league = pd.concat(league_team_dfs, ignore_index=True, sort=False, join='outer')
                 
-                # Save in new historical directory
-                out_dir = 'notebooks/scrapper/data/historical_2014_2024'
-                out_path = f"{out_dir}/{league_name.replace(' ', '_')}_{season.replace('-', '_')}.csv"
+                # Save in new historical directory (use absolute path)
+                import os
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                out_dir = os.path.join(base_dir, 'data', 'historical_2014_2024')
+                out_path = os.path.join(out_dir, f"{league_name.replace(' ', '_')}_{season.replace('-', '_')}.csv")
                 try:
                     import os
                     os.makedirs(out_dir, exist_ok=True)
@@ -428,13 +430,18 @@ def main():
             
             print(f"Final dataframe shape: {df_raw.shape}")
             
-            output_file = 'notebooks/scrapper/data/historical_2014_2024/ALL_HISTORICAL_RAW.csv'
+            # Use absolute path for output files
+            import os
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            out_dir = os.path.join(base_dir, 'data', 'historical_2014_2024')
+            
+            output_file = os.path.join(out_dir, 'ALL_HISTORICAL_RAW.csv')
             df_raw.to_csv(output_file, index=False)
             print(f"✓✓✓ Raw data saved: {output_file} ({len(df_raw)} records) ✓✓✓")
             
             # Aggregate by player
             df_aggregated = process_historical_data(all_team_data)
-            agg_file = 'notebooks/scrapper/data/historical_2014_2024/ALL_HISTORICAL_AGGREGATED.csv'
+            agg_file = os.path.join(out_dir, 'ALL_HISTORICAL_AGGREGATED.csv')
             df_aggregated.to_csv(agg_file, index=False)
             print(f"✓✓✓ Aggregated data saved: {agg_file} ({len(df_aggregated)} unique players) ✓✓✓")
         except Exception as e:

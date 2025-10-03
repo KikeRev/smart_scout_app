@@ -83,6 +83,76 @@ Base = declarative_base()
 #  Player model (aligned with CSV_COLUMN_MAP values)
 # ---------------------------------------------------------------------------
 
+class PlayerHistory(Base):
+    """
+    PlayerHistory model for storing historical player statistics by season.
+    Each row represents a player's statistics for a specific season.
+    Used for evolution charts in player dashboards.
+    """
+    __tablename__ = "player_history"
+    
+    # Primary key
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
+    player = sa.Column(sa.String(255), nullable=False, index=True)
+    season = sa.Column(sa.String(10), nullable=False, index=True)
+    
+    # Team and league info
+    team = sa.Column(sa.String(128))
+    league = sa.Column(sa.String(64))
+    team_logo = sa.Column(sa.Text)
+    
+    # Basic info
+    nationality = sa.Column(sa.String(64))
+    position = sa.Column(sa.String(32))
+    age = sa.Column(sa.Integer)
+    
+    # Playing time
+    games = sa.Column(sa.Integer)
+    games_starts = sa.Column(sa.Integer)
+    minutes = sa.Column(sa.Integer)
+    minutes_90s = sa.Column(sa.Float)
+    
+    # Performance metrics
+    goals = sa.Column(sa.Integer)
+    assists = sa.Column(sa.Integer)
+    expected_goals = sa.Column(sa.Float)
+    expected_assists = sa.Column(sa.Float)
+    
+    # Advanced metrics
+    progressive_carries = sa.Column(sa.Integer)
+    progressive_passes = sa.Column(sa.Integer)
+    progressive_passes_received = sa.Column(sa.Integer)
+    
+    # Per 90 stats
+    goals_per90 = sa.Column(sa.Float)
+    assists_per90 = sa.Column(sa.Float)
+    goals_assists_per90 = sa.Column(sa.Float)
+    expected_goals_per90 = sa.Column(sa.Float)
+    expected_assists_per90 = sa.Column(sa.Float)
+    
+    # Passing
+    passes_completed = sa.Column(sa.Integer)
+    passes = sa.Column(sa.Integer)
+    passes_pct = sa.Column(sa.Float)
+    
+    # Defensive
+    tackles = sa.Column(sa.Integer)
+    tackles_won = sa.Column(sa.Integer)
+    interceptions = sa.Column(sa.Integer)
+    blocks = sa.Column(sa.Integer)
+    clearances = sa.Column(sa.Integer)
+    
+    # Timestamps
+    created_at = sa.Column(sa.DateTime, server_default=sa.func.now())
+    updated_at = sa.Column(sa.DateTime, server_default=sa.func.now(), onupdate=sa.func.now())
+    
+    # Unique constraint on player + season
+    __table_args__ = (
+        sa.UniqueConstraint('player', 'season', name='uq_player_season'),
+        sa.Index('idx_player_season', 'player', 'season'),
+    )
+
+
 class Player(Base):
     __tablename__ = "players"
 
@@ -707,10 +777,88 @@ def link_player_news(engine: sa.Engine, only_new: bool = True) -> None:
 
 # ----------------------------- CLI --------------------------------
 
+def load_player_history(engine: sa.Engine, csv_path: Path, if_exists: str = "append"):
+    """
+    Load historical player data into player_history table.
+    Each row represents a player's stats for a specific season.
+    """
+    print(f"📊 Loading player history from {csv_path}...")
+    
+    df = pd.read_csv(csv_path, low_memory=False)
+    
+    # Fix column names
+    if 'nationalit' in df.columns:
+        df.rename(columns={'nationalit': 'nationality'}, inplace=True)
+    
+    # Column mapping for player_history table
+    column_mapping = {
+        'player': 'player',
+        'Season': 'season',
+        'Team': 'team',
+        'League': 'league',
+        'Team_Logo': 'team_logo',
+        'nationality': 'nationality',
+        'position': 'position',
+        'age': 'age',
+        'games': 'games',
+        'games_starts': 'games_starts',
+        'minutes': 'minutes',
+        'minutes_90s': 'minutes_90s',
+        'goals': 'goals',
+        'assists': 'assists',
+        'xg': 'expected_goals',
+        'xg_assist': 'expected_assists',
+        'progressive_carries': 'progressive_carries',
+        'progressive_passes': 'progressive_passes',
+        'progressive_passes_received': 'progressive_passes_received',
+        'goals_per90': 'goals_per90',
+        'assists_per90': 'assists_per90',
+        'goals_assists_per90': 'goals_assists_per90',
+        'xg_per90': 'expected_goals_per90',
+        'xg_assist_per90': 'expected_assists_per90',
+        'passes_completed': 'passes_completed',
+        'passes': 'passes',
+        'passes_pct': 'passes_pct',
+        'tackles': 'tackles',
+        'tackles_won': 'tackles_won',
+        'interceptions': 'interceptions',
+        'blocks': 'blocks',
+        'clearances': 'clearances',
+    }
+    
+    # Keep only columns that exist
+    available_cols = {k: v for k, v in column_mapping.items() if k in df.columns}
+    df_prepared = df[list(available_cols.keys())].copy()
+    df_prepared.rename(columns=available_cols, inplace=True)
+    
+    # Convert numeric columns
+    numeric_cols = ['age', 'games', 'games_starts', 'minutes', 'minutes_90s', 'goals', 'assists',
+                    'expected_goals', 'expected_assists', 'progressive_carries', 'progressive_passes',
+                    'progressive_passes_received', 'goals_per90', 'assists_per90', 'goals_assists_per90',
+                    'expected_goals_per90', 'expected_assists_per90', 'passes_completed', 'passes',
+                    'passes_pct', 'tackles', 'tackles_won', 'interceptions', 'blocks', 'clearances']
+    
+    for col in numeric_cols:
+        if col in df_prepared.columns:
+            df_prepared[col] = pd.to_numeric(df_prepared[col], errors='coerce')
+    
+    # Remove rows with missing player or season
+    df_prepared = df_prepared.dropna(subset=['player', 'season'])
+    
+    print(f"Inserting {len(df_prepared)} historical records...")
+    
+    # Use if_exists parameter
+    df_prepared.to_sql('player_history', engine, if_exists=if_exists, index=False, method='multi', chunksize=1000)
+    
+    print(f"✅ Player history loaded: {len(df_prepared)} records")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Seed players & ingest news")
     parser.add_argument("--players-csv", type=Path, help="Path to players CSV", required=False)
+    parser.add_argument("--history-csv", type=Path, help="Path to historical players CSV (non-aggregated)", required=False)
     parser.add_argument("--replace", action="store_true", help="TRUNCATE players before importing CSV")
+    parser.add_argument("--replace-history", action="store_true", help="TRUNCATE player_history before importing CSV")
     parser.add_argument("--ingest-news", action="store_true", help="Fetch & embed latest news")
     parser.add_argument("--echo-sql", action="store_true")
     parser.add_argument("--skip-players", action="store_true")
@@ -729,6 +877,9 @@ def main():
         if not args.skip_players and args.players_csv:
             load_players(engine, args.players_csv, if_exists="replace" if args.replace else "append")
             compute_and_store_player_vectors(engine, refresh=args.refresh_embs)
+
+    if args.history_csv:
+        load_player_history(engine, args.history_csv, if_exists="replace" if args.replace_history else "append")
 
     if args.ingest_news:
         ingest_news(engine, verbose=args.verbose)
