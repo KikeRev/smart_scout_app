@@ -1,4 +1,4 @@
-<h1 align="center">SMART SCOUT APP v1.2</h1>
+<h1 align="center">SMART SCOUT APP v1.3</h1>
 
 <p align="center">
   <img src="./static/img/app_logo_6.png" alt="Logo">
@@ -6,9 +6,20 @@
 
 # 🚀 Welcome
 
-Welcome to **Smart Scout App v1.2** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
+Welcome to **Smart Scout App v1.3** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
 
 ## ✨ Features Overview
+
+### 📊 Historical Data Integration (⭐ NEW v1.3)
+- **Extended Historical Coverage**: Player data from 2014-2025 (11 seasons)
+- **Comprehensive Database**: 22,797 unique players with complete historical profiles
+- **Dual Data Structure**: 
+  - **Aggregated Data**: 22,797 players for similarity search (table `players`)
+  - **Seasonal Data**: 51,759 records for evolution tracking (table `player_history`)
+- **Active vs Retired Filtering**: 16,827 active players (2024-25) + 5,970 historical players
+- **Weighted Performance**: Recent seasons weighted more heavily in analysis
+- **Career Trajectory**: Track player development over multiple seasons
+- **Evolution Charts**: Ready for player dashboard historical visualizations (future feature)
 
 ### 🤖 AI-Powered Scouting
 - **Intelligent Player Recommendations**: AI agent analyzes player data and provides recommendations
@@ -42,6 +53,42 @@ Welcome to **Smart Scout App v1.2** — an application created to help football 
 - **Player News**: Latest news about specific players
 - **News Summarization**: AI-powered news summaries
 - **Semantic Search**: Find relevant news using natural language
+
+# 📁 Data Management
+
+## Historical Data Structure
+- **Source**: fbref.com (Top 5 European leagues + additional leagues in 2024-25)
+- **Period**: 2014-15 to 2024-25 seasons (11 seasons)
+- **Players**: 22,797 total (16,827 active, 5,970 retired/inactive)
+- **Records**: 51,759 seasonal records for evolution tracking
+- **Update Frequency**: End of each season
+
+## Data Files
+- **Aggregated Dataset**: `data/all_players_with_historical_aggregated.csv` (22,797 players)
+- **Historical Dataset**: `data/historical_players_raw.csv` (51,759 seasonal records)
+- **Backup Strategy**: Automated backups with timestamps
+- **Version Control**: Git + optional DVC for data versioning
+
+## Data Update Process
+```bash
+# 1. Update data (when new season available)
+python scripts/update_data.py --season 2025-26
+
+# 2. Ingest aggregated data to players table
+python -m apps.ingestion.seed_and_ingest \
+  --players-csv data/all_players_with_historical_aggregated.csv \
+  --replace --verbose --refresh-embs
+
+# 3. Ingest historical data to player_history table
+python -m apps.ingestion.seed_and_ingest \
+  --history-csv data/historical_players_raw.csv \
+  --replace-history --verbose
+```
+
+## Future Data Versioning
+- **DVC Implementation**: See `docs/DVC_IMPLEMENTATION.md` for advanced data versioning
+- **Benefits**: Reproducible experiments, team collaboration, data lineage tracking
+- **When to Use**: Multi-developer teams, frequent data updates, research projects
 
 # 🧱 Project Structure
 
@@ -957,6 +1004,45 @@ docker-compose exec api python -m pytest tests/ --cov=. --cov-report=html
 
 
 # 📋 Release Notes
+
+## 🚀 Version 1.3 - Extended Historical Data & Enhanced Database (October 2025)
+
+### ✨ New Features
+- **Extended Historical Coverage**: Complete player data from 2014-2025 (11 seasons)
+- **Dual Database Structure**: 
+  - `players` table: 22,797 aggregated players for similarity search
+  - `player_history` table: 51,759 seasonal records for evolution tracking
+- **Enhanced Data Pipeline**: Robust scraping and aggregation system for historical data
+- **Improved seed_and_ingest.py**: New CLI flags for historical data management
+- **Future-Ready Evolution Charts**: Database structure prepared for player dashboard historical visualizations
+
+### 🔧 Improvements
+- **Data Quality**: 10 years of historical data from Top 5 European leagues
+- **Player Coverage**: 22,797 unique players (16,827 active + 5,970 historical)
+- **Seasonal Records**: 51,759 individual season records for detailed analysis
+- **Robust Scraping**: Enhanced error handling and data persistence
+- **Column Alignment**: Automatic handling of different column sets across seasons
+
+### 🛠️ Technical Enhancements
+- **New Database Model**: `PlayerHistory` for seasonal data storage
+- **Enhanced CLI**: `--history-csv` and `--replace-history` flags
+- **Data Aggregation**: Weighted averages by minutes played for player profiles
+- **File Management**: Organized data structure with separate aggregated and raw datasets
+
+### 📊 Data Statistics
+- **Total Players**: 22,797 (vs 19,184 in v1.2)
+- **Active Players**: 16,827 (2024-25 season)
+- **Historical Players**: 5,970 (2014-2024)
+- **Seasonal Records**: 51,759 individual season entries
+- **Coverage**: 11 seasons (2014-15 to 2024-25)
+
+### 🔮 Future Enhancements (Planned)
+- **Player Evolution Charts**: Historical performance visualization in player dashboards
+- **Career Trajectory Analysis**: Track player development over multiple seasons
+- **Seasonal Comparison Tools**: Compare player performance across different seasons
+- **Retirement Detection**: Enhanced algorithms to identify retired vs inactive players
+
+---
 
 ## 🚀 Version 1.2 - Viability Score & Enhanced Recommendations (October 2025)
 

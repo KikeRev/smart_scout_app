@@ -56,7 +56,9 @@ services:
           echo "▶ Full bootstrap (players + news)"
           python -m apps.ingestion.seed_and_ingest \
             --players-csv data/all_players_cleaned.csv \
-            --replace --refresh-embs --ingest-news --verbose
+            --history-csv data/historical_players_raw.csv \
+            --replace --replace-history --refresh-embs \
+            --ingest-news --verbose
         fi
       '
     volumes:
