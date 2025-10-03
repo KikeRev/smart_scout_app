@@ -314,10 +314,13 @@ def main():
     print("=== HISTORICAL PLAYER DATA SCRAPING ===")
     print("Loading historical URLs...")
     
-    # Load URLs from JSON
+    # Load URLs from JSON (use test file for validation)
+    import sys
+    json_file = sys.argv[1] if len(sys.argv) > 1 else 'historic_leagues_links.json'
+    
     try:
-        historical_links = load_historical_links('historic_leagues_links.json')
-        print(f"Loaded {len(historical_links)} league/season configurations")
+        historical_links = load_historical_links(json_file)
+        print(f"Loaded {len(historical_links)} league/season configurations from {json_file}")
     except FileNotFoundError:
         print("Error: historic_leagues_links.json file not found")
         return
@@ -363,18 +366,28 @@ def main():
 
             # Per-league/season summary and safeguard save
             if league_team_dfs:
-                df_league = pd.concat(league_team_dfs, ignore_index=True, sort=False)
+                # Use concat with join='outer' to handle different column sets
+                df_league = pd.concat(league_team_dfs, ignore_index=True, sort=False, join='outer')
                 
-                # Save in new historical_raw directory
-                out_dir = 'notebooks/scrapper/data'
-                out_path = f"{out_dir}/{league_name}_{season.replace('-', '_')}.csv"
+                # Save in new historical directory
+                out_dir = 'notebooks/scrapper/data/historical_2014_2024'
+                out_path = f"{out_dir}/{league_name.replace(' ', '_')}_{season.replace('-', '_')}.csv"
                 try:
                     import os
                     os.makedirs(out_dir, exist_ok=True)
                     df_league.to_csv(out_path, index=False)
-                    print(f"Saved league-season CSV → {out_path} ({len(df_league)} rows)")
+                    print(f"✓✓✓ SAVED: {out_path} ({len(df_league)} rows) ✓✓✓")
+                    
+                    # Verify file was saved
+                    if os.path.exists(out_path):
+                        file_size = os.path.getsize(out_path)
+                        print(f"    File verified: {file_size} bytes")
+                    else:
+                        print(f"    ✗✗✗ ERROR: File not found after save!")
                 except Exception as e:
-                    print(f"Warning: could not save {out_path}: {e}")
+                    print(f"✗✗✗ ERROR saving {out_path}: {e}")
+                    import traceback
+                    traceback.print_exc()
 
                 # Team counts for this league-season
                 try:
@@ -400,15 +413,35 @@ def main():
     print(f"Total team datasets: {len(all_team_data)}")
     
     if all_team_data:
-        # Save raw data by season
-        df_raw = pd.concat(all_team_data, ignore_index=True, sort=False)
-        df_raw.to_csv('notebooks/scrapper/data/historical_players_raw.csv', index=False)
-        print(f"Raw data saved: {len(df_raw)} records")
-        
-        # Aggregate by player
-        df_aggregated = process_historical_data(all_team_data)
-        df_aggregated.to_csv('notebooks/scrapper/data/historical_players_aggregated.csv', index=False)
-        print(f"Aggregated data saved: {len(df_aggregated)} unique players")
+        # Save raw data by season - with try/except to ensure individual files are safe
+        try:
+            print("Concatenating all team data...")
+            # Reset index for each dataframe to avoid duplicate index issues
+            for i, df in enumerate(all_team_data):
+                all_team_data[i] = df.reset_index(drop=True)
+            
+            # Use join='outer' to handle different column sets across seasons
+            df_raw = pd.concat(all_team_data, ignore_index=True, sort=False, join='outer')
+            
+            # Remove duplicate columns if any
+            df_raw = df_raw.loc[:, ~df_raw.columns.duplicated()]
+            
+            print(f"Final dataframe shape: {df_raw.shape}")
+            
+            output_file = 'notebooks/scrapper/data/historical_2014_2024/ALL_HISTORICAL_RAW.csv'
+            df_raw.to_csv(output_file, index=False)
+            print(f"✓✓✓ Raw data saved: {output_file} ({len(df_raw)} records) ✓✓✓")
+            
+            # Aggregate by player
+            df_aggregated = process_historical_data(all_team_data)
+            agg_file = 'notebooks/scrapper/data/historical_2014_2024/ALL_HISTORICAL_AGGREGATED.csv'
+            df_aggregated.to_csv(agg_file, index=False)
+            print(f"✓✓✓ Aggregated data saved: {agg_file} ({len(df_aggregated)} unique players) ✓✓✓")
+        except Exception as e:
+            print(f"✗✗✗ ERROR during final aggregation: {e}")
+            print("Individual league/season files are still saved!")
+            import traceback
+            traceback.print_exc()
         
         # Statistics
         print(f"\n=== STATISTICS ===")
