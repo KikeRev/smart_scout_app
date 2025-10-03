@@ -105,6 +105,7 @@ def get_team_links(league_name: str, league_url: str, table_id: str) -> List[Tup
     """
     Returns list of (team_name, team_url, league_name, season) from league page.
     """
+    print(f"    Fetching league page: {league_url}")
     resp = fetch_with_random_header(league_url, timeout=30)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -130,6 +131,7 @@ def get_team_links(league_name: str, league_url: str, table_id: str) -> List[Tup
 
 def scrape_team_stats(team_name: str, team_url: str, league_name: str, season: str) -> pd.DataFrame:
     """Scrapes player statistics for a team in a specific season."""
+    print(f"      Fetching team page: {team_url}")
     resp = fetch_with_random_header(team_url, timeout=30)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -157,8 +159,10 @@ def scrape_team_stats(team_name: str, team_url: str, league_name: str, season: s
                 found = True
                 break
         if not found:
-            print(f"Table with prefix '{base}' not found for {team_name}")
+            print(f"      ⚠ Table with prefix '{base}' not found for {team_name}")
             continue
+        else:
+            print(f"      ✓ Found table: {table_id}")
 
         # Extract columns
         header_rows = table.thead.find_all("tr")
@@ -187,8 +191,10 @@ def scrape_team_stats(team_name: str, team_url: str, league_name: str, season: s
         dfs.append(df)
 
     if not dfs:
+        print(f"      ✗ No data tables found for {team_name}")
         return pd.DataFrame()
 
+    print(f"      ✓ Found {len(dfs)} data tables for {team_name}")
     df_all = reduce(
         lambda l, r: pd.merge(
             l, r,
@@ -207,6 +213,7 @@ def scrape_team_stats(team_name: str, team_url: str, league_name: str, season: s
     # Remove automatic suffixes
     df_all.columns = [c.rstrip('_x').rstrip('_y') for c in df_all.columns]
 
+    print(f"      ✓ Processed {len(df_all)} players from {team_name}")
     return df_all
 
 # -----------------------------
@@ -327,7 +334,9 @@ def main():
         url = config['url']
         table_id = config['table_id']
         
+        progress = (i / len(historical_links)) * 100
         print(f"\n=== [{i+1}/{len(historical_links)}] {league_name} - {season} ===")
+        print(f"Progress: {progress:.1f}% | Estimated time remaining: {((len(historical_links) - i) * 2):.0f} minutes")
         
         try:
             # Get team links
@@ -372,8 +381,9 @@ def main():
                     team_counts = (
                         df_league.groupby('Team').size().sort_values(ascending=False)
                     )
-                    print("Team counts (players) for this league-season:")
-                    for team, cnt in team_counts.items():
+                    print(f"✓ {league_name} {season} completed: {len(df_league)} total players")
+                    print("Top 5 teams by player count:")
+                    for team, cnt in team_counts.head().items():
                         print(f"  - {team}: {cnt}")
                 except Exception as e:
                     print(f"Warning: could not compute team counts: {e}")
