@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="container-85 mt-4">
+{% block fullwidth_content %}
+<div class="container-fluid mt-4">
   {% if error %}
     <div class="alert alert-danger">{{ error }}</div>
   {% else %}
@@ -12,49 +12,291 @@
       </div>
     </div>
 
+    <!-- Layout: 20% sidebar (metrics) + 80% main content -->
     <div class="row g-4">
-      <div class="col-lg-6">
-        {% if radar_url %}
-          <img src="{{ radar_url }}" alt="Radar chart for {{ player.full_name }}" class="img-fluid rounded shadow-sm">
-        {% else %}
-          <div class="alert alert-warning">Radar not available.</div>
-        {% endif %}
-      </div>
-      <div class="col-lg-6">
+      <!-- Sidebar 20%: metric selector -->
+      <aside class="col-12 col-lg-2">
         <div class="card shadow-sm">
-          <div class="card-header">Statistics</div>
-          <div class="card-body p-0">
-            <table class="table table-sm mb-0">
-              <tbody>
-                {% for k, v in kpis.items %}
-                <tr>
-                  <th class="w-50">{{ k|title }}</th>
-                  <td>{{ v }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Historical metrics</span>
+            <small class="text-muted" id="metric-count">0 / 3</small>
+          </div>
+          <div class="card-body">
+            <small class="text-muted d-block mb-2">Usage</small>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="minutes" id="metric-minutes">
+              <label class="form-check-label" for="metric-minutes" data-bs-toggle="tooltip" title="Total minutes played in the season">Minutes</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="minutes_90s" id="metric-min90s">
+              <label class="form-check-label" for="metric-min90s" data-bs-toggle="tooltip" title="Number of 90-minute equivalents played">Minutes (90s)</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="games" id="metric-games">
+              <label class="form-check-label" for="metric-games" data-bs-toggle="tooltip" title="Games played in the season">Games</label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="games_starts" id="metric-starts">
+              <label class="form-check-label" for="metric-starts" data-bs-toggle="tooltip" title="Games started in the season">Starts</label>
+            </div>
+
+            <small class="text-muted d-block mt-2 mb-2">Attacking</small>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="goals" id="metric-goals">
+              <label class="form-check-label" for="metric-goals" data-bs-toggle="tooltip" title="Goals scored in the season">Goals</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="assists" id="metric-assists">
+              <label class="form-check-label" for="metric-assists" data-bs-toggle="tooltip" title="Assists in the season">Assists</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="expected_goals" id="metric-xg">
+              <label class="form-check-label" for="metric-xg" data-bs-toggle="tooltip" title="Expected goals (xG)">Expected goals (xG)</label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="expected_assists" id="metric-xa">
+              <label class="form-check-label" for="metric-xa" data-bs-toggle="tooltip" title="Expected assists (xA)">Expected assists (xA)</label>
+            </div>
+
+            <small class="text-muted d-block mt-2 mb-2">Per 90</small>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="goals_per90" id="metric-goals90">
+              <label class="form-check-label" for="metric-goals90" data-bs-toggle="tooltip" title="Goals scored per 90 minutes">Goals/90</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="assists_per90" id="metric-assists90">
+              <label class="form-check-label" for="metric-assists90" data-bs-toggle="tooltip" title="Assists per 90 minutes">Assists/90</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="goals_assists_per90" id="metric-ga90">
+              <label class="form-check-label" for="metric-ga90" data-bs-toggle="tooltip" title="Goals + Assists per 90 minutes">G+A/90</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="expected_goals_per90" id="metric-xg90">
+              <label class="form-check-label" for="metric-xg90" data-bs-toggle="tooltip" title="Expected goals per 90 minutes">xG/90</label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="expected_assists_per90" id="metric-xa90">
+              <label class="form-check-label" for="metric-xa90" data-bs-toggle="tooltip" title="Expected assists per 90 minutes">xA/90</label>
+            </div>
+
+            <small class="text-muted d-block mt-2 mb-2">Progression</small>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="progressive_carries" id="metric-progcarries">
+              <label class="form-check-label" for="metric-progcarries" data-bs-toggle="tooltip" title="Ball carries that move the ball significantly forward">Progressive carries</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="progressive_passes" id="metric-progpasses">
+              <label class="form-check-label" for="metric-progpasses" data-bs-toggle="tooltip" title="Passes that move the ball significantly forward">Progressive passes</label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="progressive_passes_received" id="metric-progpassrecv">
+              <label class="form-check-label" for="metric-progpassrecv" data-bs-toggle="tooltip" title="Progressive passes received">Prog. passes received</label>
+            </div>
+
+            <small class="text-muted d-block mt-2 mb-2">Passing</small>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="passes_completed" id="metric-passcomp">
+              <label class="form-check-label" for="metric-passcomp" data-bs-toggle="tooltip" title="Completed passes">Passes completed</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="passes" id="metric-passes">
+              <label class="form-check-label" for="metric-passes" data-bs-toggle="tooltip" title="Passes attempted">Passes attempted</label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="passes_pct" id="metric-passpct">
+              <label class="form-check-label" for="metric-passpct" data-bs-toggle="tooltip" title="Completed passes percentage">Passes completed %</label>
+            </div>
+
+            <small class="text-muted d-block mt-2 mb-2">Defending</small>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="tackles" id="metric-tackles">
+              <label class="form-check-label" for="metric-tackles" data-bs-toggle="tooltip" title="Tackles made">Tackles</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="tackles_won" id="metric-tackwon">
+              <label class="form-check-label" for="metric-tackwon" data-bs-toggle="tooltip" title="Tackles won">Tackles won</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="interceptions" id="metric-interceptions">
+              <label class="form-check-label" for="metric-interceptions" data-bs-toggle="tooltip" title="Interceptions">Interceptions</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="blocks" id="metric-blocks">
+              <label class="form-check-label" for="metric-blocks" data-bs-toggle="tooltip" title="Blocks">Blocks</label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="clearances" id="metric-clearances">
+              <label class="form-check-label" for="metric-clearances" data-bs-toggle="tooltip" title="Clearances">Clearances</label>
+            </div>
+
+            <small class="text-muted d-block mt-2 mb-2">Goalkeeping</small>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="gk_goals_against" id="metric-gkga">
+              <label class="form-check-label" for="metric-gkga" data-bs-toggle="tooltip" title="Goals conceded">GK: Goals against</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="gk_pens_allowed" id="metric-gkpen">
+              <label class="form-check-label" for="metric-gkpen" data-bs-toggle="tooltip" title="Penalty goals conceded">GK: Pens allowed</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="gk_psxg" id="metric-gkpsxg">
+              <label class="form-check-label" for="metric-gkpsxg" data-bs-toggle="tooltip" title="Post-shot expected goals faced">GK: PSxG</label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="gk_psnpxg_per_shot_on_target_against" id="metric-gkpsnpxg">
+              <label class="form-check-label" for="metric-gkpsnpxg" data-bs-toggle="tooltip" title="Non-penalty xG per shot on target against">GK: PSnpxG/shot on target</label>
+            </div>
+
+            <hr>
+            <small class="text-muted d-block">Context (informational)</small>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="metric-team" disabled>
+              <label class="form-check-label" for="metric-team" data-bs-toggle="tooltip" title="Club for each season">Team (by season)</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="metric-league" disabled>
+              <label class="form-check-label" for="metric-league" data-bs-toggle="tooltip" title="League for each season">League (by season)</label>
+            </div>
+
+            <hr>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="toggle-club-context" checked>
+              <label class="form-check-label" for="toggle-club-context">Show club context</label>
+            </div>
           </div>
         </div>
-        
-        <!-- Team Logo -->
-        {% if player.team_logo %}
-        <div class="card shadow-sm mt-3">
-          <div class="card-header text-center">Team</div>
-          <div class="card-body text-center">
-            <img src="{{ player.team_logo }}" 
-                 alt="{{ player.club }} logo" 
-                 class="img-fluid" 
-                 style="max-height: 120px; max-width: 120px;"
-                 onerror="this.style.display='none'">
-            <h6 class="mt-2 mb-0">{{ player.club }}</h6>
+      </aside>
+
+      <!-- Main content 80%: top team + stats; below split: radar | charts -->
+      <section class="col-12 col-lg-10">
+        <!-- Top row: Team (logo) then Stats table -->
+        <div class="row g-3">
+          <div class="col-12">
+            {% if player.team_logo %}
+            <div class="card shadow-sm">
+              <div class="card-header text-center">Team Season 24/25</div>
+              <div class="card-body text-center">
+                <img src="{{ player.team_logo }}" alt="{{ player.club }} logo"
+                     class="img-fluid" style="max-height: 120px; max-width: 120px;"
+                     onerror="this.style.display='none'">
+                <h6 class="mt-2 mb-0">{{ player.club }}</h6>
+              </div>
+            </div>
+            {% endif %}
           </div>
         </div>
-        {% endif %}
-      </div>
+
+        <!-- Split row: left Stats+Radar (50%), right stacked charts (50%) -->
+        <div class="row g-3 mt-3">
+          <div class="col-12 col-xl-6">
+            <!-- Stats table on top -->
+            <div class="card shadow-sm">
+              <div class="card-header">Statistics</div>
+              <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                  <tbody>
+                    {% for k, v in kpis.items %}
+                    <tr>
+                      <th class="w-50">{{ k|title }}</th>
+                      <td>{{ v }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <!-- Radar below -->
+            {% if radar_url %}
+              <div class="card shadow-sm mt-3">
+                <div class="card-header">Performance Stats</div>
+                <!-- Height responsive but bounded: min 260px, ideal 38vh, max 420px -->
+                <div class="card-body d-flex align-items-center justify-content-center" style="height: clamp(650px, 50vh, 650px);">
+                  <img src="{{ radar_url }}" alt="Radar chart for {{ player.full_name }}" class="img-fluid rounded" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                </div>
+              </div>
+            {% else %}
+              <div class="alert alert-warning mt-3">Performance Stats not available.</div>
+            {% endif %}
+          </div>
+          <div class="col-12 col-xl-6">
+            <div class="card shadow-sm mb-3">
+              <div class="card-header" id="chart-1-header">Historical chart 1</div>
+              <div class="card-body"><img id="history-chart-1" style="height: 240px; width: 100%; object-fit: contain;" /></div>
+            </div>
+            <div class="card shadow-sm mb-3 d-none" id="chart-2-wrapper">
+              <div class="card-header" id="chart-2-header">Historical chart 2</div>
+              <div class="card-body"><img id="history-chart-2" style="height: 240px; width: 100%; object-fit: contain;" /></div>
+            </div>
+            <div class="card shadow-sm d-none mb-4" id="chart-3-wrapper">
+              <div class="card-header" id="chart-3-header">Historical chart 3</div>
+              <div class="card-body"><img id="history-chart-3" style="height: 240px; width: 100%; object-fit: contain;" /></div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   {% endif %}
 </div>
 {% endblock %}
+{% block fullscreen_content %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Bootstrap tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el); });
 
+    // Max 3 metrics selected logic + dynamic visibility and server-side image charts
+    const checkboxes = document.querySelectorAll('.metric-checkbox');
+    const counterEl = document.getElementById('metric-count');
+    const wrappers = [
+      {wrap: null, header: document.getElementById('chart-1-header'), div: document.getElementById('history-chart-1')},
+      {wrap: document.getElementById('chart-2-wrapper'), header: document.getElementById('chart-2-header'), div: document.getElementById('history-chart-2')},
+      {wrap: document.getElementById('chart-3-wrapper'), header: document.getElementById('chart-3-header'), div: document.getElementById('history-chart-3')}
+    ];
+    
+    // Player ID from Django template
+    var playerId = {{ player.id|default:0 }};
 
+    function updateCounter() {
+      const selected = document.querySelectorAll('.metric-checkbox:checked').length;
+      counterEl.textContent = selected + ' / 3';
+    }
+    function updateChartsVisibility() {
+      const selectedMetrics = Array.from(document.querySelectorAll('.metric-checkbox:checked')).slice(0,3);
+      // Set headers
+      for (let i=0; i<3; i++) {
+        const label = selectedMetrics[i] ? (selectedMetrics[i].nextElementSibling ? selectedMetrics[i].nextElementSibling.innerText : 'Metric ' + (i+1)) : 'Historical chart ' + (i+1);
+        if (wrappers[i].header) wrappers[i].header.textContent = label;
+      }
+      // Toggle visibility of 2nd and 3rd charts
+      if (wrappers[1].wrap) wrappers[1].wrap.classList.toggle('d-none', selectedMetrics.length < 2);
+      if (wrappers[2].wrap) wrappers[2].wrap.classList.toggle('d-none', selectedMetrics.length < 3);
+    }
+    function renderCharts() {
+      const selectedMetrics = Array.from(document.querySelectorAll('.metric-checkbox:checked')).slice(0,3);
+      const showContext = document.getElementById('toggle-club-context').checked ? 1 : 0;
+      const base = '/dashboard/api/history_chart/?id=' + playerId + '&context=' + showContext;
+      if (selectedMetrics[0]) document.getElementById('history-chart-1').src = base + '&metric=' + encodeURIComponent(selectedMetrics[0].value);
+      if (selectedMetrics[1]) document.getElementById('history-chart-2').src = base + '&metric=' + encodeURIComponent(selectedMetrics[1].value);
+      if (selectedMetrics[2]) document.getElementById('history-chart-3').src = base + '&metric=' + encodeURIComponent(selectedMetrics[2].value);
+    }
+    function enforceLimit(e) {
+      const selected = document.querySelectorAll('.metric-checkbox:checked').length;
+      if (selected > 3) {
+        e.target.checked = false;
+      }
+      updateCounter();
+      updateChartsVisibility();
+      renderCharts();
+    }
+    const clubToggle = document.getElementById('toggle-club-context');
+    if (clubToggle) clubToggle.addEventListener('change', renderCharts);
+    checkboxes.forEach(cb => cb.addEventListener('change', enforceLimit));
+    updateCounter();
+    updateChartsVisibility();
+    renderCharts();
+  });
+</script>
+{% endblock %}

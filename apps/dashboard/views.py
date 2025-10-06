@@ -1,5 +1,6 @@
 #from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from django.http import FileResponse
 import logging
 from django.contrib.auth.decorators import login_required
 from django.contrib.staticfiles import finders
@@ -23,6 +24,18 @@ import requests
 from django.urls import reverse
 import json, urllib.parse
 from typing import Annotated
+from django.db import connection
+from django.conf import settings
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import numpy as np
+from pathlib import Path
+import hashlib
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+from io import BytesIO
+import urllib.request
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -451,3 +464,248 @@ def saved_searches_api(request):
             return JsonResponse({'error': str(e)}, status=400)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@login_required
+def player_history_api(request, player_name: str):
+    """Return per-season historical stats for a player, as stored in player_history.
+    Response: [{season, team, league, team_logo, minutes, ...metrics...}] sorted by season asc.
+    """
+    try:
+        # Minimal set of columns used in charts; extendable
+        desired_columns = [
+            'player','season','team','league','team_logo','minutes','minutes_90s','games','games_starts',
+            'goals','assists','expected_goals','expected_assists',
+            'progressive_carries','progressive_passes','progressive_passes_received',
+            'goals_per90','assists_per90','goals_assists_per90','expected_goals_per90','expected_assists_per90',
+            'passes_completed','passes','passes_pct',
+            'tackles','tackles_won','interceptions','blocks','clearances',
+            'gk_goals_against','gk_pens_allowed','gk_psxg','gk_psnpxg_per_shot_on_target_against'
+        ]
+        with connection.cursor() as cur:
+            # Discover existing columns to avoid selecting non-existent GK fields on some datasets
+            cur.execute(
+                """
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'player_history'
+                """
+            )
+            existing_cols = {row[0] for row in cur.fetchall()}
+            # Keep order from desired_columns, filter by existence
+            columns = [c for c in desired_columns if c in existing_cols]
+            # Ensure mandatory keys are present
+            for mandatory in ['player','season','team','league','team_logo']:
+                if mandatory not in columns and mandatory in existing_cols:
+                    columns.insert(0, mandatory)
+            col_select = ', '.join(columns)
+
+            # Try exact lower match first; if empty, fallback to unaccent/ILIKE if extension exists
+            cur.execute(
+                f"""
+                SELECT {col_select}
+                FROM player_history
+                WHERE lower(player) = lower(%s)
+                ORDER BY season ASC
+                """,
+                [player_name],
+            )
+            rows = cur.fetchall()
+            # Build mapping using cursor description
+            cols = [c[0] for c in cur.description]
+        history = [dict(zip(cols, row)) for row in rows]
+        if not history:
+            try:
+                with connection.cursor() as cur:
+                    # ensure unaccent is available (no-op if already)
+                    cur.execute("CREATE EXTENSION IF NOT EXISTS unaccent;")
+                    cur.execute(
+                        f"""
+                        SELECT {col_select}
+                        FROM player_history
+                        WHERE unaccent(lower(player)) = unaccent(lower(%s))
+                        ORDER BY season ASC
+                        """,
+                        [player_name],
+                    )
+                    rows = cur.fetchall()
+                    cols = [c[0] for c in cur.description]
+                    history = [dict(zip(cols, row)) for row in rows]
+            except Exception:
+                history = []
+        if not history:
+            with connection.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {col_select}
+                    FROM player_history
+                    WHERE lower(player) LIKE '%%' || lower(%s) || '%%'
+                    ORDER BY season ASC
+                    """,
+                    [player_name],
+                )
+                rows = cur.fetchall()
+                cols = [c[0] for c in cur.description]
+                history = [dict(zip(cols, row)) for row in rows]
+        return JsonResponse({"history": history})
+    except Exception as e:
+        logger.exception("player_history_api error: %s", e)
+        return JsonResponse({"error": str(e)}, status=400)
+
+
+@login_required
+def player_history_by_id_api(request, player_id: int):
+    """Same as player_history_api but by joining players.id to history.player name."""
+    try:
+        with connection.cursor() as cur:
+            cur.execute("SELECT full_name FROM players WHERE id = %s", [player_id])
+            row = cur.fetchone()
+            if not row:
+                return JsonResponse({"history": []})
+            name = row[0]
+        # Reuse name-based endpoint logic
+        return player_history_api(request, name)
+    except Exception as e:
+        logger.exception("player_history_by_id_api error: %s", e)
+        return JsonResponse({"error": str(e)}, status=400)
+
+
+def _fetch_history_rows(player_name: str) -> list[dict]:
+    """Return per-season rows from player_history for a given player name."""
+    with connection.cursor() as cur:
+        # Discover existing columns
+        cur.execute(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'player_history'
+            """
+        )
+        existing_cols = {row[0] for row in cur.fetchall()}
+        desired = [
+            'player','season','team','league','team_logo','minutes','minutes_90s','games','games_starts',
+            'goals','assists','expected_goals','expected_assists',
+            'progressive_carries','progressive_passes','progressive_passes_received',
+            'goals_per90','assists_per90','goals_assists_per90','expected_goals_per90','expected_assists_per90',
+            'passes_completed','passes','passes_pct',
+            'tackles','tackles_won','interceptions','blocks','clearances',
+            'gk_goals_against','gk_pens_allowed','gk_psxg','gk_psnpxg_per_shot_on_target_against'
+        ]
+        cols = [c for c in desired if c in existing_cols]
+        for mandatory in ['player','season','team']:
+            if mandatory not in cols and mandatory in existing_cols:
+                cols.insert(0, mandatory)
+        col_select = ', '.join(cols)
+
+        cur.execute(
+            f"""
+            SELECT {col_select}
+            FROM player_history
+            WHERE lower(player) = lower(%s)
+            ORDER BY season ASC
+            """,
+            [player_name],
+        )
+        rows = cur.fetchall()
+        names = [c[0] for c in cur.description]
+        return [dict(zip(names, r)) for r in rows]
+
+
+@login_required
+def history_chart_api(request):
+    """Generate and return a URL to a PNG line chart for the given metric.
+    Query params: id (player_id), metric (col name), context (0/1).
+    """
+    try:
+        player_id = int(request.GET.get('id', '0'))
+        metric = request.GET.get('metric')
+        show_context = request.GET.get('context', '1') in {'1', 'true', 'True'}
+        if not player_id or not metric:
+            return JsonResponse({'error': 'missing id or metric'}, status=400)
+
+        # Resolve player name
+        with connection.cursor() as cur:
+            cur.execute("SELECT full_name FROM players WHERE id = %s", [player_id])
+            row = cur.fetchone()
+            if not row:
+                return JsonResponse({'error': 'player not found'}, status=404)
+            name = row[0]
+
+        history = _fetch_history_rows(name)
+        if not history:
+            return JsonResponse({'error': 'no history'}, status=404)
+
+        seasons = [r['season'] for r in history]
+        y_raw = [r.get(metric) for r in history]
+        y = [np.nan if v in (None, '') else float(v) for v in y_raw]
+
+        # Prepare figure
+        fig, ax = plt.subplots(figsize=(8, 3))
+        ax.plot(range(len(seasons)), y, marker='o', linewidth=2, markersize=4)
+        ax.set_xticks(range(len(seasons)))
+        ax.set_xticklabels(seasons, rotation=0, fontsize=8)
+        ax.set_ylabel(metric)
+        ax.grid(True, axis='y', alpha=0.2)
+
+        # Club context bands with team logos
+        if show_context and 'team' in history[0]:
+            start = 0
+            colors = [(0.2, 0.4, 0.8, 0.12), (0.8, 0.4, 0.2, 0.12)]  # Alternating blue/orange subtle
+            color_idx = 0
+            ylim = ax.get_ylim()
+            y_range = ylim[1] - ylim[0]
+            
+            for i in range(1, len(history)+1):
+                changed = i == len(history) or history[i]['team'] != history[i-1]['team']
+                if changed:
+                    # Background band
+                    ax.axvspan(start-0.5, i-0.5, color=colors[color_idx % 2], zorder=0)
+                    
+                    # Try to add team logo
+                    mid_x = (start + i - 1) / 2
+                    logo_url = history[start].get('team_logo')
+                    
+                    if logo_url and logo_url.strip():
+                        try:
+                            # Download and add logo
+                            with urllib.request.urlopen(logo_url, timeout=2) as response:
+                                img_data = response.read()
+                            img = Image.open(BytesIO(img_data)).convert('RGBA')
+                            
+                            # Calculate logo size based on band width
+                            band_width = i - start
+                            logo_zoom = min(0.15 * band_width, 0.35)  # Scale with band width, max 0.35
+                            
+                            # Position logo in vertical center
+                            logo_y = ylim[0] + (y_range * 0.5)  # Center vertically
+                            
+                            imagebox = OffsetImage(img, zoom=logo_zoom, alpha=0.6)
+                            ab = AnnotationBbox(imagebox, (mid_x, logo_y), 
+                                              frameon=False, zorder=1)
+                            ax.add_artist(ab)
+                        except Exception:
+                            # Fallback: show team name if logo fails
+                            team_name = history[start]['team']
+                            ax.text(mid_x, ylim[1] - (y_range * 0.06), team_name[:15], 
+                                   ha='center', va='top', fontsize=7, alpha=0.5)
+                    
+                    start = i
+                    color_idx += 1
+
+        ax.margins(x=0.02)
+
+        # Save under media/charts
+        charts_dir = Path(settings.MEDIA_ROOT) / 'charts'
+        charts_dir.mkdir(parents=True, exist_ok=True)
+        key = f"{player_id}|{metric}|{int(show_context)}|{seasons[0]}|{seasons[-1]}"
+        h = hashlib.md5(key.encode()).hexdigest()[:12]
+        out_path = charts_dir / f"history_{player_id}_{metric}_{h}.png"
+        fig.tight_layout()
+        fig.savefig(out_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+
+        # Return the image file directly
+        return FileResponse(open(out_path, 'rb'), content_type='image/png')
+    except Exception as e:
+        logger.exception('history_chart_api error: %s', e)
+        return JsonResponse({'error': str(e)}, status=400)
