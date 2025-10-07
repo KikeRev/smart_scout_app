@@ -855,21 +855,21 @@ Navigate to the "Search Players" option from the main dashboard to access the ma
 
 <p align="center">
   <!-- Replace the src below with your real file path -->
-  <img src="./static/img/example_dashboard.png" alt="Dashboard Example" width="800">
+  <img src="./static/img/example_dashboard.PNG" alt="Dashboard Example" width="800">
 </p>
 
 ## 📊 Player Profile Dashboard Example
 
 <p align="center">
   <!-- Replace the src below with your real file path -->
-  <img src="./static/img/player_profile_dashboard.PNG" alt="Dashboard Example" width="800">
+  <img src="./static/img/player_profile_dashboard.png" alt="Player Profile Dashboard Example" width="800">
 </p>
 
 ## 📊 Manual Search Dashboard Example
 
 <p align="center">
   <!-- Replace the src below with your real file path -->
-  <img src="./static/img/manual_search_dashboard.PNG" alt="Dashboard Example" width="800">
+  <img src="./static/img/manual_search_dashboard.png" alt="Manual Search Dashboard Example" width="800">
 </p>
 
 # 🛠️ Technical Improvements
