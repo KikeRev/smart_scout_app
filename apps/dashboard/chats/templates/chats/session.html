@@ -111,6 +111,38 @@
       ta.form.requestSubmit();     // trigger submit (HTMX intercepts it)
     }
   });
+
+  /* ---------- Auto-scroll to last message ---------- */
+  function scrollChatToBottom() {
+    const log = document.getElementById('chat-log');
+    if (!log) return;
+    // allow layout to settle before scrolling
+    requestAnimationFrame(() => {
+      try {
+        log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' });
+      } catch (e) {
+        // fallback for older browsers
+        log.scrollTop = log.scrollHeight;
+      }
+    });
+  }
+
+  // On initial load
+  window.addEventListener('load', scrollChatToBottom);
+
+  // After HTMX swaps the new message into #chat-log
+  document.body.addEventListener('htmx:afterSwap', (e) => {
+    if (e.target && e.target.id === 'chat-log') {
+      scrollChatToBottom();
+    }
+  });
+
+  // After content is fully settled (images/tables)
+  document.body.addEventListener('htmx:afterSettle', (e) => {
+    if (e.target && e.target.id === 'chat-log') {
+      scrollChatToBottom();
+    }
+  });
 </script>
 {% endblock %}
 

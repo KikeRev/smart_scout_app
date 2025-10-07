@@ -1,4 +1,4 @@
-<h1 align="center">SMART SCOUT APP v1.3</h1>
+<h1 align="center">SMART SCOUT APP v1.4</h1>
 
 <p align="center">
   <img src="./static/img/app_logo_6.png" alt="Logo">
@@ -6,11 +6,11 @@
 
 # 🚀 Welcome
 
-Welcome to **Smart Scout App v1.3** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
+Welcome to **Smart Scout App v1.4** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
 
 ## ✨ Features Overview
 
-### 📊 Historical Data Integration (⭐ NEW v1.3)
+### 📊 Historical Data Integration (⭐ Updated in v1.4)
 - **Extended Historical Coverage**: Player data from 2014-2025 (11 seasons)
 - **Comprehensive Database**: 22,797 unique players with complete historical profiles
 - **Dual Data Structure**: 
@@ -37,9 +37,11 @@ Welcome to **Smart Scout App v1.3** — an application created to help football 
   - Considers club rivalry, player status, market value, and transfer difficulty
   - Primary selection criteria for AI recommendations
 
-### 🔍 Manual Search & Analysis
+### 🔍 Manual Search & Analysis (⭐ Enhanced in v1.4)
 - **Advanced Player Search**: Filter players by multiple criteria
-- **Visual Comparisons**: Interactive radar and pizza charts
+- **Visual Comparisons**: Single radar/pizza plus 3 historical evolution charts (multi-player)
+- **Historical Evolution (NEW)**: Server-side PNG charts for minutes_90s + 2 position metrics, up to 3 players at once
+- **Categorized Metrics Sidebar (NEW)**: Usage, Attacking, Per 90, Progression, Passing, Defending, Goalkeeping (with tooltips)
 - **Saved Searches**: Store and reuse search configurations
 - **Real-time Filtering**: Instant results as you type
 
@@ -47,6 +49,7 @@ Welcome to **Smart Scout App v1.3** — an application created to help football 
 - **Radar Charts**: Individual and comparison radar charts
 - **Pizza Charts**: Performance breakdown visualizations
 - **Interactive Dashboards**: Embedded comparison interfaces
+- **Historical Evolution Charts (NEW)**: Team-context bands and logos for individual view; comparative multi-line charts (2–3 players)
 - **Export Capabilities**: Download charts and data
 
 ### 📰 News Integration
@@ -852,7 +855,21 @@ Navigate to the "Search Players" option from the main dashboard to access the ma
 
 <p align="center">
   <!-- Replace the src below with your real file path -->
-  <img src="./static/img/example_dashboard.PNG" alt="Dashboard Example" width="800">
+  <img src="./static/img/example_dashboard.png" alt="Dashboard Example" width="800">
+</p>
+
+## 📊 Player Profile Dashboard Example
+
+<p align="center">
+  <!-- Replace the src below with your real file path -->
+  <img src="./static/img/player_profile_dashboard.PNG" alt="Dashboard Example" width="800">
+</p>
+
+## 📊 Manual Search Dashboard Example
+
+<p align="center">
+  <!-- Replace the src below with your real file path -->
+  <img src="./static/img/manual_search_dashboard.PNG" alt="Dashboard Example" width="800">
 </p>
 
 # 🛠️ Technical Improvements

@@ -3,7 +3,8 @@
 {% load custom_filters %}
 
 {% block fullwidth_content %}
-<div class="page-wrapper-80">
+<div class="container-fluid mt-3">
+<script src="{% static 'js/metric_tooltips.js' %}"></script>
 {% csrf_token %}
   <!-- Logo de la aplicación -->
   <section class="text-center py-3">
@@ -18,8 +19,24 @@
   </div>
   {% else %}
   
+  <!-- Layout: sidebar 20% + main 80% -->
+  <div class="row g-3">
+    <!-- Sidebar: métricas históricas -->
+    <aside class="col-12 col-lg-2">
+      <div class="card shadow-sm h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Historical metrics</span>
+          <small class="text-muted" id="metric-count">0 / 3</small>
+        </div>
+        <div class="card-body" id="metrics-sidebar" style="max-height: 75vh; overflow-y: auto;">
+          <div id="metricsList"><p class="text-muted">Loading metrics…</p></div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="col-12 col-lg-10">
   <!-- Player cards -->
-  <div class="row mb-4">
+  <div class="row mb-3">
     {% for player in players %}
     <div class="col-md-{% if player_count == 1 %}12{% elif player_count == 2 %}6{% else %}4{% endif %}">
       <div class="card h-100">
@@ -64,27 +81,47 @@
     </div>
     {% endfor %}
   </div>
-  
-  <!-- Comparison chart -->
-  {% if chart_url %}
-  <div class="card">
-    <div class="card-header">
-      <h5 class="mb-0">
-        {% if player_count == 1 %}
-        📊 Individual Analysis
-        {% else %}
-        📊 Player Comparison
-        {% endif %}
-      </h5>
+
+  <!-- Charts row: left radar, right historical (3) -->
+  <div class="row g-3 mt-2">
+    <div class="col-12 col-xl-6">
+      {% if chart_url %}
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">{% if player_count == 1 %}📊 Individual Analysis{% else %}📊 Player Comparison{% endif %}</h5>
+        </div>
+        <div class="card-body text-center">
+          <img src="{{ chart_url }}" alt="Comparison chart" class="img-fluid" style="max-width: 100%; height: auto; max-height: 1050px;">
+        </div>
+      </div>
+      {% endif %}
     </div>
-    <div class="card-body text-center">
-      <img src="{{ chart_url }}" 
-           alt="Comparison chart" 
-           class="img-fluid"
-           style="max-width: 100%; height: auto;">
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm mb-3">
+        <div class="card-header text-center"><span id="hist-1-title">Historical chart 1</span></div>
+        <div class="card-body text-center p-2" style="height:320px;">
+          <img id="hist-1-img" alt="Historical 1" style="height:100%;width:100%;object-fit:contain;" loading="lazy" decoding="async">
+        </div>
+      </div>
+      <div class="card shadow-sm mb-3">
+        <div class="card-header text-center"><span id="hist-2-title">Historical chart 2</span></div>
+        <div class="card-body text-center p-2" style="height:320px;">
+          <img id="hist-2-img" alt="Historical 2" style="height:100%;width:100%;object-fit:contain;" loading="lazy" decoding="async">
+        </div>
+      </div>
+      <div class="card shadow-sm">
+        <div class="card-header text-center"><span id="hist-3-title">Historical chart 3</span></div>
+        <div class="card-body text-center p-2" style="height:320px;">
+          <img id="hist-3-img" alt="Historical 3" style="height:100%;width:100%;object-fit:contain;" loading="lazy" decoding="async">
+        </div>
+      </div>
     </div>
   </div>
-  {% endif %}
+    </section>
+  </div>
+  
+  <!-- Comparison chart -->
+  
   
   <!-- Selected metrics information -->
   {% if selected_metrics %}
@@ -150,6 +187,170 @@
 </div>
 
 <script>
+// Sidebar: cargar métricas y gestionar selección (máx 3)
+document.addEventListener('DOMContentLoaded', function(){
+  const maxSel = 3;
+  const metricsDiv = document.getElementById('metricsList');
+  const counter = document.getElementById('metric-count');
+
+  function loadMetrics(){
+    fetch('{% url "dashboard:search_api" %}?action=metrics')
+      .then(r=>r.json()).then(data=>{
+        const metrics = data.metrics || [];
+        if (metrics.length === 0){ metricsDiv.innerHTML = '<p class="text-muted">No metrics available</p>'; return; }
+
+        // Categorías (mismo criterio que en otros dashboards)
+        const CATS = {
+          'Usage': ['minutes','minutes_90s','games','starts'],
+          'Attacking': ['goals','assists','expected_goals','expected_assists'],
+          'Per 90': ['goals_per90','assists_per90','goals_assists_per90','expected_goals_per90','expected_assists_per90','expected_goals_assists_per90'],
+          'Progression': ['progressive_carries','progressive_passes','progressive_passes_received'],
+          'Passing': ['passes_completed','passes','passes_pct','passes_completed_long','passes_long','passes_pct_long'],
+          'Defending': ['tackles','tackles_won','interceptions','blocks','blocked_shots','blocked_passes','clearances','challenge_tackles','challenges','challenge_tackles_pct','challenges_lost','errors','tackles_interceptions'],
+          'Goalkeeping': ['gk_goals_against','gk_pens_allowed','gk_psxg','gk_psnpxg_per_shot_on_target_against','gk_free_kick_goals_against','gk_corner_kick_goals_against','gk_own_goals_against']
+        };
+
+        // Descripciones breves para tooltips (igual filosofía que en perfil)
+        const DESC = window.METRIC_DESCRIPTIONS || {
+          'minutes': 'Total minutes played in the season',
+          'minutes_90s': 'Number of 90-minute equivalents played',
+          'games': 'Games played in the season',
+          'starts': 'Games started in the season',
+          'goals': 'Goals scored in the season',
+          'assists': 'Assists in the season',
+          'expected_goals': 'Expected goals (xG)',
+          'expected_assists': 'Expected assists (xA)',
+          'goals_per90': 'Goals per 90 minutes',
+          'assists_per90': 'Assists per 90 minutes',
+          'goals_assists_per90': 'Goals + Assists per 90 minutes',
+          'expected_goals_per90': 'Expected goals per 90 minutes',
+          'expected_assists_per90': 'Expected assists per 90 minutes',
+          'expected_goals_assists_per90': 'Expected goals + assists per 90 minutes',
+          'progressive_carries': 'Ball carries that move the ball significantly forward',
+          'progressive_passes': 'Passes that move the ball significantly forward',
+          'progressive_passes_received': 'Progressive passes received',
+          'passes_completed': 'Completed passes',
+          'passes': 'Passes attempted',
+          'passes_pct': 'Completed passes percentage',
+          'tackles': 'Tackles made',
+          'tackles_won': 'Tackles won',
+          'interceptions': 'Interceptions',
+          'blocks': 'Blocks',
+          'blocked_shots': 'Shots blocked',
+          'blocked_passes': 'Passes blocked',
+          'clearances': 'Clearances',
+          'challenge_tackles': 'Defensive challenges attempted',
+          'challenges': 'Challenges attempted',
+          'challenge_tackles_pct': 'Challenge success percentage',
+          'challenges_lost': 'Challenges lost',
+          'errors': 'Errors leading to shot/goal',
+          'tackles_interceptions': 'Tackles + interceptions',
+          'gk_goals_against': 'Goals conceded (GK)',
+          'gk_pens_allowed': 'Penalty goals conceded (GK)',
+          'gk_psxg': 'Post-shot expected goals faced (GK)',
+          'gk_psnpxg_per_shot_on_target_against': 'Non-penalty xG per shot on target against (GK)'
+        };
+
+        // Filtrar por disponibilidad
+        const available = new Set(metrics);
+        const htmlSections = [];
+        const used = new Set();
+        Object.entries(CATS).forEach(([title, keys])=>{
+          const items = keys.filter(k=>available.has(k));
+          if (items.length === 0) return;
+          items.forEach(k=>used.add(k));
+          const list = items.map(m=>{
+            const label = m.replace(/_/g,' ');
+            const title = DESC[m] || label;
+            return `
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="${m}" id="metric_${m}">
+              <label class="form-check-label" for="metric_${m}" data-bs-toggle="tooltip" title="${title}">${label}</label>
+            </div>`;
+          }).join('');
+          htmlSections.push(`<small class="text-muted d-block mt-2 mb-1">${title}</small>${list}`);
+        });
+
+        // Otros
+        const others = metrics.filter(m=>!used.has(m));
+        if (others.length){
+          const list = others.map(m=>{
+            const label = m.replace(/_/g,' ');
+            const title = DESC[m] || label;
+            return `
+            <div class="form-check">
+              <input class="form-check-input metric-checkbox" type="checkbox" value="${m}" id="metric_${m}">
+              <label class="form-check-label" for="metric_${m}" data-bs-toggle="tooltip" title="${title}">${label}</label>
+            </div>`;
+          }).join('');
+          htmlSections.push(`<small class="text-muted d-block mt-2 mb-1">Other</small>${list}`);
+        }
+
+        metricsDiv.innerHTML = htmlSections.join('');
+        attachHandlers();
+        // inicializar tooltips
+        if (window.bootstrap && bootstrap.Tooltip) {
+          const tt = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+          tt.map(el => new bootstrap.Tooltip(el));
+        }
+        // Preselección desde URL si existe
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlMetrics = urlParams.getAll('metrics').slice(0,3);
+        urlMetrics.forEach(m=>{
+          const cb = document.getElementById('metric_'+m);
+          if (cb) cb.checked = true;
+        });
+        updateCounter();
+        renderHist();
+      }).catch(()=>{ metricsDiv.innerHTML = '<p class="text-danger">Error loading metrics</p>'; });
+  }
+
+  function attachHandlers(){
+    document.querySelectorAll('.metric-checkbox').forEach(cb=>{
+      cb.addEventListener('change', function(){
+        const s = document.querySelectorAll('.metric-checkbox:checked');
+        if (s.length > maxSel) this.checked = false;
+        updateCounter();
+        renderHist();
+      });
+    });
+  }
+
+  function getSelected(){
+    const urlParams = new URLSearchParams(window.location.search);
+    const m = urlParams.getAll('metrics');
+    if (m && m.length > 0) return m.slice(0,3);
+    const checked = Array.from(document.querySelectorAll('.metric-checkbox:checked')).map(cb=>cb.value);
+    return checked.slice(0,3);
+  }
+  function updateCounter(){ if (counter){ const n = document.querySelectorAll('.metric-checkbox:checked').length; counter.textContent = `${n} / ${maxSel}`; } }
+  function renderHist(){
+    const metrics = getSelected();
+    const params = new URLSearchParams(window.location.search);
+    const ids = params.getAll('player_ids');
+    const idsParam = ids.join(',');
+    const baseUrl = '{% url "dashboard:history_chart_multi_api" %}?ids=' + encodeURIComponent(idsParam) + '&metric=';
+    const slots = [
+      {img: 'hist-1-img', title: 'hist-1-title'},
+      {img: 'hist-2-img', title: 'hist-2-title'},
+      {img: 'hist-3-img', title: 'hist-3-title'}
+    ];
+    for (let i=0;i<slots.length;i++){
+      const img = document.getElementById(slots[i].img);
+      const title = document.getElementById(slots[i].title);
+      if (!img || !title) continue;
+      if (metrics[i]){
+        title.textContent = metrics[i].replace(/_/g,' ').toUpperCase();
+        img.src = baseUrl + encodeURIComponent(metrics[i]) + '&_ts=' + Date.now();
+        img.closest('.card').style.display = '';
+      } else {
+        img.src = '';
+        img.closest('.card').style.display = 'none';
+      }
+    }
+  }
+  loadMetrics();
+});
 // Save search
 function saveSearch() {
     const modal = new bootstrap.Modal(document.getElementById('saveSearchModal'));

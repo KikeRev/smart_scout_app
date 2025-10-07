@@ -327,7 +327,7 @@ def _to_float(x):
     if isinstance(x, str):
         x = NUMERIC_RE.sub("", x)
     try:
-        return float(x)
+        return round(float(x), 3)
     except ValueError:
         return 0.0
 
@@ -844,6 +844,8 @@ def load_player_history(engine: sa.Engine, csv_path: Path, if_exists: str = "app
     
     # Remove rows with missing player or season
     df_prepared = df_prepared.dropna(subset=['player', 'season'])
+
+    df_prepared["player"] = df_prepared["player"].apply(clean_name)
     
     print(f"Inserting {len(df_prepared)} historical records...")
     
