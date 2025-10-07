@@ -878,3 +878,75 @@ def generate_history_chart_comparison_file(player_id1: int, player_id2: int, met
     fig.savefig(out_path, dpi=150, bbox_inches='tight')
     plt.close(fig)
     return out_path
+
+
+@login_required
+def history_chart_multi_api(request):
+    """Generate multi-line historical chart for up to 3 players.
+    Query params: ids (comma separated), metric (col name)
+    """
+    try:
+        ids_param = request.GET.get('ids', '')
+        metric = request.GET.get('metric')
+        if not ids_param or not metric:
+            return JsonResponse({'error': 'missing ids or metric'}, status=400)
+        id_list = [int(x) for x in ids_param.split(',') if x.strip().isdigit()][:3]
+        if len(id_list) == 0:
+            return JsonResponse({'error': 'no valid ids'}, status=400)
+
+        # Resolve names
+        with connection.cursor() as cur:
+            cur.execute(
+                f"SELECT id, full_name FROM players WHERE id = ANY(%s)", [id_list]
+            )
+            rows = cur.fetchall()
+            if len(rows) < len(id_list):
+                # proceed with available
+                pass
+            id_to_name = {r[0]: r[1] for r in rows}
+
+        # Gather histories
+        histories = []
+        for pid in id_list:
+            name = id_to_name.get(pid)
+            if not name:
+                continue
+            hist = _fetch_history_rows(name)
+            if hist:
+                seasons = [r['season'] for r in hist]
+                y = [np.nan if (v:=(r.get(metric))) in (None, '') else float(v) for r in hist]
+                histories.append((pid, name, seasons, y))
+
+        if not histories:
+            return JsonResponse({'error': 'no history'}, status=404)
+
+        # Build unified seasons
+        all_seasons = sorted(set(s for _,_,seas,_ in histories for s in seas))
+
+        colors = ['#3b82f6', '#ef4444', '#10b981']  # blue, red, green
+        markers = ['o', 's', 'D']
+        fig, ax = plt.subplots(figsize=(8, 3))
+        for idx, (pid, name, seasons, y_vals) in enumerate(histories):
+            indices = [all_seasons.index(s) for s in seasons]
+            ax.plot(indices, y_vals, marker=markers[idx%len(markers)], linewidth=2, markersize=4,
+                    label=name, color=colors[idx%len(colors)], alpha=0.9)
+
+        ax.set_xticks(range(len(all_seasons)))
+        ax.set_xticklabels(all_seasons, rotation=45, fontsize=7, ha='right')
+        ax.set_ylabel(metric, fontsize=9)
+        ax.grid(True, axis='y', alpha=0.2)
+        ax.legend(loc='upper left', fontsize=8, framealpha=0.9)
+        ax.margins(x=0.02)
+
+        charts_dir = Path(settings.MEDIA_ROOT) / 'charts'
+        charts_dir.mkdir(parents=True, exist_ok=True)
+        key = f"{'-'.join(map(str,id_list))}|{metric}|{all_seasons[0]}|{all_seasons[-1]}"
+        h = hashlib.md5(key.encode()).hexdigest()[:12]
+        out_path = charts_dir / f"multi_{'_'.join(map(str,id_list))}_{metric}_{h}.png"
+        fig.tight_layout()
+        fig.savefig(out_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return FileResponse(open(out_path, 'rb'), content_type='image/png')
+    except Exception as e:
+        logger.exception('history_chart_multi_api error: %s', e)
+        return JsonResponse({'error': str(e)}, status=500)

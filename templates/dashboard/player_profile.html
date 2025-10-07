@@ -1,7 +1,9 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block fullwidth_content %}
 <div class="container-fluid mt-4">
+  <script src="{% static 'js/metric_tooltips.js' %}"></script>
   {% if error %}
     <div class="alert alert-danger">{{ error }}</div>
   {% else %}

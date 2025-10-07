@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import home, refresh_dash, inline_view, player_search, comparison_dashboard, search_api, saved_searches_api, player_profile, player_history_api, player_history_by_id_api, history_chart_api, history_chart_comparison_api
+from .views import home, refresh_dash, inline_view, player_search, comparison_dashboard, search_api, saved_searches_api, player_profile, player_history_api, player_history_by_id_api, history_chart_api, history_chart_comparison_api, history_chart_multi_api
 from django.views.decorators.csrf import csrf_exempt
 
 app_name = "dashboard"
@@ -20,5 +20,7 @@ urlpatterns = [
     path("api/history_chart", csrf_exempt(history_chart_api)),
     path("api/history_chart_comparison/", csrf_exempt(history_chart_comparison_api), name="history_chart_comparison_api"),
     path("api/history_chart_comparison", csrf_exempt(history_chart_comparison_api)),
+    path("api/history_chart_multi/", csrf_exempt(history_chart_multi_api), name="history_chart_multi_api"),
+    path("api/history_chart_multi", csrf_exempt(history_chart_multi_api)),
     path("player/<int:player_id>/", player_profile, name="player_profile"),
 ]
