@@ -1,7 +1,12 @@
-{% load markdownify %}
+{% load markdownify static %}
 
 {% if m.role == "user" %}
 <div class="chat-row chat-user">
+  <div class="chat-avatar chat-avatar-user" title="You">
+    {% with uname=request.user.first_name|default:request.user.username %}
+      <span>{{ uname|first|upper }}</span>
+    {% endwith %}
+  </div>
   <div class="bubble bubble-user fade-in">
     {% autoescape off %}
       {{ m.content|markdownify }}
@@ -42,6 +47,9 @@
         👍 <input type="radio" name="rate_{{ m.id }}" value="up">
         👎 <input type="radio" name="rate_{{ m.id }}" value="down">
     </span>
+  </div>
+  <div class="chat-avatar chat-avatar-bot" title="Agent">
+    <img src="{% static 'img/app_logo_6.png' %}" alt="Agent">
   </div>
 </div>
 {% endif %}

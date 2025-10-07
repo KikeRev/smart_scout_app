@@ -92,6 +92,15 @@
                 </div>
             </div>
 
+            <h3 class="mt-4">Historical evolution (comparison)</h3>
+            <div class="row g-3">
+                {% for url in comp_history %}
+                    <div class="col-12">
+                        <img src="{{ url }}" class="img-fluid" alt="Historical Comparison {{ forloop.counter }}">
+                    </div>
+                {% endfor %}
+            </div>
+
             <h2 class="mt-4">4. Recent news summary</h2>
             <ul>
                 {% for n in news %}
@@ -106,15 +115,22 @@
 
             <div class="row text-center my-4">
                 <div class="col-md-6">
-                    <img src="{{ radar_base_url }}" class="img-fluid" alt="Radar Base" style="max-height:650px;">
-                </div>
-                <div class="col-md-6">
-                    <img src="{{ radar_comp_url }}" class="img-fluid" alt="Radar Comp" style="max-height:650px;">
+                    <img src="{{ radar_base_url }}" class="img-fluid" alt="Radar Base" style="max-height:450px;">
                 </div>
             </div>
 
             <div class="text-center">
-                <img src="{{ pizza_url }}" class="img-fluid" style="max-width:650px" alt="Pizza Plot Comp">
+                <img src="{{ pizza_url }}" class="img-fluid" style="max-width:450px" alt="Pizza Plot Comp">
+            </div>
+
+            <h2 class="mt-4">6. Historical evolution (individual)</h2>
+            <p><small>Métricas: {{ metrics_labels|join:", " }}</small></p>
+            <div class="row g-3">
+                {% for url in indiv_history %}
+                    <div class="col-12">
+                        <img src="{{ url }}" class="img-fluid" alt="Historical Individual {{ forloop.counter }}">
+                    </div>
+                {% endfor %}
             </div>
         </div>
 

@@ -2,9 +2,9 @@
 
 <!-- Layout: 20% sidebar (metrics) + 80% main content -->
 <div class="row g-4">
-  <!-- Sidebar 20%: metric selector -->
-  <aside class="col-12 col-lg-2">
-    <div class="card shadow-sm">
+  <!-- Sidebar 10%: metric selector -->
+  <aside class="col-12 col-lg-1">
+    <div class="card shadow-sm sticky-sidebar">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>Historical metrics</span>
         <small class="text-muted" id="metric-count">0 / 3</small>
@@ -139,67 +139,61 @@
     </div>
   </aside>
 
-  <!-- Main content 80%: tabla (20%) + center charts (40%) + historical charts (40%) -->
-  <section class="col-12 col-lg-10">
-    <div class="row g-3">
-      <!-- Column 1: Comparison table (20%) -->
-      <div class="col-12 col-xl-2">
-        <div class="card shadow-sm" style="max-height: 80vh; overflow-y: auto;">
-          <div class="card-header">Stats Comparison</div>
-          <div class="card-body p-0">
+  <!-- Main content 90%: tabla (30%) + center charts (30%) + historical charts (40%) -->
+  <section class="col-12 col-lg-11">
+    <div class="row g-2">
+      <!-- Column 1: Comparison table (~25%) -->
+      <div class="col-12 col-xl-3">
+        <div class="card shadow-sm card-fill vh-92">
+          <div class="card-header">Season 24-25 Stats Comparison</div>
+          <div class="card-body p-0 overflow-auto">
             {{ table_html|safe }}
           </div>
         </div>
       </div>
 
-      <!-- Column 2: Center charts (40%) -->
-      <div class="col-12 col-xl-4">
+      <!-- Column 2: Center charts (~25-30%) -->
+      <div class="col-12 col-xl-3">
         <!-- Radar comparison -->
-        <div class="card shadow-sm mb-3">
+        <div class="card shadow-sm mb-2 card-fill" style="min-height:42vh;max-height:46vh;">
           <div class="card-header text-center">Radar Comparison</div>
           <div class="card-body text-center p-2">
-            <img src="{{ radar_cmp }}" alt="Radar comparison" class="img-fluid" style="max-width: 100%; height: auto;">
+            <img src="{{ radar_cmp }}" alt="Radar comparison" class="chart-img" loading="lazy" decoding="async" style="max-width:90%;max-height:calc(100% - 2rem);">
           </div>
         </div>
 
         <!-- Pizza comparison -->
-        <div class="card shadow-sm">
+        <div class="card shadow-sm card-fill" style="min-height:42vh;max-height:46vh;">
           <div class="card-header text-center">Pizza Comparison</div>
           <div class="card-body text-center p-2">
-            <img src="{{ pizza_cmp }}" alt="Pizza comparison" class="img-fluid" style="max-width: 100%; height: auto;">
+            <img src="{{ pizza_cmp }}" alt="Pizza comparison" class="chart-img" loading="lazy" decoding="async" style="max-width:90%;max-height:calc(100% - 2rem);">
           </div>
         </div>
       </div>
 
       <!-- Column 3: Historical charts (40%) -->
-      <div class="col-12 col-xl-6">
+      <div class="col-12 col-xl-6 bg-panel">
         <!-- Historical Chart 1 -->
-        <div id="historical-chart-1-container" class="card shadow-sm mb-3" style="display: none;">
-          <div class="card-header text-center">
-            <span id="historical-chart-1-title">Historical Evolution</span>
-          </div>
-          <div class="card-body text-center p-2">
-            <img id="historical-chart-1" src="" alt="Historical chart 1" class="img-fluid" style="max-width: 100%; height: auto;">
+        <div class="card shadow-sm mb-2" id="chart-1-wrapper">
+          <div class="card-header text-center" id="chart-1-header">Historical chart 1</div>
+          <div class="card-body text-center p-2" style="height:380px;">
+            <img id="chart-1-img" alt="Historical chart 1" style="height:100%;width:100%;object-fit:contain;" loading="lazy" decoding="async">
           </div>
         </div>
 
         <!-- Historical Chart 2 -->
-        <div id="historical-chart-2-container" class="card shadow-sm mb-3" style="display: none;">
-          <div class="card-header text-center">
-            <span id="historical-chart-2-title">Historical Evolution</span>
-          </div>
-          <div class="card-body text-center p-2">
-            <img id="historical-chart-2" src="" alt="Historical chart 2" class="img-fluid" style="max-width: 100%; height: auto;">
+        <div class="card shadow-sm mb-2 d-none" id="chart-2-wrapper">
+          <div class="card-header text-center" id="chart-2-header">Historical chart 2</div>
+          <div class="card-body text-center p-2" style="height:380px;">
+            <img id="chart-2-img" alt="Historical chart 2" style="height:100%;width:100%;object-fit:contain;" loading="lazy" decoding="async">
           </div>
         </div>
 
         <!-- Historical Chart 3 -->
-        <div id="historical-chart-3-container" class="card shadow-sm mb-3" style="display: none;">
-          <div class="card-header text-center">
-            <span id="historical-chart-3-title">Historical Evolution</span>
-          </div>
-          <div class="card-body text-center p-2">
-            <img id="historical-chart-3" src="" alt="Historical chart 3" class="img-fluid" style="max-width: 100%; height: auto;">
+        <div class="card shadow-sm mb-2 d-none" id="chart-3-wrapper">
+          <div class="card-header text-center" id="chart-3-header">Historical chart 3</div>
+          <div class="card-body text-center p-2" style="height:380px;">
+            <img id="chart-3-img" alt="Historical chart 3" style="height:100%;width:100%;object-fit:contain;" loading="lazy" decoding="async">
           </div>
         </div>
       </div>
@@ -213,15 +207,32 @@
   var candPlayerId = {{ cand_id|default:0 }};
   
   (function() {
-    // Initialize Bootstrap tooltips
+    // If no metrics selected, preselect defaults to ensure charts render
+    var preselected = ['minutes', 'goals', 'assists'];
+    var anyChecked = document.querySelector('.metric-checkbox:checked') !== null;
+    if (!anyChecked) {
+      preselected.forEach(function(val){
+        var el = document.querySelector('.metric-checkbox[value="' + val + '"]');
+        if (el) { el.checked = true; }
+      });
+    }
+
+    // Initialize Bootstrap tooltips (guard if bootstrap is missing)
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+    if (window.bootstrap && bootstrap.Tooltip) {
+      tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+    }
 
     var checkboxes = document.querySelectorAll('.metric-checkbox');
     var counter = document.getElementById('metric-count');
     var maxSelections = 3;
+    var wrappers = [
+      {wrap: document.getElementById('chart-1-wrapper'), header: document.getElementById('chart-1-header'), img: document.getElementById('chart-1-img')},
+      {wrap: document.getElementById('chart-2-wrapper'), header: document.getElementById('chart-2-header'), img: document.getElementById('chart-2-img')},
+      {wrap: document.getElementById('chart-3-wrapper'), header: document.getElementById('chart-3-header'), img: document.getElementById('chart-3-img')}
+    ];
 
     function updateCounter() {
       var checked = document.querySelectorAll('.metric-checkbox:checked');
@@ -236,32 +247,25 @@
         }
       });
 
+      updateChartsVisibility();
       renderCharts();
     }
 
-    function renderCharts() {
-      var selectedMetrics = [];
-      document.querySelectorAll('.metric-checkbox:checked').forEach(function(cb) {
-        selectedMetrics.push(cb.value);
-      });
+    function updateChartsVisibility() {
+      var selected = Array.from(document.querySelectorAll('.metric-checkbox:checked')).slice(0,3);
+      for (var i = 0; i < 3; i++) {
+        var label = selected[i] ? (selected[i].nextElementSibling ? selected[i].nextElementSibling.innerText : selected[i].value) : 'Historical chart ' + (i+1);
+        if (wrappers[i].header) wrappers[i].header.textContent = label;
+        if (wrappers[i].wrap) wrappers[i].wrap.classList.toggle('d-none', i >= selected.length);
+      }
+    }
 
-      // Show/hide chart containers and update images
-      for (var i = 1; i <= 3; i++) {
-        var container = document.getElementById('historical-chart-' + i + '-container');
-        var img = document.getElementById('historical-chart-' + i);
-        var title = document.getElementById('historical-chart-' + i + '-title');
-        
-        if (i <= selectedMetrics.length) {
-          var metric = selectedMetrics[i - 1];
-          var metricLabel = metric.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
-          
-          title.textContent = metricLabel;
-          
-          var chartUrl = '/dashboard/api/history_chart_comparison?id1=' + basePlayerId + '&id2=' + candPlayerId + '&metric=' + metric;
-          img.src = chartUrl;
-          container.style.display = 'block';
-        } else {
-          container.style.display = 'none';
+    function renderCharts() {
+      var selected = Array.from(document.querySelectorAll('.metric-checkbox:checked')).slice(0,3).map(function(cb){ return cb.value; });
+      var base = '/dashboard/api/history_chart_comparison/?id1=' + basePlayerId + '&id2=' + candPlayerId + '&metric=';
+      for (var i = 0; i < 3; i++) {
+        if (selected[i] && wrappers[i].img) {
+          wrappers[i].img.src = base + encodeURIComponent(selected[i]) + '&_ts=' + Date.now();
         }
       }
     }
@@ -271,5 +275,7 @@
     });
 
     updateCounter();
+    updateChartsVisibility();
+    renderCharts();
   })();
 </script>

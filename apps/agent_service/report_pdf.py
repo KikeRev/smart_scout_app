@@ -60,7 +60,7 @@ def build_report_pdf(
         • pros, cons         → bullet lists
     """
     from apps.agent_service.agents.tools import player_news_tool
-    from apps.dashboard.views import _context, _fetch_stats
+    from apps.dashboard.views import _context, _fetch_stats, generate_history_chart_file, generate_history_chart_comparison_file
 
     # 1) collect stats + charts
     ctx_dash= _context(base_id, chosen_id, candidate_ids, metrics=[])
@@ -146,7 +146,34 @@ def build_report_pdf(
 
     recommendation_clean = _strip_code_fences(recommendation)
 
-    # 4) build HTML
+    # 4) pick default metrics by role
+    def_metrics = {
+        'GK': ['minutes_90s', 'gk_psxg', 'gk_psnpxg_per_shot_on_target_against'],
+        'DF': ['minutes_90s', 'tackles_won', 'interceptions'],
+        'MF': ['minutes_90s', 'progressive_passes', 'expected_assists_per90'],
+        'FW': ['minutes_90s', 'goals_per90', 'expected_goals_per90'],
+    }
+    role = players_map[chosen_id]['position'].upper() if players_map.get(chosen_id) else 'FW'
+    metrics_for_role = def_metrics.get(role, def_metrics['FW'])
+
+    # 4.1) generate individual history charts for chosen player (with context)
+    indiv_history_files = []
+    for m in metrics_for_role:
+        try:
+            indiv_history_files.append(_abs_uri(str(generate_history_chart_file(chosen_id, m, show_context=True))))
+        except Exception:
+            # best effort: skip if not available
+            pass
+
+    # 4.2) generate comparison charts (base vs chosen) for same metrics
+    comp_history_files = []
+    for m in metrics_for_role:
+        try:
+            comp_history_files.append(_abs_uri(str(generate_history_chart_comparison_file(base_id, chosen_id, m))))
+        except Exception:
+            pass
+
+    # 5) build HTML
     html_str = render_to_string(
         "reports/report.html",
         {
@@ -159,17 +186,20 @@ def build_report_pdf(
             "cons":        cons,
             "news":        news_summary,
             "table_html":  ctx_dash["table_html"],
-            "radar_base_url": _abs_uri(ctx_dash["radar_base"]),
-            "radar_comp_url": _abs_uri(ctx_dash["radar_cand"]),
+            "radar_base_url": _abs_uri(ctx_dash.get("radar_cmp", ctx_dash.get("radar_base"))),
+            "radar_comp_url": _abs_uri(ctx_dash.get("radar_cand", ctx_dash.get("radar_cmp"))),
             "pizza_url":      _abs_uri(ctx_dash["pizza_cmp"]),
             "logo_url":       _abs_uri(static("img/app_logo_6.png")),
             "github_url": _abs_uri(static("img/github.png")),
             "linkedin_url": _abs_uri(static("img/linkedin.png")),
             "instagram_url": _abs_uri(static("img/instagram.png")),
+            "indiv_history": indiv_history_files,
+            "comp_history": comp_history_files,
+            "metrics_labels": metrics_for_role,
         },
     )
 
-    # 5) HTML → PDF
+    # 6) HTML → PDF
     file_id   = uuid.uuid4().hex
     rel_path  = f"reports/{file_id}.pdf"           #   reports/… inside MEDIA_ROOT
     pdf_path  = MEDIA_DIR / f"{file_id}.pdf"
