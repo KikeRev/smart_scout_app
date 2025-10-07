@@ -782,14 +782,14 @@ Here are some useful prompts to try with the Smart Scout Agent:
 
 <p align="center">
   <!-- Replace the src below with your real file path -->
-  <img src="./static/img/user_home_page.PNG" alt="Home Page" width="800">
+  <img src="./static/img/user_home_page.png" alt="Home Page" width="800">
 </p>
 
 ## 📊 User Profile Page
 
 <p align="center">
   <!-- Replace the src below with your real file path -->
-  <img src="./static/img/user_profile_page.PNG" alt="User Profile Page" width="800">
+  <img src="./static/img/user_profile_page.png" alt="User Profile Page" width="800">
 </p>
 
 ## 📊 User Reports Page
