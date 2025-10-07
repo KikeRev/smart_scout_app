@@ -1,17 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
-{% block content %}
 
-<style>
-    /* only specific to the dashboard */
-    .chart-wrapper img { max-width:100%; height:auto; }
-</style>
-
-<div class="container-fluid py-3">
+{% block fullwidth_content %}
+<div class="container-fluid mt-4">
 
     <!-- ──────────────── CABECERA ──────────────── -->
-    <header class="d-flex flex-wrap align-items-center gap-3 mb-4">
-        <h2 class="m-0 flex-grow-1">Comparison dashboard</h2>
+    <header class="d-flex flex-wrap align-items-center gap-3 mb-3">
+        <h2 class="m-0 flex-grow-1">Player Comparison Dashboard</h2>
 
         {# ⇩ when changing, a POST is made to /refresh and replaces #dashboard-content #}
         <form  hx-post="{% url 'dashboard:refresh' %}"

@@ -15,6 +15,7 @@ from django.http import HttpResponseBadRequest, HttpResponse, HttpResponseBadReq
 
 from apps.agent_service.viz_tools import (
     radar_chart,
+    radar_comparison_chart,
     pizza_comparison_chart
 )
 from apps.agent_service.dashboard_viz_tools import dashboard_radar_single
@@ -96,20 +97,10 @@ def _context(base_id: int, cand_id: int, cand_ids: list[int], metrics: list[str]
         raise ValueError("IDs not found in API")
 
     # ── 2) charts using stats directly ─────────────
-    radar_base = radar_chart(
-        player_name=base_stats["full_name"],
-        stats=base_stats,
-        team=base_stats["club"],
-        position=base_stats["position"],
-        nationality=base_stats["nationality"],
-    )
-
-    radar_cand = radar_chart(
-        player_name=cand_stats["full_name"],
-        stats=cand_stats,
-        team=cand_stats["club"],
-        position=cand_stats["position"],
-        nationality=cand_stats["nationality"],
+    # Use radar_comparison_chart instead of two individual radars
+    radar_cmp = radar_comparison_chart(
+        player1_name=base_stats["full_name"],
+        player2_name=cand_stats["full_name"],
     )
 
     pizza_cmp = pizza_comparison_chart(
@@ -128,8 +119,7 @@ def _context(base_id: int, cand_id: int, cand_ids: list[int], metrics: list[str]
         "cand_ids": cand_ids,
         "players": players,
         "metrics": metrics,
-        "radar_base": radar_base["attachments"][0]["url"],
-        "radar_cand": radar_cand["attachments"][0]["url"],
+        "radar_cmp": radar_cmp["attachments"][0]["url"],
         "pizza_cmp":  pizza_cmp["attachments"][0]["url"],
         "table_html": table_html,
     }
@@ -709,3 +699,81 @@ def history_chart_api(request):
     except Exception as e:
         logger.exception('history_chart_api error: %s', e)
         return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+def history_chart_comparison_api(request):
+    """Generate and return a PNG line chart comparing two players for the given metric.
+    Query params: id1 (player_id), id2 (player_id), metric (col name).
+    No club context in comparison charts to keep them clean.
+    """
+    try:
+        player_id1 = int(request.GET.get('id1', '0'))
+        player_id2 = int(request.GET.get('id2', '0'))
+        metric = request.GET.get('metric')
+        if not player_id1 or not player_id2 or not metric:
+            return JsonResponse({'error': 'missing id1, id2 or metric'}, status=400)
+
+        # Resolve player names
+        with connection.cursor() as cur:
+            cur.execute("SELECT id, full_name FROM players WHERE id IN (%s, %s)", [player_id1, player_id2])
+            rows = cur.fetchall()
+            if len(rows) < 2:
+                return JsonResponse({'error': 'one or both players not found'}, status=404)
+            names_map = {row[0]: row[1] for row in rows}
+        
+        name1 = names_map[player_id1]
+        name2 = names_map[player_id2]
+
+        history1 = _fetch_history_rows(name1)
+        history2 = _fetch_history_rows(name2)
+        
+        if not history1 or not history2:
+            return JsonResponse({'error': 'no history for one or both players'}, status=404)
+
+        # Extract data
+        seasons1 = [r['season'] for r in history1]
+        y1_raw = [r.get(metric) for r in history1]
+        y1 = [np.nan if v in (None, '') else float(v) for v in y1_raw]
+
+        seasons2 = [r['season'] for r in history2]
+        y2_raw = [r.get(metric) for r in history2]
+        y2 = [np.nan if v in (None, '') else float(v) for v in y2_raw]
+
+        # Use all unique seasons sorted
+        all_seasons = sorted(set(seasons1 + seasons2))
+        
+        # Prepare figure
+        fig, ax = plt.subplots(figsize=(8, 3))
+        
+        # Create indices for each player based on all_seasons
+        indices1 = [all_seasons.index(s) for s in seasons1]
+        indices2 = [all_seasons.index(s) for s in seasons2]
+        
+        ax.plot(indices1, y1, marker='o', linewidth=2, markersize=4, 
+                label=name1, color='#3b82f6', alpha=0.8)
+        ax.plot(indices2, y2, marker='s', linewidth=2, markersize=4, 
+                label=name2, color='#ef4444', alpha=0.8)
+        
+        ax.set_xticks(range(len(all_seasons)))
+        ax.set_xticklabels(all_seasons, rotation=45, fontsize=7, ha='right')
+        ax.set_ylabel(metric, fontsize=9)
+        ax.grid(True, axis='y', alpha=0.2)
+        ax.legend(loc='upper left', fontsize=8, framealpha=0.9)
+        ax.margins(x=0.02)
+
+        # Save under media/charts
+        charts_dir = Path(settings.MEDIA_ROOT) / 'charts'
+        charts_dir.mkdir(parents=True, exist_ok=True)
+        key = f"{player_id1}|{player_id2}|{metric}|{all_seasons[0]}|{all_seasons[-1]}"
+        h = hashlib.md5(key.encode()).hexdigest()[:12]
+        out_path = charts_dir / f"comparison_{player_id1}_{player_id2}_{metric}_{h}.png"
+        fig.tight_layout()
+        fig.savefig(out_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+
+        # Return the image file directly
+        return FileResponse(open(out_path, 'rb'), content_type='image/png')
+    except Exception as e:
+        logger.exception('history_chart_comparison_api error: %s', e)
+        return JsonResponse({'error': str(e)}, status=500)
