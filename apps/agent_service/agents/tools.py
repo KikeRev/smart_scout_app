@@ -58,6 +58,25 @@ from apps.agent_service.validation import (
     sanitize_text
 )
 
+# ----------------------------------------------------------------------------
+# Helper utilities (simple language detection for guided messages)
+# ----------------------------------------------------------------------------
+
+def _looks_spanish(text: str) -> bool:
+    """Heurística liviana ES/EN para mensajes guiados."""
+    if not isinstance(text, str):
+        return False
+    t = text.lower()
+    spanish_clues = [
+        " el ", " la ", " los ", " las ", " de ", " del ", " para ", " por ",
+        " jugador", " equipo", " informe", " reporte", " crear", " dame", " buscar",
+        "¿", "¡", "ó", "á", "é", "í", "ú", "ñ",
+    ]
+    return any(clue in t for clue in spanish_clues)
+
+def _msg_locale(user_text: Optional[str], es: str, en: str) -> str:
+    return es if _looks_spanish(user_text or "") else en
+
 
 # --------------------------- 1) Similar Players ----------------------------- #
 class SimilarPlayersInput(BaseModel):
@@ -832,10 +851,20 @@ def build_scouting_report(
                 print(f"DEBUG: Using backup cache: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
         
         if not cached_context:
-            return {
-                "text": "Error: No previous search context found. Please run similar_players_team_fit_table first.",
-                "attachments": []
-            }
+            # Mensaje guiado localizado (ES/EN) en vez de error técnico
+            es_msg = (
+                "No encuentro el contexto de la última búsqueda (base y candidatos). "
+                "Para continuar puedo: \n"
+                "1) volver a generar la tabla de candidatos (dime el jugador de referencia y el equipo objetivo), o\n"
+                "2) si ya tienes los IDs, indícame 'base_id' y la lista de 'candidate_ids'."
+            )
+            en_msg = (
+                "I can't find the last search context (base and candidates). "
+                "To proceed, I can: \n"
+                "1) regenerate the candidates table (tell me the reference player and the target team), or\n"
+                "2) if you already have them, provide 'base_id' and the list of 'candidate_ids'."
+            )
+            return {"text": _msg_locale(objective, es_msg, en_msg), "attachments": []}
         
         print(f"DEBUG: Found cached context for user {user_id}: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
             
