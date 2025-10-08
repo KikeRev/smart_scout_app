@@ -317,9 +317,6 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   function getSelected(){
-    const urlParams = new URLSearchParams(window.location.search);
-    const m = urlParams.getAll('metrics');
-    if (m && m.length > 0) return m.slice(0,3);
     const checked = Array.from(document.querySelectorAll('.metric-checkbox:checked')).map(cb=>cb.value);
     return checked.slice(0,3);
   }

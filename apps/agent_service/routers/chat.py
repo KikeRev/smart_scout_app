@@ -76,7 +76,10 @@ def chat(req: ChatRequest):
         user_id=req.user_id or "anon",
         messages=req.messages,            # ← history arrives here
     )
-    result = agent.invoke({"input": req.message})
+    
+    # Add user_id to the input context so tools can access it
+    input_data = {"input": req.message, "user_id": req.user_id or "anon"}
+    result = agent.invoke(input_data)
     return {"answer": result["output"]}
 
 
@@ -94,7 +97,8 @@ async def chat_stream(req: ChatRequest):
 
     # launch LLM in background to avoid blocking
     async with anyio.create_task_group() as tg:
-        tg.start_soon(anyio.to_thread.run_sync, agent.invoke, {"input": req.message})
+        input_data = {"input": req.message, "user_id": req.user_id or "anon"}
+        tg.start_soon(anyio.to_thread.run_sync, agent.invoke, input_data)
 
     async def event_generator():
         async for tok in callback.token_iter():

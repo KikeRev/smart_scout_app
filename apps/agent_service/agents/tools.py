@@ -19,6 +19,36 @@ _user_search_contexts: Dict[str, Dict] = {}
 # Alternative: Use a more persistent cache approach
 # Store the last search context in a way that survives between agent calls
 _last_search_context: Dict = {}
+
+# Redis connection for persistent context (optional)
+try:
+    import redis
+    redis_client = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
+    redis_client.ping()  # Test connection
+    REDIS_AVAILABLE = True
+except:
+    redis_client = None
+    REDIS_AVAILABLE = False
+
+def _save_context_to_redis(user_id: str, context: Dict):
+    """Save context to Redis for persistence across requests"""
+    if REDIS_AVAILABLE:
+        try:
+            redis_client.setex(f"search_context:{user_id}", 3600, json.dumps(context))  # 1 hour TTL
+        except:
+            pass  # Fallback to in-memory cache
+
+def _get_context_from_redis(user_id: str) -> Dict:
+    """Get context from Redis"""
+    if REDIS_AVAILABLE:
+        try:
+            data = redis_client.get(f"search_context:{user_id}")
+            if data:
+                return json.loads(data)
+        except:
+            pass
+    return {}
+
 from apps.agent_service.validation import (
     validate_player_data, 
     validate_similar_players_data, 
@@ -27,6 +57,25 @@ from apps.agent_service.validation import (
     validate_parameters,
     sanitize_text
 )
+
+# ----------------------------------------------------------------------------
+# Helper utilities (simple language detection for guided messages)
+# ----------------------------------------------------------------------------
+
+def _looks_spanish(text: str) -> bool:
+    """Heurística liviana ES/EN para mensajes guiados."""
+    if not isinstance(text, str):
+        return False
+    t = text.lower()
+    spanish_clues = [
+        " el ", " la ", " los ", " las ", " de ", " del ", " para ", " por ",
+        " jugador", " equipo", " informe", " reporte", " crear", " dame", " buscar",
+        "¿", "¡", "ó", "á", "é", "í", "ú", "ñ",
+    ]
+    return any(clue in t for clue in spanish_clues)
+
+def _msg_locale(user_text: Optional[str], es: str, en: str) -> str:
+    return es if _looks_spanish(user_text or "") else en
 
 
 # --------------------------- 1) Similar Players ----------------------------- #
@@ -375,8 +424,13 @@ def _similar_players_team_fit_table(
     _user_search_contexts["current"] = context_data
     _last_search_context = context_data  # Backup cache
     
+    # Save to Redis for persistence across requests
+    user_id = context.get("user_id", "anon")
+    _save_context_to_redis(user_id, context_data)
+    
     # Debug: print to logs to verify context is being saved
     print(f"DEBUG: Saved search context: {len(candidate_ids)} candidates, base_id={player_id}, target_team={team}")
+    
     
     return {
         "text": title,
@@ -781,19 +835,38 @@ def build_scouting_report(
     if not base_id or not candidate_ids:
         print(f"DEBUG: Looking for cached context. Available keys: {list(_user_search_contexts.keys())}")
         
-        # Try primary cache first
-        if "current" in _user_search_contexts:
-            cached_context = _user_search_contexts["current"]
-            print(f"DEBUG: Found cached context: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
-        # Fallback to backup cache
-        elif _last_search_context:
-            cached_context = _last_search_context
-            print(f"DEBUG: Using backup cache: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
-        else:
-            return {
-                "text": "Error: No previous search context found. Please run similar_players_team_fit_table first.",
-                "attachments": []
-            }
+        # Get user_id from context (passed by agent)
+        user_id = context.get("user_id", "anon") if 'context' in locals() else "anon"
+        
+        # Try Redis first for persistence
+        cached_context = _get_context_from_redis(user_id)
+        
+        # Fallback to in-memory cache
+        if not cached_context:
+            if "current" in _user_search_contexts:
+                cached_context = _user_search_contexts["current"]
+                print(f"DEBUG: Found in-memory context: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
+            elif _last_search_context:
+                cached_context = _last_search_context
+                print(f"DEBUG: Using backup cache: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
+        
+        if not cached_context:
+            # Mensaje guiado localizado (ES/EN) en vez de error técnico
+            es_msg = (
+                "No encuentro el contexto de la última búsqueda (base y candidatos). "
+                "Para continuar puedo: \n"
+                "1) volver a generar la tabla de candidatos (dime el jugador de referencia y el equipo objetivo), o\n"
+                "2) si ya tienes los IDs, indícame 'base_id' y la lista de 'candidate_ids'."
+            )
+            en_msg = (
+                "I can't find the last search context (base and candidates). "
+                "To proceed, I can: \n"
+                "1) regenerate the candidates table (tell me the reference player and the target team), or\n"
+                "2) if you already have them, provide 'base_id' and the list of 'candidate_ids'."
+            )
+            return {"text": _msg_locale(objective, es_msg, en_msg), "attachments": []}
+        
+        print(f"DEBUG: Found cached context for user {user_id}: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
             
         base_id = base_id or cached_context.get("base_id")
         candidate_ids = candidate_ids or cached_context.get("candidate_ids")
@@ -932,6 +1005,67 @@ def compare_stats_table(player1_name: str, player2_name: str) -> str:
             {"type": "table", "html": tabla_html}
         ]
     }
+
+# ---------------------- 4.3) Choose best candidate (no PDF) ----------------- #
+class ChooseBestCandidateInput(BaseModel):
+    objective: Optional[str] = Field(None, description="User objective text to infer language for the response")
+
+def choose_best_candidate(objective: Optional[str] = None) -> dict:
+    """Return the best candidate name and id from cached/Redis context.
+    If context is missing, return a localized guided message.
+    """
+    # Get user_id if passed via LangChain input context
+    user_id = context.get("user_id", "anon") if 'context' in locals() else "anon"
+    cached_context = _get_context_from_redis(user_id) or _user_search_contexts.get("current") or _last_search_context
+    if not cached_context:
+        es_msg = (
+            "No encuentro el contexto de la última búsqueda. "
+            "Primero genera la tabla de candidatos y después podré elegir el mejor (nombre real)."
+        )
+        en_msg = (
+            "I can't find the last search context. "
+            "Please generate the candidates table first and then I will pick the best one (real name)."
+        )
+        return {"text": _msg_locale(objective, es_msg, en_msg)}
+
+    base_id = int(cached_context.get("base_id")) if cached_context.get("base_id") is not None else None
+    candidate_ids = [int(i) for i in cached_context.get("candidate_ids", [])]
+    if not base_id or not candidate_ids:
+        es_msg = "El contexto está incompleto (falta base_id o candidate_ids). Vuelve a generar la tabla, por favor."
+        en_msg = "Context is incomplete (missing base_id or candidate_ids). Please regenerate the candidates table."
+        return {"text": _msg_locale(objective, es_msg, en_msg)}
+
+    # Fetch minimal stats map to get names
+    from apps.dashboard.views import _fetch_stats
+    players_map = _fetch_stats([base_id, *candidate_ids])
+
+    # Compute feasibility + viability from cached candidates_data if available
+    candidates_data = cached_context.get("candidates_data") or []
+    if not candidates_data:
+        # fallback: pick first candidate_id
+        best_id = candidate_ids[0]
+    else:
+        for c in candidates_data:
+            c["feasibility_multiplier"] = _feasibility_multiplier(c, cached_context.get("target_team"))
+            base_si = float(c.get("success_index_v2_1", c.get("success_index", 0)))
+            c["viability_score"] = base_si * c["feasibility_multiplier"]
+        best = sorted(candidates_data, key=lambda x: x.get("viability_score", 0), reverse=True)[0]
+        best_id = int(best.get("id"))
+
+    name = players_map.get(best_id, {}).get("full_name") or str(best_id)
+    es_text = f"Mi recomendación inicial es: {name} (ID {best_id})."
+    en_text = f"My initial recommendation is: {name} (ID {best_id})."
+    return {"text": _msg_locale(objective, es_text, en_text), "chosen_id": best_id, "player_name": name}
+
+choose_best_candidate_tool = StructuredTool.from_function(
+    func=choose_best_candidate,
+    name="choose_best_candidate",
+    description=(
+        "Selects the best candidate from the latest search context and returns the real player name and id. "
+        "If context is missing, returns a guided message to regenerate the table."
+    ),
+    args_schema=ChooseBestCandidateInput,
+)
     
 pizza_chart_tool = StructuredTool.from_function(
     func=pizza_chart,
