@@ -19,6 +19,36 @@ _user_search_contexts: Dict[str, Dict] = {}
 # Alternative: Use a more persistent cache approach
 # Store the last search context in a way that survives between agent calls
 _last_search_context: Dict = {}
+
+# Redis connection for persistent context (optional)
+try:
+    import redis
+    redis_client = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
+    redis_client.ping()  # Test connection
+    REDIS_AVAILABLE = True
+except:
+    redis_client = None
+    REDIS_AVAILABLE = False
+
+def _save_context_to_redis(user_id: str, context: Dict):
+    """Save context to Redis for persistence across requests"""
+    if REDIS_AVAILABLE:
+        try:
+            redis_client.setex(f"search_context:{user_id}", 3600, json.dumps(context))  # 1 hour TTL
+        except:
+            pass  # Fallback to in-memory cache
+
+def _get_context_from_redis(user_id: str) -> Dict:
+    """Get context from Redis"""
+    if REDIS_AVAILABLE:
+        try:
+            data = redis_client.get(f"search_context:{user_id}")
+            if data:
+                return json.loads(data)
+        except:
+            pass
+    return {}
+
 from apps.agent_service.validation import (
     validate_player_data, 
     validate_similar_players_data, 
@@ -375,8 +405,13 @@ def _similar_players_team_fit_table(
     _user_search_contexts["current"] = context_data
     _last_search_context = context_data  # Backup cache
     
+    # Save to Redis for persistence across requests
+    user_id = context.get("user_id", "anon")
+    _save_context_to_redis(user_id, context_data)
+    
     # Debug: print to logs to verify context is being saved
     print(f"DEBUG: Saved search context: {len(candidate_ids)} candidates, base_id={player_id}, target_team={team}")
+    
     
     return {
         "text": title,
@@ -781,19 +816,28 @@ def build_scouting_report(
     if not base_id or not candidate_ids:
         print(f"DEBUG: Looking for cached context. Available keys: {list(_user_search_contexts.keys())}")
         
-        # Try primary cache first
-        if "current" in _user_search_contexts:
-            cached_context = _user_search_contexts["current"]
-            print(f"DEBUG: Found cached context: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
-        # Fallback to backup cache
-        elif _last_search_context:
-            cached_context = _last_search_context
-            print(f"DEBUG: Using backup cache: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
-        else:
+        # Get user_id from context (passed by agent)
+        user_id = context.get("user_id", "anon") if 'context' in locals() else "anon"
+        
+        # Try Redis first for persistence
+        cached_context = _get_context_from_redis(user_id)
+        
+        # Fallback to in-memory cache
+        if not cached_context:
+            if "current" in _user_search_contexts:
+                cached_context = _user_search_contexts["current"]
+                print(f"DEBUG: Found in-memory context: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
+            elif _last_search_context:
+                cached_context = _last_search_context
+                print(f"DEBUG: Using backup cache: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
+        
+        if not cached_context:
             return {
                 "text": "Error: No previous search context found. Please run similar_players_team_fit_table first.",
                 "attachments": []
             }
+        
+        print(f"DEBUG: Found cached context for user {user_id}: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
             
         base_id = base_id or cached_context.get("base_id")
         candidate_ids = candidate_ids or cached_context.get("candidate_ids")

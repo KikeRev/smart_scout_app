@@ -48,6 +48,8 @@ SYSTEM = SystemMessage(
         **FOR PDF REPORTS (INTELLIGENT RECOMMENDATION):**
         1. After calling `similar_players_team_fit_table`, the search context is automatically saved.
         2. When the user asks "create a report with the best candidate", YOU must analyze ALL candidates and decide which one to recommend.
+        3. **CRITICAL**: Always maintain context from previous searches. If the user asks for a report after a search, use the SAME search results that were just displayed.
+        4. **CONTEXT AWARENESS**: If the user asks for a dashboard or report after a search, refer to the previous search results in your response. Don't start a new search unless explicitly requested.
         3. The tool `build_scouting_report` will automatically use the cached search context, so you only need to provide:
            - objective: the scouting objective
            - chosen_id: YOUR RECOMMENDED PLAYER (after feasibility analysis)
