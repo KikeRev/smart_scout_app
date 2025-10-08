@@ -1005,6 +1005,67 @@ def compare_stats_table(player1_name: str, player2_name: str) -> str:
             {"type": "table", "html": tabla_html}
         ]
     }
+
+# ---------------------- 4.3) Choose best candidate (no PDF) ----------------- #
+class ChooseBestCandidateInput(BaseModel):
+    objective: Optional[str] = Field(None, description="User objective text to infer language for the response")
+
+def choose_best_candidate(objective: Optional[str] = None) -> dict:
+    """Return the best candidate name and id from cached/Redis context.
+    If context is missing, return a localized guided message.
+    """
+    # Get user_id if passed via LangChain input context
+    user_id = context.get("user_id", "anon") if 'context' in locals() else "anon"
+    cached_context = _get_context_from_redis(user_id) or _user_search_contexts.get("current") or _last_search_context
+    if not cached_context:
+        es_msg = (
+            "No encuentro el contexto de la última búsqueda. "
+            "Primero genera la tabla de candidatos y después podré elegir el mejor (nombre real)."
+        )
+        en_msg = (
+            "I can't find the last search context. "
+            "Please generate the candidates table first and then I will pick the best one (real name)."
+        )
+        return {"text": _msg_locale(objective, es_msg, en_msg)}
+
+    base_id = int(cached_context.get("base_id")) if cached_context.get("base_id") is not None else None
+    candidate_ids = [int(i) for i in cached_context.get("candidate_ids", [])]
+    if not base_id or not candidate_ids:
+        es_msg = "El contexto está incompleto (falta base_id o candidate_ids). Vuelve a generar la tabla, por favor."
+        en_msg = "Context is incomplete (missing base_id or candidate_ids). Please regenerate the candidates table."
+        return {"text": _msg_locale(objective, es_msg, en_msg)}
+
+    # Fetch minimal stats map to get names
+    from apps.dashboard.views import _fetch_stats
+    players_map = _fetch_stats([base_id, *candidate_ids])
+
+    # Compute feasibility + viability from cached candidates_data if available
+    candidates_data = cached_context.get("candidates_data") or []
+    if not candidates_data:
+        # fallback: pick first candidate_id
+        best_id = candidate_ids[0]
+    else:
+        for c in candidates_data:
+            c["feasibility_multiplier"] = _feasibility_multiplier(c, cached_context.get("target_team"))
+            base_si = float(c.get("success_index_v2_1", c.get("success_index", 0)))
+            c["viability_score"] = base_si * c["feasibility_multiplier"]
+        best = sorted(candidates_data, key=lambda x: x.get("viability_score", 0), reverse=True)[0]
+        best_id = int(best.get("id"))
+
+    name = players_map.get(best_id, {}).get("full_name") or str(best_id)
+    es_text = f"Mi recomendación inicial es: {name} (ID {best_id})."
+    en_text = f"My initial recommendation is: {name} (ID {best_id})."
+    return {"text": _msg_locale(objective, es_text, en_text), "chosen_id": best_id, "player_name": name}
+
+choose_best_candidate_tool = StructuredTool.from_function(
+    func=choose_best_candidate,
+    name="choose_best_candidate",
+    description=(
+        "Selects the best candidate from the latest search context and returns the real player name and id. "
+        "If context is missing, returns a guided message to regenerate the table."
+    ),
+    args_schema=ChooseBestCandidateInput,
+)
     
 pizza_chart_tool = StructuredTool.from_function(
     func=pizza_chart,
