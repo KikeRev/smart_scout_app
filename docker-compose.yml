@@ -15,7 +15,7 @@ services:
       dockerfile: Dockerfile
     container_name: scouting-api
     command: >-
-      uvicorn apps.agent_service.main:app --host 0.0.0.0 --port 8001 --reload
+      uvicorn apps.agent_service.main:app --host 0.0.0.0 --port 8001
     volumes:
       - ./:/app 
       - ./media:/app/media
