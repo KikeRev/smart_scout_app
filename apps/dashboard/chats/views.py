@@ -215,7 +215,10 @@ def chat_message(request, pk):
     )
 
     # ---------- 2) AGENT ----------
-    raw = agent.invoke({"input": text_in})["output"]
+    raw = agent.invoke({
+        "input": text_in,
+        "user_id": str(request.user.id),  # pass user_id so tools can use Redis context
+    })["output"]
     
     # ─── Get TAO events for transparency ───
     tao_events_markdown = ""
