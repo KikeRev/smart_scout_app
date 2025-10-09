@@ -202,12 +202,25 @@ def chat_message(request, pk):
     if not text_in:
         return HttpResponse(status=204)
 
+    # Detect user language (simple heuristic based on Spanish keywords)
+    spanish_keywords = ["busca", "genera", "crea", "dame", "encuentra", "muestra", "compara", "analiza"]
+    language = "es" if any(word in text_in.lower() for word in spanish_keywords) else "en"
+
     # ---------- 1) memory ----------
     past_msgs = session.messages.order_by("created_at")
-    agent = build_agent(user_id=str(request.user.id), messages=past_msgs)
+    agent = build_agent(
+        user_id=str(request.user.id), 
+        messages=past_msgs,
+        language=language
+    )
 
     # ---------- 2) AGENT ----------
     raw = agent.invoke({"input": text_in})["output"]
+    
+    # ─── Get TAO events for transparency ───
+    tao_events_html = ""
+    if hasattr(agent, '_tao_callback'):
+        tao_events_html = agent._tao_callback.get_events_html()
 
     # ­—— detect posible redirect (dashboard_inline) -------------
     redirect_url = raw.get("url") if isinstance(raw, dict) else None
@@ -218,6 +231,10 @@ def chat_message(request, pk):
     else:                                    # fallback
         answer_text = str(raw)
         attachments = []
+    
+    # ─── Prepend TAO events to answer for transparency ───
+    if tao_events_html:
+        answer_text = tao_events_html + "\n\n" + answer_text
 
     # ---------- 3) PERSISTENCE ----------
     m_user, m_bot = Message.objects.bulk_create([

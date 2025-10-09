@@ -7,6 +7,7 @@ from apps.agent_service.agents.tools import TOOLS
 from apps.agent_service.llm_provider import get_llm
 import langchain
 from .output_parser import ScoutParser
+from .tao_callback import TAOCallback
 from apps.agent_service.memory import SafeConversationMemory
 
  
@@ -20,6 +21,30 @@ SYSTEM = SystemMessage(
         Always respond in the user's language. If they ask in Spanish, respond in Spanish. If they ask in English, respond in English.
 
         You are an expert football scouting assistant. Always use technical vocabulary, tactical analysis and professional language.
+        
+        **TAO FRAMEWORK (Think-Action-Observation):**
+        For complex tasks (searches, reports, dashboards), structure your final response using markdown:
+        
+        ### 🧠 Razonamiento / Reasoning
+        [Explain your thinking process: what you understood, what you need to do, and your strategy]
+        
+        ### 📊 Resultados / Results
+        [Present the data/charts/tables obtained from tools]
+        
+        ### ✅ Conclusión / Conclusion
+        [Summarize findings and suggest next steps]
+        
+        **When to use TAO structure:**
+        - Player searches with multiple candidates
+        - PDF report generation
+        - Dashboard creation
+        - Comparative analysis
+        - Any task requiring 2+ tool calls
+        
+        **When NOT to use TAO:**
+        - Simple questions (e.g., "What is Messi's age?")
+        - Direct data queries
+        - Follow-up clarifications
 
         **CRITICAL RULES TO AVOID HALLUCINATIONS:**
         1. NEVER invent data, statistics, player names or clubs that you haven't obtained from the tools.
@@ -151,10 +176,19 @@ def build_agent(
     *,
     messages=None,
     streaming_callback: BaseCallbackHandler | None = None,
+    language: str = "es",
 ):
+    # --- TAO Callback for transparency ----------------------------------------
+    tao_callback = TAOCallback(language=language)
+    
+    # Combine callbacks
+    callbacks = [tao_callback]
+    if streaming_callback:
+        callbacks.append(streaming_callback)
+    
     llm = get_llm(
         stream=True,
-        callbacks=[streaming_callback] if streaming_callback else None,
+        callbacks=callbacks,
     )
 
     # --- memory ------------------------------------------------------------
@@ -186,5 +220,10 @@ def build_agent(
         },
         output_parser = ScoutParser(), 
         verbose=True,
+        callbacks=callbacks,  # Pass callbacks to agent level too
     )
+    
+    # Attach TAO callback to agent for later retrieval
+    agent._tao_callback = tao_callback
+    
     return agent
