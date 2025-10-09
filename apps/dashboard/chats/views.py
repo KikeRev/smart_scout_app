@@ -141,6 +141,12 @@ def chat_stream(request, pk):
     # Agent execution in background thread
     def run_agent():
         from apps.agent_service.agents.tao_callback import TAOCallback
+        from apps.agent_service.agents.tools import set_current_user_id
+        
+        # Set user_id in thread-local storage so tools can access it
+        user_id = str(request.user.id)
+        set_current_user_id(user_id)
+        print(f"[DJANGO DEBUG] Set thread-local user_id: {user_id}")
         
         # Create TAO callback with event queue
         tao_callback = TAOCallback(language=language)
@@ -151,7 +157,7 @@ def chat_stream(request, pk):
         
         past_msgs = session.messages.order_by("created_at")
         agent = build_agent(
-            user_id=str(request.user.id),
+            user_id=user_id,
             messages=past_msgs,
             language=language,
             callbacks=[tao_callback]  # Pass TAO callback explicitly
@@ -163,7 +169,7 @@ def chat_stream(request, pk):
         raw = agent.invoke(
             {
                 "input": text_in,
-                "user_id": str(request.user.id),
+                "user_id": user_id,
             },
             config={"callbacks": [tao_callback]}  # Pass callbacks in invoke config
         )["output"]

@@ -3,7 +3,7 @@ from langchain_core.messages import SystemMessage
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.schema import HumanMessage, AIMessage
 from langchain.prompts.chat import MessagesPlaceholder
-from apps.agent_service.agents.tools import TOOLS
+from apps.agent_service.agents.tools import TOOLS, set_current_user_id
 from apps.agent_service.llm_provider import get_llm
 import langchain
 from .output_parser import ScoutParser
@@ -94,9 +94,13 @@ SYSTEM = SystemMessage(
         1. Use `player_lookup` to get the `player_id` of the reference player.
         2. Validate that the player exists before continuing.
         3. If the user specifies a target team (e.g., "similar to X for team Y"), use `similar_players_team_fit_table`.
-           - The tool automatically stores the search context (base_id, candidate_ids, target_team)
-           - Display the returned HTML table to the user
-        4. After displaying the table, inform the user they can request a PDF report with any candidate from the list.
+           - CRITICAL: ALWAYS pass user_id parameter to save context correctly
+           - The tool automatically stores the search context (base_id, candidate_ids, target_team) in Redis using user_id
+           - The tool returns a properly formatted response with 'text' and 'attachments'
+           - Return the EXACT output from the tool without any modification or additional text
+           - After displaying the table, the user can request a dashboard or PDF report
+        4. If the user then asks for a dashboard or report, you MUST call the corresponding tool (dashboard_inline or build_scouting_report)
+           - CRITICAL: ALWAYS pass user_id parameter to retrieve context from Redis
 
         **FOR VISUALIZATIONS:**
         - First use `player_stats` to get statistical data.

@@ -10,11 +10,26 @@ from apps.agent_service.report_pdf import build_report_pdf
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from apps.agent_service.llm_provider import get_llm
+import threading
 
 # Global cache for last search context (simple in-memory storage)
 # This allows build_scouting_report to access the last search metadata
 # Key: user_id, Value: search context
 _user_search_contexts: Dict[str, Dict] = {}
+
+# Thread-local storage for current user_id
+_thread_local = threading.local()
+
+def set_current_user_id(user_id: str):
+    """Set the current user_id in thread-local storage"""
+    _thread_local.user_id = user_id
+    print(f"[THREAD DEBUG] Set user_id in thread-local: {user_id}")
+
+def get_current_user_id() -> str:
+    """Get the current user_id from thread-local storage"""
+    user_id = getattr(_thread_local, 'user_id', 'anon')
+    print(f"[THREAD DEBUG] Retrieved user_id from thread-local: {user_id}")
+    return user_id
 
 # Alternative: Use a more persistent cache approach
 # Store the last search context in a way that survives between agent calls
@@ -32,20 +47,29 @@ except:
 
 def _save_context_to_redis(user_id: str, context: Dict):
     """Save context to Redis for persistence across requests"""
+    print(f"[REDIS DEBUG] Saving context for user {user_id}: {context}")
     if REDIS_AVAILABLE:
         try:
             redis_client.setex(f"search_context:{user_id}", 3600, json.dumps(context))  # 1 hour TTL
-        except:
+            print(f"[REDIS DEBUG] Successfully saved to Redis")
+        except Exception as e:
+            print(f"[REDIS DEBUG] Failed to save: {e}")
             pass  # Fallback to in-memory cache
 
 def _get_context_from_redis(user_id: str) -> Dict:
     """Get context from Redis"""
+    print(f"[REDIS DEBUG] Retrieving context for user {user_id}")
     if REDIS_AVAILABLE:
         try:
             data = redis_client.get(f"search_context:{user_id}")
             if data:
-                return json.loads(data)
-        except:
+                context = json.loads(data)
+                print(f"[REDIS DEBUG] Retrieved from Redis: {context}")
+                return context
+            else:
+                print(f"[REDIS DEBUG] No data found in Redis")
+        except Exception as e:
+            print(f"[REDIS DEBUG] Failed to retrieve: {e}")
             pass
     return {}
 
@@ -137,6 +161,7 @@ class SimilarPlayersTeamFitInput(BaseModel):
     max_age: int = Field(45, description="Maximum age")
     exclude_club: Optional[str] = Field(None, description="Clubs to exclude (comma-separated)")
     overall_weight: float = Field(0.5, description="Weight for overall similarity in success index (0..1)")
+    user_id: Optional[str] = Field(None, description="User ID to save context to Redis")
 
 def _similar_players_team_fit(
     player_id: int,
@@ -187,6 +212,7 @@ def _similar_players_team_fit_table(
     max_age: int = 45,
     exclude_club: Optional[str] = None,
     overall_weight: float = 0.5,
+    user_id: Optional[str] = None,
 ):
     """
     Calls the team-fit endpoint and returns an HTML table with ordered results
@@ -425,8 +451,9 @@ def _similar_players_team_fit_table(
     _last_search_context = context_data  # Backup cache
     
     # Save to Redis for persistence across requests
-    user_id = context.get("user_id", "anon")
-    _save_context_to_redis(user_id, context_data)
+    # Use thread-local user_id if not explicitly provided
+    effective_user_id = user_id or get_current_user_id()
+    _save_context_to_redis(effective_user_id, context_data)
     
     # Debug: print to logs to verify context is being saved
     print(f"DEBUG: Saved search context: {len(candidate_ids)} candidates, base_id={player_id}, target_team={team}")
@@ -444,11 +471,13 @@ similar_players_team_fit_table_tool = StructuredTool.from_function(
     description=(
         "Same as similar_players_team_fit but returns a compact HTML table "
         "sorted by success_index, ideal for chat display or copy to report. "
-        "Also stores search context (base_id, candidate_ids, target_team) for later report generation."
+        "CRITICAL: ALWAYS pass user_id parameter - this tool stores search context (base_id, candidate_ids, target_team) "
+        "in Redis using user_id for persistence. After this tool completes, the user can request 'dashboard' or 'PDF report' "
+        "in their NEXT message, and those tools will automatically retrieve the stored context using the same user_id."
     ),
     func=_similar_players_team_fit_table,
     args_schema=SimilarPlayersTeamFitInput,
-    return_direct=True          # Back to True to display table correctly
+    return_direct=True  # Must be True to display table correctly in chat
 )
 
 
@@ -698,6 +727,7 @@ class BuildScoutingReportInput(BaseModel):
     pros: Optional[List[str]] = Field(None, description="List of player advantages (optional)")
     cons: Optional[List[str]] = Field(None, description="List of player disadvantages or risks (optional)")
     target_team: Optional[str] = Field(None, description="If provided, compute success_index vs team-position cohort and include it in the recommendation context")
+    user_id: Optional[str] = Field(None, description="User ID to retrieve cached context from Redis")
 
 def generate_recommendation_with_news(
     chosen_id: int,
@@ -828,6 +858,7 @@ def build_scouting_report(
     pros: Optional[List[str]] = None,
     cons: Optional[List[str]] = None,
     target_team: Optional[str] = None,
+    user_id: Optional[str] = None,
 ) -> dict:
     global _user_search_contexts
     
@@ -835,11 +866,11 @@ def build_scouting_report(
     if not base_id or not candidate_ids:
         print(f"DEBUG: Looking for cached context. Available keys: {list(_user_search_contexts.keys())}")
         
-        # Get user_id from context (passed by agent)
-        user_id = context.get("user_id", "anon") if 'context' in locals() else "anon"
+        # Use thread-local user_id if not explicitly provided
+        effective_user_id = user_id or get_current_user_id()
         
         # Try Redis first for persistence
-        cached_context = _get_context_from_redis(user_id)
+        cached_context = _get_context_from_redis(effective_user_id)
         
         # Fallback to in-memory cache
         if not cached_context:
@@ -1009,14 +1040,15 @@ def compare_stats_table(player1_name: str, player2_name: str) -> str:
 # ---------------------- 4.3) Choose best candidate (no PDF) ----------------- #
 class ChooseBestCandidateInput(BaseModel):
     objective: Optional[str] = Field(None, description="User objective text to infer language for the response")
+    user_id: Optional[str] = Field(None, description="User ID to retrieve cached context from Redis")
 
-def choose_best_candidate(objective: Optional[str] = None) -> dict:
+def choose_best_candidate(objective: Optional[str] = None, user_id: Optional[str] = None) -> dict:
     """Return the best candidate name and id from cached/Redis context.
     If context is missing, return a localized guided message.
     """
-    # Get user_id if passed via LangChain input context
-    user_id = context.get("user_id", "anon") if 'context' in locals() else "anon"
-    cached_context = _get_context_from_redis(user_id) or _user_search_contexts.get("current") or _last_search_context
+    # Use thread-local user_id if not explicitly provided
+    effective_user_id = user_id or get_current_user_id()
+    cached_context = _get_context_from_redis(effective_user_id) or _user_search_contexts.get("current") or _last_search_context
     if not cached_context:
         es_msg = (
             "No encuentro el contexto de la última búsqueda. "
@@ -1141,22 +1173,30 @@ def _dashboard_inline_with_context(
     """Wrapper that defaults to the latest candidate list from cache if not provided."""
     global _user_search_contexts, _last_search_context
     
+    print(f"[DASHBOARD DEBUG] Called with base_player_id={base_player_id}, candidate_ids={candidate_ids}, user_id={user_id}")
+    
     if (not base_player_id or not candidate_ids):
         ctx = {}
         
+        # Use thread-local user_id if not explicitly provided
+        effective_user_id = user_id or get_current_user_id()
+        
         # Try Redis first (persistent across requests)
-        if user_id:
-            ctx = _get_context_from_redis(user_id) or {}
+        ctx = _get_context_from_redis(effective_user_id) or {}
+        print(f"[DASHBOARD DEBUG] Retrieved from Redis for user {effective_user_id}: {ctx}")
         
         # Fallback to primary cache
         if not ctx and "current" in _user_search_contexts:
             ctx = _user_search_contexts["current"]
+            print(f"[DASHBOARD DEBUG] Using primary cache: {ctx}")
         # Fallback to backup cache
         elif not ctx and _last_search_context:
             ctx = _last_search_context
+            print(f"[DASHBOARD DEBUG] Using backup cache: {ctx}")
             
         base_player_id = base_player_id or ctx.get("base_id")
         candidate_ids = candidate_ids or ctx.get("candidate_ids")
+        print(f"[DASHBOARD DEBUG] Final IDs - base: {base_player_id}, candidates: {candidate_ids}")
         
     # Safety: ensure list of ints
     candidate_ids = [int(i) for i in (candidate_ids or []) if isinstance(i, (int, float))]
@@ -1182,8 +1222,8 @@ dashboard_inline_tool = StructuredTool.from_function(
     name="dashboard_inline",
     description=(
         "Generates an interactive dashboard with the base player and candidates. "
-        "If no candidate_ids/base_id are provided, uses the latest recommendation list from this chat session. "
-        "IMPORTANT: Always pass user_id to retrieve cached context from previous searches."
+        "If no candidate_ids/base_id are provided, uses the latest recommendation list from Redis. "
+        "CRITICAL: ALWAYS pass user_id parameter to retrieve cached context from previous searches in Redis."
     ),
     args_schema=DashboardInlineInput,
     return_direct=True  # Return directly - already in correct format with text + attachments

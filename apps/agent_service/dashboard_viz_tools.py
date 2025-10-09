@@ -504,7 +504,7 @@ def dashboard_radar_comparison(players_data: List[dict], selected_metrics: List[
             color = colors[i % len(colors)]
             
             radar_output = radar.draw_radar(vals_arr, ax=axs['radar'],
-                                            kwargs_radar={'facecolor': color, 'alpha': 0.8},
+                                            kwargs_radar={'facecolor': color, 'alpha': 0.9-((i/10)*3)},
                                             kwargs_rings={'facecolor': '#e0e0e0', 'alpha': 0.4})
             radar_poly, rings_outer, vertices = radar_output
             
