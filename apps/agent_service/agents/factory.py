@@ -213,18 +213,27 @@ def build_agent(
     messages=None,
     streaming_callback: BaseCallbackHandler | None = None,
     language: str = "es",
+    callbacks: list = None,  # Allow external callbacks
 ):
     # --- TAO Callback for transparency ----------------------------------------
-    tao_callback = TAOCallback(language=language)
-    
-    # Combine callbacks
-    callbacks = [tao_callback]
-    if streaming_callback:
-        callbacks.append(streaming_callback)
+    # If external callbacks are provided (e.g., from Django), use them
+    # Otherwise, create a default TAO callback
+    if callbacks:
+        # External callbacks provided (e.g., from Django streaming)
+        # Don't create a duplicate TAO callback
+        final_callbacks = callbacks.copy()
+        # Find the TAO callback if it exists
+        tao_callback = next((cb for cb in callbacks if isinstance(cb, TAOCallback)), None)
+    else:
+        # No external callbacks - create default TAO callback (for FastAPI)
+        tao_callback = TAOCallback(language=language, stream_callback=streaming_callback)
+        final_callbacks = [tao_callback]
+        if streaming_callback:
+            final_callbacks.append(streaming_callback)
     
     llm = get_llm(
         stream=True,
-        callbacks=callbacks,
+        callbacks=final_callbacks,
     )
 
     # --- memory ------------------------------------------------------------
@@ -256,10 +265,11 @@ def build_agent(
         },
         output_parser = ScoutParser(), 
         verbose=True,
-        callbacks=callbacks,  # Pass callbacks to agent level too
+        callbacks=final_callbacks,  # Pass callbacks to agent level too
     )
     
-    # Attach TAO callback to agent for later retrieval
-    agent._tao_callback = tao_callback
+    # Attach TAO callback to agent for later retrieval (if it exists)
+    if tao_callback:
+        agent._tao_callback = tao_callback
     
     return agent

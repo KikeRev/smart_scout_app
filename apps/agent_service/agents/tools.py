@@ -1127,30 +1127,66 @@ build_report_pdf_tool = StructuredTool.from_function(
     return_direct=True          #  <<–– Important: allows returning the table directly to the chat
 )
 
-def _dashboard_inline_with_context(base_player_id: Optional[int] = None, candidate_ids: Optional[List[int]] = None) -> dict:
+class DashboardInlineInput(BaseModel):
+    """Input for dashboard inline. Both parameters are optional - will use cached context if not provided."""
+    base_player_id: Optional[int] = Field(None, description="ID of the base/reference player")
+    candidate_ids: Optional[List[int]] = Field(None, description="List of candidate player IDs to compare")
+    user_id: Optional[str] = Field(None, description="User ID to retrieve cached context from Redis")
+
+def _dashboard_inline_with_context(
+    base_player_id: Optional[int] = None, 
+    candidate_ids: Optional[List[int]] = None,
+    user_id: Optional[str] = None
+) -> dict:
     """Wrapper that defaults to the latest candidate list from cache if not provided."""
     global _user_search_contexts, _last_search_context
+    
     if (not base_player_id or not candidate_ids):
-        # Try primary cache first
-        if "current" in _user_search_contexts:
+        ctx = {}
+        
+        # Try Redis first (persistent across requests)
+        if user_id:
+            ctx = _get_context_from_redis(user_id) or {}
+        
+        # Fallback to primary cache
+        if not ctx and "current" in _user_search_contexts:
             ctx = _user_search_contexts["current"]
         # Fallback to backup cache
-        elif _last_search_context:
+        elif not ctx and _last_search_context:
             ctx = _last_search_context
-        else:
-            ctx = {}
             
         base_player_id = base_player_id or ctx.get("base_id")
         candidate_ids = candidate_ids or ctx.get("candidate_ids")
+        
     # Safety: ensure list of ints
     candidate_ids = [int(i) for i in (candidate_ids or []) if isinstance(i, (int, float))]
-    return dashboard_inline(base_player_id, candidate_ids)
+    
+    # Get the URL from dashboard_inline
+    result = dashboard_inline(base_player_id, candidate_ids)
+    dashboard_url = result.get("url", "")
+    
+    # Return in the format expected by ScoutParser (text + attachments)
+    return {
+        "text": "I have created an interactive dashboard with comparative analysis. Click the button below to explore the data.",
+        "attachments": [
+            {
+                "type": "url",
+                "url": dashboard_url,
+                "title": "View Dashboard"
+            }
+        ]
+    }
 
 dashboard_inline_tool = StructuredTool.from_function(
     func=_dashboard_inline_with_context,
     name="dashboard_inline",
-    description="Generates an interactive dashboard with the base player and candidates. If no candidate_ids/base_id are provided, uses the latest recommendation list from this chat session.",
-    return_direct=True
+    description=(
+        "Generates an interactive dashboard with the base player and candidates. "
+        "If no candidate_ids/base_id are provided, uses the latest recommendation list from this chat session. "
+        "IMPORTANT: Always pass user_id to retrieve cached context from previous searches."
+    ),
+    args_schema=DashboardInlineInput,
+    return_direct=True  # Return directly - already in correct format with text + attachments
 )
 
 build_scouting_report_tool = StructuredTool.from_function(

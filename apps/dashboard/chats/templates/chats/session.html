@@ -59,15 +59,7 @@
           {% endif %}
         </div>
 
-        <form id="chat-form"
-              hx-post="{% url 'chats:message' session.id %}"
-              hx-target="#chat-log"
-              hx-swap="beforeend"       
-              hx-trigger="submit"
-              hx-include="#chat-input"
-              hx-vals='{"hx-skip-ci":true}'
-              hx-indicator="#thinking-indicator"
-              class="chat-form">
+        <form id="chat-form" class="chat-form">
           {% csrf_token %}
 
           <div class="chat-input-container">
@@ -85,7 +77,7 @@
 
           <div id="thinking-indicator" class="thinking-indicator">
                 <div class="spinner"></div>
-                <span>Thinking…</span>
+                <span id="thinking-text">Thinking…</span>
           </div>
 
         </form>
@@ -143,6 +135,91 @@
       scrollChatToBottom();
     }
   });
+
+  // SSE streaming for real-time TAO events
+  (function() {
+    const form = document.getElementById('chat-form');
+    const thinking = document.getElementById('thinking-indicator');
+    const thinkingText = document.getElementById('thinking-text');
+    const chatLog = document.getElementById('chat-log');
+    
+    if (!form || !thinking || !thinkingText || !chatLog) return;
+    
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const message = formData.get('text');
+      
+      if (!message || !message.trim()) return;
+      
+      // Show spinner
+      thinking.style.display = 'flex';
+      thinkingText.textContent = 'Thinking...';
+      
+      // Clear textarea
+      form.querySelector('textarea').value = '';
+      
+      try {
+        // Send via fetch to get SSE stream
+        const response = await fetch('{% url "chats:chat_stream" session.id %}', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+          }
+        });
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        
+        while (true) {
+          const {value, done} = await reader.read();
+          if (done) break;
+          
+          buffer += decoder.decode(value, {stream: true});
+          const lines = buffer.split('\n\n');
+          buffer = lines.pop();
+          
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            
+            const parts = line.split('\n');
+            let eventType = 'message';
+            let eventData = '';
+            
+            for (const part of parts) {
+              if (part.startsWith('event:')) {
+                eventType = part.slice(6).trim();
+              } else if (part.startsWith('data:')) {
+                eventData = part.slice(5).trim();
+              }
+            }
+            
+            if (eventType === 'tao') {
+              // Update spinner text with TAO event
+              thinkingText.textContent = eventData;
+            } else if (eventType === 'done') {
+              // Parse and insert final HTML
+              const data = JSON.parse(eventData);
+              if (data.html) {
+                chatLog.insertAdjacentHTML('beforeend', data.html);
+                scrollChatToBottom();
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error en streaming:', error);
+        thinkingText.textContent = 'Error al procesar la solicitud';
+      } finally {
+        // Hide spinner
+        thinking.style.display = 'none';
+        thinkingText.textContent = '';
+      }
+    });
+  })();
 </script>
 {% endblock %}
 

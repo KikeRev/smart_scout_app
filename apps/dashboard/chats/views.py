@@ -119,79 +119,115 @@ def chat_api(request):
     return JsonResponse({"session_id": session.id, "answer": answer})
 
 
-# --------------------------------------------------------------------------- #
-#  2)  /chat – streaming (Server‑Sent Events)
-# --------------------------------------------------------------------------- #
 @login_required
-@csrf_exempt
-@transaction.atomic
-def chat_stream(request):
-    data  = json.loads(request.body)
-    text  = data["message"].strip()
-    user  = request.user
-
-    # 1. session (create or retrieve)
-    session_id = data.get("session_id")
-    if session_id:
-        session = ChatSession.objects.select_for_update().get(id=session_id, user=user)
-    else:
-        session = ChatSession.objects.create(user=user)
-
-    # 2. Save the user's turn (✔ once)
-    Message.objects.create(session=session, role="user", content=text)
-
-    # 3. History for the agent
-    past = session.messages.order_by("-created_at")[:20][::-1]
-    history = [
-        {"role": "user" if m.role == "user" else "assistant", "content": m.content}
-        for m in past
-    ]
-
-    # 4. SSE generator
-    def event_stream():
-        payload = {
-            "session_id": str(session.id),
-            "user_id":    str(user.id),
-            "message":    text,
-            "messages":   history,
-            "stream":     True,
+def chat_stream(request, pk):
+    """SSE streaming endpoint for real-time TAO events"""
+    import threading
+    import queue as queue_module
+    
+    session = get_object_or_404(ChatSession, pk=pk, user=request.user)
+    text_in = request.POST.get("text", "").strip()
+    
+    if not text_in:
+        return HttpResponse(status=204)
+    
+    # Detect language
+    spanish_keywords = ["busca", "genera", "crea", "dame", "encuentra", "muestra", "compara", "analiza"]
+    language = "es" if any(word in text_in.lower() for word in spanish_keywords) else "en"
+    
+    # Queue for TAO events
+    tao_queue = queue_module.Queue()
+    
+    # Agent execution in background thread
+    def run_agent():
+        from apps.agent_service.agents.tao_callback import TAOCallback
+        
+        # Create TAO callback with event queue
+        tao_callback = TAOCallback(language=language)
+        tao_callback.event_queue = tao_queue
+        
+        print(f"[DJANGO DEBUG] Created TAO callback: {tao_callback}")
+        print(f"[DJANGO DEBUG] Event queue assigned: {tao_queue}")
+        
+        past_msgs = session.messages.order_by("created_at")
+        agent = build_agent(
+            user_id=str(request.user.id),
+            messages=past_msgs,
+            language=language,
+            callbacks=[tao_callback]  # Pass TAO callback explicitly
+        )
+        
+        print(f"[DJANGO DEBUG] Agent built, has callbacks: {hasattr(agent, 'callbacks')}")
+        
+        # Execute agent with callbacks in config
+        raw = agent.invoke(
+            {
+                "input": text_in,
+                "user_id": str(request.user.id),
+            },
+            config={"callbacks": [tao_callback]}  # Pass callbacks in invoke config
+        )["output"]
+        
+        # Signal completion with result
+        tao_queue.put({"type": "done", "result": raw})
+    
+    # Start agent thread
+    thread = threading.Thread(target=run_agent)
+    thread.start()
+    
+    def event_generator():
+        from django.template.loader import render_to_string
+        
+        while True:
+            event = tao_queue.get()
+            
+            if event["type"] == "tao":
+                # Emit TAO event
+                yield f"event: tao\ndata: {event['message']}\n\n"
+            
+            elif event["type"] == "done":
+                # Process final result
+                raw = event["result"]
+                
+                if isinstance(raw, dict):
+                    answer_text = raw.get("text", "")
+                    attachments = raw.get("attachments", [])
+                else:
+                    answer_text = str(raw)
+                    attachments = []
+                
+                # Save messages
+                with transaction.atomic():
+                    m_user = Message.objects.create(session=session, role="user", content=text_in)
+                    m_bot = Message.objects.create(
+                        session=session,
+                        role="assistant",
+                        content=answer_text,
+                        meta=attachments
+                    )
+                    
+                    if not session.title:
+                        session.title = answer_text.split("\n", 1)[0][:100]
+                        session.save(update_fields=["title"])
+                
+                # Render HTML
+                user_html = render_to_string("chats/_message.html", {"m": m_user}, request=request)
+                bot_html = render_to_string("chats/_message.html", {"m": m_bot}, request=request)
+                final_html = user_html + bot_html
+                
+                # Send done event
+                import json
+                yield f"event: done\ndata: {json.dumps({'html': final_html})}\n\n"
+                break
+    
+    return StreamingHttpResponse(
+        event_generator(),
+        content_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
         }
-        with requests.post(
-            f"{FASTAPI}/chat/",
-            json=payload,
-            timeout=300,
-            stream=True,
-        ) as r:
-            r.raise_for_status()
-            assistant_chunks = []
-
-            for raw in r.iter_lines(decode_unicode=True):
-                if not raw:
-                    continue
-                obj   = json.loads(raw)
-                delta = obj.get("content", "")
-                assistant_chunks.append(delta)
-                yield f"data: {delta}\n\n"      # send token to the browser
-
-            full_answer = "".join(assistant_chunks)
-
-        # 5. Save the complete answer
-        Message.objects.create(session=session, role="assistant", content=full_answer)
-
-        # 6. Automatic title
-        if not session.title:
-            session.title = full_answer.split("\n", 1)[0][:100]
-            session.save(update_fields=["title"])
-
-        # 7. Mark end of stream
-        yield f"event: done\ndata: {json.dumps({'session_id': session.id})}\n\n"
-
-    headers = {
-        "Content-Type":      "text/event-stream",
-        "Cache-Control":     "no-cache",
-        "X-Accel-Buffering": "no",
-    }
-    return StreamingHttpResponse(event_stream(), headers=headers)
+    )
 
 @login_required
 @transaction.atomic

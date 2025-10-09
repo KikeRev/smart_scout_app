@@ -50,10 +50,17 @@ class QueueStreamCallback(BaseCallbackHandler):
 
     # ---------- LangChain ----------
     def on_llm_new_token(self, token: str, **_):      # noqa: D401
-        self._q.put(token)
+        import json
+        self._q.put(json.dumps({"content": token}))
 
     def on_llm_end(self, *_, **__):
         self._q.put(None)            # sentinel => end
+
+    # ---------- custom TAO emitter ----------
+    def emit_tao(self, message: str):
+        """External components (like TAOCallback) can push TAO events here."""
+        import json
+        self._q.put(json.dumps({"tao": message}))
 
     # ---------- async iterator ----------
     async def token_iter(self):
@@ -95,14 +102,29 @@ async def chat_stream(req: ChatRequest):
         streaming_callback=callback,
     )
 
-    # launch LLM in background to avoid blocking
-    async with anyio.create_task_group() as tg:
-        input_data = {"input": req.message, "user_id": req.user_id or "anon"}
-        tg.start_soon(anyio.to_thread.run_sync, agent.invoke, input_data)
-
     async def event_generator():
-        async for tok in callback.token_iter():
-            yield f"data: {tok}\n\n"
+        import json as _json
+        
+        # Start agent execution in background task
+        async def run_agent():
+            input_data = {"input": req.message, "user_id": req.user_id or "anon"}
+            await anyio.to_thread.run_sync(agent.invoke, input_data)
+        
+        # Run agent and stream events concurrently
+        async with anyio.create_task_group() as tg:
+            tg.start_soon(run_agent)
+            
+            # Stream events as they arrive from the queue
+            async for raw in callback.token_iter():
+                try:
+                    obj = _json.loads(raw)
+                except Exception:
+                    yield f"data: {raw}\n\n"
+                    continue
+                if "tao" in obj:
+                    yield f"event: tao\ndata: {obj['tao']}\n\n"
+                elif "content" in obj:
+                    yield f"data: {obj['content']}\n\n"
 
     return StreamingResponse(event_generator(),
                              media_type="text/event-stream")

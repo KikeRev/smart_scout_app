@@ -35,9 +35,17 @@
             {% elif att.type == "table" %}
                 {{ att.html|safe }}
             {% elif att.type == "file" %}
-                <a href="{{ att.url }}" target="_blank" class="btn btn-download my-2">
-                    📄 {{ att.title|default:"Download file" }}
-                </a>
+                <div class="mt-3 mb-2">
+                    <a href="{{ att.url }}" target="_blank" class="btn btn-download">
+                        📄 {{ att.title|default:"Download file" }}
+                    </a>
+                </div>
+            {% elif att.type == "url" %}
+                <div class="mt-3 mb-2">
+                    <a href="{{ att.url }}" target="_blank" class="btn btn-download">
+                        📊 {{ att.title|default:"Open Link" }}
+                    </a>
+                </div>
             {% endif %}
         {% endfor %}
     {% endif %}
