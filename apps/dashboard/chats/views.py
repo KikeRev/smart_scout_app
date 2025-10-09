@@ -218,9 +218,9 @@ def chat_message(request, pk):
     raw = agent.invoke({"input": text_in})["output"]
     
     # ─── Get TAO events for transparency ───
-    tao_events_html = ""
+    tao_events_markdown = ""
     if hasattr(agent, '_tao_callback'):
-        tao_events_html = agent._tao_callback.get_events_html()
+        tao_events_markdown = agent._tao_callback.get_events_markdown()
 
     # ­—— detect posible redirect (dashboard_inline) -------------
     redirect_url = raw.get("url") if isinstance(raw, dict) else None
@@ -233,8 +233,8 @@ def chat_message(request, pk):
         attachments = []
     
     # ─── Prepend TAO events to answer for transparency ───
-    if tao_events_html:
-        answer_text = tao_events_html + "\n\n" + answer_text
+    if tao_events_markdown:
+        answer_text = tao_events_markdown + "\n\n" + answer_text
 
     # ---------- 3) PERSISTENCE ----------
     m_user, m_bot = Message.objects.bulk_create([

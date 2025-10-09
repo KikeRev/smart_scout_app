@@ -18,8 +18,40 @@ body, h1, h2, h3, h4, h5, h6, .btn, .card {
 }
 
 /* ==========================================================================
-   TAO Events - Agent Transparency
+   TAO Events - Agent Transparency (Blockquote Style)
    ========================================================================== */
+.bubble-bot blockquote {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-left: 4px solid #0b3d0b;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #495057;
+  animation: fadeInSlide 0.4s ease-out;
+}
+
+.bubble-bot blockquote p {
+  margin: 0.25rem 0;
+}
+
+.bubble-bot blockquote strong {
+  color: #0b3d0b;
+  font-weight: 600;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Legacy TAO styles (keep for backward compatibility) */
 .tao-events {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border-left: 4px solid #0b3d0b;
@@ -35,17 +67,6 @@ body, h1, h2, h3, h4, h5, h6, .btn, .card {
   padding: 0.5rem 0;
   font-size: 0.9rem;
   animation: fadeInSlide 0.3s ease-out;
-}
-
-@keyframes fadeInSlide {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 .event-message {

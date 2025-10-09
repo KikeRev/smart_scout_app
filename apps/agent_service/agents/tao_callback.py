@@ -205,20 +205,30 @@ class TAOCallback(BaseCallbackHandler):
     def get_events_markdown(self) -> str:
         """
         Render events as markdown for display in chat.
-        Alternative format if HTML is not preferred.
+        Uses blockquote style for better visibility.
         """
         if not self.events:
             return ""
         
-        lines = []
-        lines.append("---")
-        lines.append("")
-        
+        # Filter out duplicate "thinking" events
+        filtered_events = []
+        last_type = None
         for event in self.events:
-            lines.append(f"**{event['message']}**  ")
+            if event["type"] == "thinking" and last_type == "thinking":
+                continue  # Skip consecutive thinking events
+            filtered_events.append(event)
+            last_type = event["type"]
         
-        lines.append("")
-        lines.append("---")
+        if not filtered_events:
+            return ""
+        
+        lines = []
+        lines.append("> **🔄 Proceso del Agente**" if self.language == "es" else "> **🔄 Agent Process**")
+        lines.append(">")
+        
+        for event in filtered_events:
+            lines.append(f"> {event['message']}")
+        
         lines.append("")
         
         return "\n".join(lines)
