@@ -23,13 +23,10 @@ _thread_local = threading.local()
 def set_current_user_id(user_id: str):
     """Set the current user_id in thread-local storage"""
     _thread_local.user_id = user_id
-    print(f"[THREAD DEBUG] Set user_id in thread-local: {user_id}")
 
 def get_current_user_id() -> str:
     """Get the current user_id from thread-local storage"""
-    user_id = getattr(_thread_local, 'user_id', 'anon')
-    print(f"[THREAD DEBUG] Retrieved user_id from thread-local: {user_id}")
-    return user_id
+    return getattr(_thread_local, 'user_id', 'anon')
 
 # Alternative: Use a more persistent cache approach
 # Store the last search context in a way that survives between agent calls
@@ -47,29 +44,20 @@ except:
 
 def _save_context_to_redis(user_id: str, context: Dict):
     """Save context to Redis for persistence across requests"""
-    print(f"[REDIS DEBUG] Saving context for user {user_id}: {context}")
     if REDIS_AVAILABLE:
         try:
             redis_client.setex(f"search_context:{user_id}", 3600, json.dumps(context))  # 1 hour TTL
-            print(f"[REDIS DEBUG] Successfully saved to Redis")
-        except Exception as e:
-            print(f"[REDIS DEBUG] Failed to save: {e}")
+        except Exception:
             pass  # Fallback to in-memory cache
 
 def _get_context_from_redis(user_id: str) -> Dict:
     """Get context from Redis"""
-    print(f"[REDIS DEBUG] Retrieving context for user {user_id}")
     if REDIS_AVAILABLE:
         try:
             data = redis_client.get(f"search_context:{user_id}")
             if data:
-                context = json.loads(data)
-                print(f"[REDIS DEBUG] Retrieved from Redis: {context}")
-                return context
-            else:
-                print(f"[REDIS DEBUG] No data found in Redis")
-        except Exception as e:
-            print(f"[REDIS DEBUG] Failed to retrieve: {e}")
+                return json.loads(data)
+        except Exception:
             pass
     return {}
 
@@ -454,9 +442,6 @@ def _similar_players_team_fit_table(
     # Use thread-local user_id if not explicitly provided
     effective_user_id = user_id or get_current_user_id()
     _save_context_to_redis(effective_user_id, context_data)
-    
-    # Debug: print to logs to verify context is being saved
-    print(f"DEBUG: Saved search context: {len(candidate_ids)} candidates, base_id={player_id}, target_team={team}")
     
     
     return {
@@ -864,8 +849,6 @@ def build_scouting_report(
     
     # If parameters not provided, try to use cached context
     if not base_id or not candidate_ids:
-        print(f"DEBUG: Looking for cached context. Available keys: {list(_user_search_contexts.keys())}")
-        
         # Use thread-local user_id if not explicitly provided
         effective_user_id = user_id or get_current_user_id()
         
@@ -876,10 +859,8 @@ def build_scouting_report(
         if not cached_context:
             if "current" in _user_search_contexts:
                 cached_context = _user_search_contexts["current"]
-                print(f"DEBUG: Found in-memory context: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
             elif _last_search_context:
                 cached_context = _last_search_context
-                print(f"DEBUG: Using backup cache: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
         
         if not cached_context:
             # Mensaje guiado localizado (ES/EN) en vez de error técnico
@@ -897,8 +878,6 @@ def build_scouting_report(
             )
             return {"text": _msg_locale(objective, es_msg, en_msg), "attachments": []}
         
-        print(f"DEBUG: Found cached context for user {user_id}: base_id={cached_context.get('base_id')}, candidates={len(cached_context.get('candidate_ids', []))}")
-            
         base_id = base_id or cached_context.get("base_id")
         candidate_ids = candidate_ids or cached_context.get("candidate_ids")
         target_team = target_team or cached_context.get("target_team")
@@ -1173,8 +1152,6 @@ def _dashboard_inline_with_context(
     """Wrapper that defaults to the latest candidate list from cache if not provided."""
     global _user_search_contexts, _last_search_context
     
-    print(f"[DASHBOARD DEBUG] Called with base_player_id={base_player_id}, candidate_ids={candidate_ids}, user_id={user_id}")
-    
     if (not base_player_id or not candidate_ids):
         ctx = {}
         
@@ -1183,20 +1160,16 @@ def _dashboard_inline_with_context(
         
         # Try Redis first (persistent across requests)
         ctx = _get_context_from_redis(effective_user_id) or {}
-        print(f"[DASHBOARD DEBUG] Retrieved from Redis for user {effective_user_id}: {ctx}")
         
         # Fallback to primary cache
         if not ctx and "current" in _user_search_contexts:
             ctx = _user_search_contexts["current"]
-            print(f"[DASHBOARD DEBUG] Using primary cache: {ctx}")
         # Fallback to backup cache
         elif not ctx and _last_search_context:
             ctx = _last_search_context
-            print(f"[DASHBOARD DEBUG] Using backup cache: {ctx}")
             
         base_player_id = base_player_id or ctx.get("base_id")
         candidate_ids = candidate_ids or ctx.get("candidate_ids")
-        print(f"[DASHBOARD DEBUG] Final IDs - base: {base_player_id}, candidates: {candidate_ids}")
         
     # Safety: ensure list of ints
     candidate_ids = [int(i) for i in (candidate_ids or []) if isinstance(i, (int, float))]

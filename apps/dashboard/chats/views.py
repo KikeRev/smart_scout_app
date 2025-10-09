@@ -146,14 +146,10 @@ def chat_stream(request, pk):
         # Set user_id in thread-local storage so tools can access it
         user_id = str(request.user.id)
         set_current_user_id(user_id)
-        print(f"[DJANGO DEBUG] Set thread-local user_id: {user_id}")
         
         # Create TAO callback with event queue
         tao_callback = TAOCallback(language=language)
         tao_callback.event_queue = tao_queue
-        
-        print(f"[DJANGO DEBUG] Created TAO callback: {tao_callback}")
-        print(f"[DJANGO DEBUG] Event queue assigned: {tao_queue}")
         
         past_msgs = session.messages.order_by("created_at")
         agent = build_agent(
@@ -162,8 +158,6 @@ def chat_stream(request, pk):
             language=language,
             callbacks=[tao_callback]  # Pass TAO callback explicitly
         )
-        
-        print(f"[DJANGO DEBUG] Agent built, has callbacks: {hasattr(agent, 'callbacks')}")
         
         # Execute agent with callbacks in config
         raw = agent.invoke(

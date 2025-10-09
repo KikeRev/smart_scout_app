@@ -76,9 +76,7 @@ class TAOCallback(BaseCallbackHandler):
         self.events.append(event)
         
         # Emit to Django queue if available
-        print(f"[TAO DEBUG] on_tool_start called, tool={tool_name}, has_queue={self.event_queue is not None}")
         if self.event_queue is not None:
-            print(f"[TAO DEBUG] Emitting tool_start: {message}")
             self.event_queue.put({"type": "tao", "message": message})
         
         # Emit to stream if available
