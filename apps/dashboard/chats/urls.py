@@ -10,9 +10,9 @@ urlpatterns = [
     path("new/",      views.new_chat_redirect,       name="new"),           # /chat/new/
     path("<int:pk>/message/", views.chat_message, name="message"),   # /chat/<id>/
     path("chat/<int:pk>/", views.ChatSessionView.as_view(), name="session"),
-    # AJAX / streaming endpoints
+    # AJAX endpoints
     path("api/",        views.chat_api,    name="chat_api"),                # POST /chat/api
-    path("stream/",     views.chat_stream, name="chat_stream"),             # POST /chat/stream
+    path("<int:pk>/stream/", views.chat_stream, name="chat_stream"),     # POST /chat/<id>/stream (SSE)
     path("chat/<int:pk>/delete/", views.chat_delete, name="chat_delete"),
     path("file/<int:pk>/", views.serve_chart, name="file"),
     

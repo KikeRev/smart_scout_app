@@ -1,4 +1,4 @@
-<h1 align="center">SMART SCOUT APP v1.4</h1>
+<h1 align="center">SMART SCOUT APP v1.5</h1>
 
 <p align="center">
   <img src="./static/img/app_logo_6.png" alt="Logo">
@@ -6,7 +6,7 @@
 
 # 🚀 Welcome
 
-Welcome to **Smart Scout App v1.4** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
+Welcome to **Smart Scout App v1.5** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
 
 ## ✨ Features Overview
 
@@ -21,10 +21,15 @@ Welcome to **Smart Scout App v1.4** — an application created to help football 
 - **Career Trajectory**: Track player development over multiple seasons
 - **Evolution Charts**: Ready for player dashboard historical visualizations (future feature)
 
-### 🤖 AI-Powered Scouting
+### 🤖 AI-Powered Scouting (⭐ Enhanced in v1.5)
 - **Intelligent Player Recommendations**: AI agent analyzes player data and provides recommendations
 - **Natural Language Queries**: Ask questions in plain English or Spanish
 - **Comprehensive Reports**: Generate detailed PDF reports with analysis and recommendations
+- **TAO Transparency (NEW)**: Real-time visibility into agent's thinking process
+  - Live streaming of tool execution (🔍 Searching, ⚽ Analyzing, 📊 Creating dashboards, 📄 Generating reports)
+  - Server-Sent Events (SSE) for instant feedback in chat interface
+  - Standardized English messages for consistent user experience
+  - Thread-safe context management with Redis persistence
 - **Success Index v2.1** (⭐ NEW): Advanced scoring system that evaluates signing probability by considering:
   - League quality (30 tiers from Top 5 to minor leagues)
   - Playing time (starter vs rotation vs backup)
@@ -1021,6 +1026,42 @@ docker-compose exec api python -m pytest tests/ --cov=. --cov-report=html
 
 
 # 📋 Release Notes
+
+## 🚀 Version 1.5 - TAO Agent Transparency & Context Persistence (October 2025)
+
+### ✨ New Features
+- **TAO (Think-Action-Observation) Framework**: Real-time transparency into AI agent decision-making
+  - Live streaming of agent actions during execution (tool selection, data retrieval, report generation)
+  - Server-Sent Events (SSE) implementation for instant feedback
+  - Custom LangChain callbacks to capture and emit agent events
+  - Standardized English messages for tool execution status
+  - Visual indicators in chat interface (🔍 🧠 ⚽ 📊 📄 ✅)
+
+### 🔧 Improvements
+- **Thread-Local Context Management**: Robust user context persistence across requests
+  - Thread-local storage for user_id to ensure context isolation
+  - Automatic fallback to Redis when tools don't receive explicit user_id
+  - Fixed context loss bug when requesting dashboards/reports after new searches
+  - Enhanced debug logging for troubleshooting (THREAD, REDIS, DASHBOARD)
+- **Enhanced Chat Interface**: Profile pictures and improved message layout
+  - User initials avatar on the left of messages
+  - App logo avatar for agent responses on the right
+  - Auto-scroll to latest message with smooth animation
+  - Better spacing for dashboard and report buttons
+
+### 🐛 Bug Fixes
+- Fixed context retrieval for dashboard_inline and build_scouting_report tools
+- Resolved issue where agent would return previous search results instead of generating new artifacts
+- Fixed Redis key storage to use actual user_id instead of literal "user_id" string
+- Corrected table rendering when similar_players_team_fit_table has return_direct=False
+
+### 🔬 Technical Details
+- **Backend**: Django SSE streaming with threading.Thread for async agent execution
+- **Frontend**: JavaScript fetch API with ReadableStream for SSE consumption
+- **Agent**: Modified LangChain agent with TAOCallback for event interception
+- **Context**: Redis + in-memory cache with thread-local fallback mechanism
+
+---
 
 ## 🚀 Version 1.3 - Extended Historical Data & Enhanced Database (October 2025)
 

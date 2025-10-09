@@ -17,6 +17,81 @@ body, h1, h2, h3, h4, h5, h6, .btn, .card {
   border: 2px solid #222 !important;
 }
 
+/* ==========================================================================
+   TAO Events - Agent Transparency (Blockquote Style)
+   ========================================================================== */
+.bubble-bot blockquote {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-left: 4px solid #0b3d0b;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #495057;
+  animation: fadeInSlide 0.4s ease-out;
+}
+
+.bubble-bot blockquote p {
+  margin: 0.25rem 0;
+}
+
+.bubble-bot blockquote strong {
+  color: #0b3d0b;
+  font-weight: 600;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Legacy TAO styles (keep for backward compatibility) */
+.tao-events {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-left: 4px solid #0b3d0b;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.tao-event {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  animation: fadeInSlide 0.3s ease-out;
+}
+
+.event-message {
+  color: #495057;
+  font-weight: 500;
+}
+
+/* Event type styling */
+.event-action .event-message {
+  color: #0066cc;
+}
+
+.event-success .event-message {
+  color: #0b3d0b;
+}
+
+.event-error .event-message {
+  color: #dc3545;
+}
+
+.event-thinking .event-message {
+  color: #6c757d;
+  font-style: italic;
+}
+
 /* Generic "register/login" anchor */
 .link-register {
   color: #0b3d0b;

@@ -3,10 +3,11 @@ from langchain_core.messages import SystemMessage
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.schema import HumanMessage, AIMessage
 from langchain.prompts.chat import MessagesPlaceholder
-from apps.agent_service.agents.tools import TOOLS
+from apps.agent_service.agents.tools import TOOLS, set_current_user_id
 from apps.agent_service.llm_provider import get_llm
 import langchain
 from .output_parser import ScoutParser
+from .tao_callback import TAOCallback
 from apps.agent_service.memory import SafeConversationMemory
 
  
@@ -20,6 +21,66 @@ SYSTEM = SystemMessage(
         Always respond in the user's language. If they ask in Spanish, respond in Spanish. If they ask in English, respond in English.
 
         You are an expert football scouting assistant. Always use technical vocabulary, tactical analysis and professional language.
+        
+        **TAO FRAMEWORK (Think-Action-Observation):**
+        For every user request, follow a tool-first workflow and structure your final response using markdown – but ONLY AFTER executing the required tools. Never stop at the reasoning; always produce the concrete artifact (table/chart/url/pdf) first.
+
+        **GENERAL TAO WORKFLOW (ALWAYS):**
+        1) THINK – Understand intent (dashboard, report, table, visualization, profile, comparison, etc.)
+        2) CHECK CONTEXT – Retrieve cached context by user_id (base_id, candidate_ids, target_team). If missing, derive what's needed:
+           - If a player name is provided but no id → call `player_lookup`
+           - If candidates list is needed → call `similar_players_team_fit_table` (it will cache context)
+        3) ACTION – Execute the specific tool(s) required by the intent
+        4) OBSERVATION – Validate results are complete/coherent
+        5) RESPONSE – Return the artifact (URL/HTML/PDF/image) and then add a brief TAO reasoning block
+        
+        ### 🧠 Razonamiento / Reasoning
+        [Explain your thinking process: what you understood, what you need to do, and your strategy]
+        
+        ### 📊 Resultados / Results
+        [Present the data/charts/tables obtained from tools]
+        
+        ### ✅ Conclusión / Conclusion
+        [Summarize findings and suggest next steps]
+        
+        **When to use TAO structure (AFTER tools):**
+        - Player searches with multiple candidates
+        - PDF report generation
+        - Dashboard creation
+        - Comparative analysis
+        - Any task requiring 2+ tool calls
+        
+        **When NOT to use TAO:**
+        - Simple questions (e.g., "What is Messi's age?")
+        - Direct data queries
+        - Follow-up clarifications
+
+        **TOOL-FIRST POLICY (CRITICAL):**
+        - If the user asks for a DASHBOARD or COMPARATIVE DASHBOARD:
+          1) Use the cached context (base_id, candidate_ids) saved by `similar_players_team_fit_table`.
+          2) Call `dashboard_inline(base_player_id, candidate_ids)` and return the URL provided.
+          3) If context is missing, first run `player_lookup` + `similar_players_team_fit_table` to recreate it, and then `dashboard_inline`.
+          4) Do NOT answer with reasoning alone; the deliverable is the dashboard URL.
+
+        - If the user asks for a PDF REPORT:
+          1) Ensure there is cached context (base_id, candidate_ids, target_team). If missing, instruct to run the candidates table again or run it yourself.
+          2) Choose a player:
+             - If the user named a player, validate the ID with `player_lookup`.
+             - Otherwise, call `choose_best_candidate(objective, user_id)` to select `chosen_id`.
+          3) If the user did NOT specify an objective, AUTO-BUILD one using cached context, e.g.: "Find the best replacement similar to {base_player_name} for {target_team}" (use English/Spanish depending on the user's language).
+          4) If the user did NOT provide pros/cons, infer at least 3 pros and 3 cons from candidates_data (success_index_v2_1, playing time, age, league tier, rivalry constraints) and feasibility rationale.
+          5) Call `build_scouting_report(objective, base_id, candidate_ids, chosen_id, pros, cons, target_team)`.
+          4) Return the generated file URL. Do NOT return only the TAO block without the PDF.
+
+        - If the user asks for a LIST/TABLE of candidates with team fit:
+          1) Call `similar_players_team_fit_table` and show the returned HTML table.
+          2) Inform that a dashboard or PDF can be generated next.
+
+        - If the user asks for VISUALIZATIONS (radar/pizza, comparative):
+          1) Call `player_stats` first to ensure data availability.
+          2) Call `radar_chart` / `pizza_chart` or their comparative versions accordingly and return the image/URL.
+
+        - If any required parameter is missing, ask a short clarification or run the minimal tool to obtain it (e.g., `player_lookup`).
 
         **CRITICAL RULES TO AVOID HALLUCINATIONS:**
         1. NEVER invent data, statistics, player names or clubs that you haven't obtained from the tools.
@@ -33,9 +94,13 @@ SYSTEM = SystemMessage(
         1. Use `player_lookup` to get the `player_id` of the reference player.
         2. Validate that the player exists before continuing.
         3. If the user specifies a target team (e.g., "similar to X for team Y"), use `similar_players_team_fit_table`.
-           - The tool automatically stores the search context (base_id, candidate_ids, target_team)
-           - Display the returned HTML table to the user
-        4. After displaying the table, inform the user they can request a PDF report with any candidate from the list.
+           - CRITICAL: ALWAYS pass user_id parameter to save context correctly
+           - The tool automatically stores the search context (base_id, candidate_ids, target_team) in Redis using user_id
+           - The tool returns a properly formatted response with 'text' and 'attachments'
+           - Return the EXACT output from the tool without any modification or additional text
+           - After displaying the table, the user can request a dashboard or PDF report
+        4. If the user then asks for a dashboard or report, you MUST call the corresponding tool (dashboard_inline or build_scouting_report)
+           - CRITICAL: ALWAYS pass user_id parameter to retrieve context from Redis
 
         **FOR VISUALIZATIONS:**
         - First use `player_stats` to get statistical data.
@@ -151,10 +216,28 @@ def build_agent(
     *,
     messages=None,
     streaming_callback: BaseCallbackHandler | None = None,
+    language: str = "es",
+    callbacks: list = None,  # Allow external callbacks
 ):
+    # --- TAO Callback for transparency ----------------------------------------
+    # If external callbacks are provided (e.g., from Django), use them
+    # Otherwise, create a default TAO callback
+    if callbacks:
+        # External callbacks provided (e.g., from Django streaming)
+        # Don't create a duplicate TAO callback
+        final_callbacks = callbacks.copy()
+        # Find the TAO callback if it exists
+        tao_callback = next((cb for cb in callbacks if isinstance(cb, TAOCallback)), None)
+    else:
+        # No external callbacks - create default TAO callback (for FastAPI)
+        tao_callback = TAOCallback(language=language, stream_callback=streaming_callback)
+        final_callbacks = [tao_callback]
+        if streaming_callback:
+            final_callbacks.append(streaming_callback)
+    
     llm = get_llm(
         stream=True,
-        callbacks=[streaming_callback] if streaming_callback else None,
+        callbacks=final_callbacks,
     )
 
     # --- memory ------------------------------------------------------------
@@ -186,5 +269,11 @@ def build_agent(
         },
         output_parser = ScoutParser(), 
         verbose=True,
+        callbacks=final_callbacks,  # Pass callbacks to agent level too
     )
+    
+    # Attach TAO callback to agent for later retrieval (if it exists)
+    if tao_callback:
+        agent._tao_callback = tao_callback
+    
     return agent
