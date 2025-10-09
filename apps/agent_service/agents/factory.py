@@ -67,7 +67,9 @@ SYSTEM = SystemMessage(
           2) Choose a player:
              - If the user named a player, validate the ID with `player_lookup`.
              - Otherwise, call `choose_best_candidate(objective, user_id)` to select `chosen_id`.
-          3) Call `build_scouting_report(objective, base_id, candidate_ids, chosen_id, pros, cons, target_team)`.
+          3) If the user did NOT specify an objective, AUTO-BUILD one using cached context, e.g.: "Find the best replacement similar to {base_player_name} for {target_team}" (use English/Spanish depending on the user's language).
+          4) If the user did NOT provide pros/cons, infer at least 3 pros and 3 cons from candidates_data (success_index_v2_1, playing time, age, league tier, rivalry constraints) and feasibility rationale.
+          5) Call `build_scouting_report(objective, base_id, candidate_ids, chosen_id, pros, cons, target_team)`.
           4) Return the generated file URL. Do NOT return only the TAO block without the PDF.
 
         - If the user asks for a LIST/TABLE of candidates with team fit:
