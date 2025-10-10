@@ -258,15 +258,15 @@ def calculate_overall_rating(performance_rating, league_base_rating, minutes_pla
     A más minutos → más peso al performance
     A menos minutos → más peso al base de liga
     """
-    # Minutos de referencia
-    FULL_SEASON = 3000
+    # Minutos de referencia (muestra suficiente = 1500 min)
+    SUFFICIENT_SAMPLE_MINUTES = 1500
     
     # Calcular pesos (ajustable)
     LEAGUE_WEIGHT_MAX = 0.35  # Máximo 35% de peso para la liga
     PERF_WEIGHT_MAX = 0.65    # Mínimo 65% de peso para performance
     
-    # Ajustar según minutos jugados
-    minutes_factor = min(minutes_played / FULL_SEASON, 1.0)
+    # Ajustar según minutos jugados (cap en 1.0)
+    minutes_factor = min(minutes_played / SUFFICIENT_SAMPLE_MINUTES, 1.0)
     
     # Con pocos minutos, la liga pesa más
     league_weight = LEAGUE_WEIGHT_MAX * (1 - minutes_factor * 0.5)
@@ -280,16 +280,24 @@ def calculate_overall_rating(performance_rating, league_base_rating, minutes_pla
 
 **Ejemplos:**
 
-1. **Jugador Premier con 3000 min y performance 75:**
+1. **Jugador Premier con 2000 min y performance 75:**
+   - `minutes_factor = min(2000/1500, 1.0) = 1.0` ⚠️ **Cap en 1.0**
+   - `league_weight = 0.35 * (1 - 1.0*0.5) = 0.175`
    - `OVR = (60 * 0.175) + (75 * 0.825) = 10.5 + 61.875 = 72` ✅
    
-2. **Jugador Premier con 200 min y performance 80 (muestra pequeña):**
-   - `OVR = (60 * 0.327) + (80 * 0.673) = 19.6 + 53.8 = 73` ✅ Regresión a base
+2. **Jugador Premier con 300 min y performance 80 (muestra pequeña):**
+   - `minutes_factor = min(300/1500, 1.0) = 0.2`
+   - `league_weight = 0.35 * (1 - 0.2*0.5) = 0.35 * 0.9 = 0.315`
+   - `OVR = (60 * 0.315) + (80 * 0.685) = 18.9 + 54.8 = 74` ✅ Regresión a base
 
-3. **Jugador liga menor con 3000 min y performance 75:**
+3. **Jugador liga menor con 1800 min y performance 75:**
+   - `minutes_factor = 1.0` (cap)
+   - `league_weight = 0.175`
    - `OVR = (48 * 0.175) + (75 * 0.825) = 8.4 + 61.875 = 70` ✅ Penalizado por liga
 
-4. **Estrella liga menor con 3000 min y performance 88:**
+4. **Estrella liga menor con 2400 min y performance 88:**
+   - `minutes_factor = 1.0` (cap)
+   - `league_weight = 0.175`
    - `OVR = (48 * 0.175) + (88 * 0.825) = 8.4 + 72.6 = 81` ✅ Puede destacar
 
 ---
@@ -362,8 +370,8 @@ def weighted_stat_by_minutes(raw_stat_per90, league_avg_per90, minutes_played, i
         minutes_played: Minutos jugados por el jugador
         is_inverse: True si menos es mejor (ej: goles en contra)
     """
-    # Minutos de referencia (1 temporada completa ≈ 3000 min)
-    FULL_SEASON_MINUTES = 3000
+    # Minutos de referencia (muestra suficiente = 1500 min ≈ 17 partidos)
+    SUFFICIENT_SAMPLE_MINUTES = 1500
     
     # Minutos mínimos para considerar la muestra
     MIN_MINUTES = 90  # Al menos 1 partido
@@ -372,8 +380,8 @@ def weighted_stat_by_minutes(raw_stat_per90, league_avg_per90, minutes_played, i
         # Muy pocos minutos → usar solo la media de la liga
         return league_avg_per90
     
-    # Calcular peso del jugador (0 a 1)
-    player_weight = min(minutes_played / FULL_SEASON_MINUTES, 1.0)
+    # Calcular peso del jugador (0 a 1, cap en 1.0)
+    player_weight = min(minutes_played / SUFFICIENT_SAMPLE_MINUTES, 1.0)
     league_weight = 1.0 - player_weight
     
     # Regresión a la media
@@ -383,18 +391,26 @@ def weighted_stat_by_minutes(raw_stat_per90, league_avg_per90, minutes_played, i
 ```
 
 **Ejemplos - Métricas Positivas:**
-- Jugador A: 2 goles en 90 min (2.0 per90), media liga: 0.5
-  - `weighted = (2.0 * 0.03) + (0.5 * 0.97) = 0.54` ✅ Realista
+- **Jugador A:** 2 goles en 90 min (2.0 per90), media liga: 0.5
+  - `player_weight = min(90/1500, 1.0) = 0.06`
+  - `weighted = (2.0 * 0.06) + (0.5 * 0.94) = 0.12 + 0.47 = 0.59` ✅ Realista
   
-- Messi: 35 goles en 3000 min (1.05 per90), media liga: 0.5
-  - `weighted = (1.05 * 1.0) + (0.5 * 0.0) = 1.05` ✅ Sin penalización
+- **Jugador B:** 12 goles en 750 min (1.44 per90), media liga: 0.5
+  - `player_weight = min(750/1500, 1.0) = 0.5`
+  - `weighted = (1.44 * 0.5) + (0.5 * 0.5) = 0.72 + 0.25 = 0.97` ✅ Mejora con más minutos
+  
+- **Titular:** 20 goles en 2400 min (0.75 per90), media liga: 0.5
+  - `player_weight = min(2400/1500, 1.0) = 1.0` ⚠️ **Cap en 1.0**
+  - `weighted = (0.75 * 1.0) + (0.5 * 0.0) = 0.75` ✅ 100% confianza
 
 **Ejemplos - Métricas Inversas (Porteros):**
-- Portero novato: 0 goles en 90 min (0.0 per90), media liga: 1.2
-  - `weighted = (0.0 * 0.03) + (1.2 * 0.97) = 1.16` ✅ No parece perfecto
+- **Portero novato:** 0 goles en 90 min (0.0 per90), media liga: 1.2
+  - `player_weight = 0.06`
+  - `weighted = (0.0 * 0.06) + (1.2 * 0.94) = 1.13` ✅ No parece perfecto
   
-- Portero titular: 30 goles en 3000 min (0.9 per90), media liga: 1.2
-  - `weighted = (0.9 * 1.0) + (1.2 * 0.0) = 0.9` ✅ Confía en su rendimiento
+- **Portero regular:** 18 goles en 1500 min (1.08 per90), media liga: 1.2
+  - `player_weight = min(1500/1500, 1.0) = 1.0`
+  - `weighted = (1.08 * 1.0) + (1.2 * 0.0) = 1.08` ✅ 100% confianza en su rendimiento
 
 **Caso especial - Porteros sin minutos:**
 ```python
@@ -402,6 +418,20 @@ def weighted_stat_by_minutes(raw_stat_per90, league_avg_per90, minutes_played, i
 # → Asignar la media de la liga (ni bueno ni malo)
 # → Rating neutral basado en el nivel de la liga
 ```
+
+#### Tabla de Umbrales de Minutos
+
+| Minutos Jugados | Partidos (aprox) | Player Weight | League Weight | Interpretación |
+|-----------------|------------------|---------------|---------------|----------------|
+| 0               | 0                | 0.00          | 1.00          | Media de liga |
+| 90              | 1                | 0.06          | 0.94          | Muestra muy pequeña |
+| 270             | 3                | 0.18          | 0.82          | Muestra insuficiente |
+| 450             | 5                | 0.30          | 0.70          | Empezando a confiar |
+| 750             | 8                | 0.50          | 0.50          | Muestra media |
+| 1080            | 12               | 0.72          | 0.28          | Buena muestra |
+| **1500** ✅     | **17**           | **1.00**      | **0.00**      | **Muestra suficiente** |
+| 2000            | 22               | 1.00 (cap)    | 0.00          | Titular consolidado |
+| 3000            | 33               | 1.00 (cap)    | 0.00          | Temporada completa |
 
 ### Paso 3: Aplicar Escalado Global
 Escalar todas las métricas a rango 0-100 usando:
@@ -787,8 +817,10 @@ OVR = (48 * 0.21) + (72.05 * 0.79)
 **Problema resuelto:** Jugadores con pocos partidos aparecían con stats infladas.
 
 **Solución:** 
-- Jugador con 90 min → 97% peso a media liga, 3% peso a su stat
-- Jugador con 3000 min → 100% peso a su stat
+- Jugador con 90 min → 94% peso a media liga, 6% peso a su stat
+- Jugador con 750 min → 50% peso a cada uno
+- Jugador con **≥1500 min (17 partidos)** → 100% peso a su stat ✅ **Muestra suficiente**
+- **Cap garantizado:** `min(minutes/1500, 1.0)` asegura factor ≤ 1.0
 
 ### 2. 🏆 **Rating Base por Nivel de Liga**
 **Problema resuelto:** No se reconocía que jugar en top ligas ya implica cierto nivel.
