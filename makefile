@@ -19,11 +19,13 @@ up-db:
 	docker compose up -d db redis
 
 ## Manual ingestion targets 
-ingest-full: up-db   ## Load CSV, refresh embeddings, ingest news (idempotent)
+ingest-full: up-db   ## Full bootstrap: players + history + ratings + news
 	docker compose run --rm --build -t -e INGEST_MODE="" ingestion
 
-## Only scrape & embed NEW football news (no rebuild)
-ingest-news: up-db   ## Only scrape & embed NEW football news
+ingest-players: up-db   ## Players-only: players + history + ratings (no news)
+	docker compose run --rm --build -t -e INGEST_MODE="players" ingestion
+
+ingest-news: up-db   ## News-only: scrape & embed NEW football news
 	docker compose run --rm -t -e INGEST_MODE="news" ingestion
 
 ## Stop containers (NO delete networks nor volumes)

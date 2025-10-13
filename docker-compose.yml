@@ -43,8 +43,9 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: scouting-ingestion
-    # ① = full bootstrap (players + embeddings + news)  
-    # ② = news‑only mode (no touch on players)
+    # Mode 1 = full bootstrap (players + embeddings + ratings + news)  
+    # Mode 2 = players-only mode (players + history + ratings)
+    # Mode 3 = news-only mode (no touch on players)
     command: >
       sh -lc '
         set -eu
@@ -52,12 +53,21 @@ services:
         if [ "$${INGEST_MODE:-}" = "news" ]; then
           echo "▶ News-only ingestion"
           python -m apps.ingestion.seed_and_ingest --ingest-news --skip-players --verbose
-        else
-          echo "▶ Full bootstrap (players + news)"
+        elif [ "$${INGEST_MODE:-}" = "players" ]; then
+          echo "▶ Players-only ingestion (players + history + ratings)"
           python -m apps.ingestion.seed_and_ingest \
-            --players-csv data/all_players_cleaned.csv \
-            --history-csv data/historical_players_raw.csv \
+            --players-csv data/all_players_plus_historic_data_aggregated_v2.csv \
+            --history-csv data/all_players_plus_historic_data_non_aggregated_v2.csv \
             --replace --replace-history --refresh-embs \
+            --calculate-ratings --replace-ratings \
+            --verbose
+        else
+          echo "▶ Full bootstrap (players + history + ratings + news)"
+          python -m apps.ingestion.seed_and_ingest \
+            --players-csv data/all_players_plus_historic_data_aggregated_v2.csv \
+            --history-csv data/all_players_plus_historic_data_non_aggregated_v2.csv \
+            --replace --replace-history --refresh-embs \
+            --calculate-ratings --replace-ratings \
             --ingest-news --verbose
         fi
       '

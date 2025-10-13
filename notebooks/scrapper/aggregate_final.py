@@ -4,11 +4,11 @@ import numpy as np
 def main():
     print("=== Loading data ===")
     # Load current season data
-    df1 = pd.read_csv('notebooks/scrapper/data/all_players_cleaned.csv')
+    df1 = pd.read_csv('data/all_players_cleaned.csv')
     print(f"Current season (all_players_cleaned): {df1.shape}")
     
     # Load historical data
-    df2 = pd.read_csv('notebooks/scrapper/data/historical_players_raw.csv')
+    df2 = pd.read_csv('data/historical_players_raw.csv')
     print(f"Historical data: {df2.shape}")
     
     # Add season column to current data
@@ -39,6 +39,10 @@ def main():
         df_final["minutes.1"] = df_final["minutes.1"].apply(lambda x: float(str(x).replace(",", ".")))
     
     print("Cleaned minutes columns")
+    # Save result
+    output_path = "data/all_players_plus_historic_data_non_aggregated_v2.csv"
+    df_final.to_csv(output_path, index=False)
+    print(f"Saved to: {output_path}")
     
     # Define categorical and numerical columns (as in notebook)
     cat_cols = ["player", "nationality", "position", "age", "Team", "League", "Team_Logo", "Season"]
@@ -84,7 +88,7 @@ def main():
     print(f"Final columns: {len(df_final_agg.columns)}")
     
     # Save result
-    output_path = "notebooks/scrapper/data/all_players_plus_historic_data_v2.csv"
+    output_path = "data/all_players_plus_historic_data_aggregated_v2.csv"
     df_final_agg.to_csv(output_path, index=False)
     print(f"Saved to: {output_path}")
     

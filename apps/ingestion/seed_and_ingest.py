@@ -164,6 +164,7 @@ class Player(Base):
     club = sa.Column(sa.String(128))
     team_logo = sa.Column(sa.Text)
     league = sa.Column(sa.String(64))
+    season = sa.Column(sa.String(10), index=True)
 
     minutes = sa.Column(sa.Integer)
     minutes_90s = sa.Column(sa.Float)
@@ -217,11 +218,53 @@ class Player(Base):
     clearances = sa.Column(sa.Integer)
     errors = sa.Column(sa.Integer)
 
-    # Historical player field (only one kept in CSV)
+    # Historical player fields
     player_status = sa.Column(sa.String(20), default='active')
 
     # optional: pgvector column for aggregated numerical vector
     feature_vector = sa.Column(Vector(DIM))
+
+
+class PlayerRating(Base):
+    """
+    FIFA-style ratings calculated for each player.
+    Automatically updated whenever the players table is updated.
+    """
+    __tablename__ = "player_ratings"
+    
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
+    player_id = sa.Column(sa.Integer, sa.ForeignKey('players.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # Overall rating
+    overall_rating = sa.Column(sa.Integer, nullable=False)  # Final OVR (0-100)
+    
+    # OVR components
+    league_base_rating = sa.Column(sa.Float)  # Base rating by league
+    performance_rating = sa.Column(sa.Float)  # Performance-based rating
+    
+    # Attributes by category (0-100)
+    att = sa.Column(sa.Integer)  # Attacking
+    ply = sa.Column(sa.Integer)  # Playmaking
+    def_rating = sa.Column(sa.Integer)  # Defending (renamed to avoid reserved word conflict)
+    ctr = sa.Column(sa.Integer)  # Ball Control
+    phy = sa.Column(sa.Integer)  # Physical
+    gkp = sa.Column(sa.Integer)  # Goalkeeping (NULL for non-goalkeepers)
+    
+    # Metadata
+    season = sa.Column(sa.String(10), index=True)
+    position = sa.Column(sa.String(32))
+    minutes_played = sa.Column(sa.Integer)
+    
+    # Timestamps
+    created_at = sa.Column(sa.DateTime, server_default=sa.func.now())
+    updated_at = sa.Column(sa.DateTime, server_default=sa.func.now(), onupdate=sa.func.now())
+    
+    # Indexes and constraints
+    __table_args__ = (
+        sa.UniqueConstraint('player_id', 'season', name='uq_player_rating_season'),
+        sa.Index('idx_overall_rating', 'overall_rating'),
+        sa.Index('idx_player_season_rating', 'player_id', 'season'),
+    )
 
 
 class FootballNews(Base):
@@ -311,10 +354,11 @@ CSV_COLUMN_MAP = {
     "blocked_passes": "blocked_passes",
     "interceptions": "interceptions",
     "tackles_interceptions": "tackles_interceptions",
-    "clearances": "clearances",
+    "clearances": "clearances", 
     "errors": "errors",
-    # Historical field (only one expected in CSV)
+    # Historical fields
     "player_status": "player_status",
+    "Season": "season",
 }
 
 REQUIRED_COLUMNS = set(CSV_COLUMN_MAP.keys())
@@ -405,7 +449,7 @@ def load_players(engine: sa.Engine, csv_path: Path,  if_exists: str = "append"):
     float_cols = list(
         set(df.columns)
         - set(int_cols)
-        - {"full_name", "nationality", "position", "club", "team_logo", "league", "player_status"}
+        - {"full_name", "nationality", "position", "club", "team_logo", "league", "player_status", "season"}
     )
     for col in float_cols:
         df[col] = df[col].apply(_to_float)
@@ -855,6 +899,31 @@ def load_player_history(engine: sa.Engine, csv_path: Path, if_exists: str = "app
     print(f"✅ Player history loaded: {len(df_prepared)} records")
 
 
+def calculate_ratings_wrapper(engine: sa.Engine, season: str = None, replace: bool = False, verbose: bool = False):
+    """
+    Wrapper to calculate ratings from seed_and_ingest.
+    Dynamically imports to avoid circular dependencies.
+    """
+    try:
+        # Dynamic import to avoid circular dependencies
+        sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+        from scripts.calculate_all_ratings import calculate_all_ratings
+        
+        print("\n🎯 Calculating player ratings...")
+        calculate_all_ratings(
+            engine=engine,
+            season=season,
+            replace=replace,
+            batch_size=100,
+            verbose=verbose
+        )
+    except Exception as e:
+        print(f"❌ Error calculating ratings: {e}")
+        if verbose:
+            import traceback
+            traceback.print_exc()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Seed players & ingest news")
     parser.add_argument("--players-csv", type=Path, help="Path to players CSV", required=False)
@@ -862,6 +931,9 @@ def main():
     parser.add_argument("--replace", action="store_true", help="TRUNCATE players before importing CSV")
     parser.add_argument("--replace-history", action="store_true", help="TRUNCATE player_history before importing CSV")
     parser.add_argument("--ingest-news", action="store_true", help="Fetch & embed latest news")
+    parser.add_argument("--calculate-ratings", action="store_true", help="Calculate FIFA-style ratings for all players")
+    parser.add_argument("--ratings-season", type=str, help="Season for ratings calculation (default: all)")
+    parser.add_argument("--replace-ratings", action="store_true", help="Replace existing ratings")
     parser.add_argument("--echo-sql", action="store_true")
     parser.add_argument("--skip-players", action="store_true")
     parser.add_argument("--verbose", action="store_true")
@@ -886,6 +958,14 @@ def main():
     if args.ingest_news:
         ingest_news(engine, verbose=args.verbose)
         link_player_news(engine)
+
+    if args.calculate_ratings:
+        calculate_ratings_wrapper(
+            engine=engine,
+            season=args.ratings_season,
+            replace=args.replace_ratings,
+            verbose=args.verbose
+        )
 
     print("✅ All done")
 

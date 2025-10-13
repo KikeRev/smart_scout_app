@@ -4,22 +4,6 @@
 {# Use fullwidth_content to bypass the container #}
 {% block fullwidth_content %}
 <div class="page-wrapper-80">
-  <!-- Logo of the application -->
-  <section class="text-center py-3" role="banner">
-    <div class="logo-container">
-      <a href="https://github.com/KikeRev/smart_scout_app" 
-         target="_blank" 
-         rel="noopener noreferrer"
-         title="View source code on GitHub"
-         aria-label="View Smart Scout App source code on GitHub">
-        <img src="{% static 'img/app_logo_6.png' %}"    
-             alt="Smart Scout - Application of football analysis with artificial intelligence"
-             class="img-fluid app-logo glass-logo"
-             role="img">
-      </a>
-    </div>
-  </section>
-  
   <div class="home-container">
     <div class="home-header">
       <h1 class="home-welcome" role="heading" aria-level="1">
@@ -31,42 +15,24 @@
     <nav class="home-actions" role="navigation" aria-label="Main application navigation">
       <div class="action-buttons" role="group" aria-label="Main application options">
         <a class="action-btn btn-primary" href="{% url 'chats:new' %}" 
-           data-bs-toggle="tooltip" data-bs-placement="top" 
-           title="Create a personalized report with the artificial intelligence agent"
            role="button" 
-           aria-label="Create new player analysis report with artificial intelligence"
-           aria-describedby="nuevo-informe-desc">
-          <div class="btn-icon" aria-hidden="true">📊</div>
-          <div class="btn-content">
-            <h4 class="btn-title">New Report</h4>
-          </div>
-          <span id="nuevo-informe-desc" class="sr-only">Button to create a new personalized report using artificial intelligence. Clicking will open the chat with the agent to generate detailed player analysis.</span>
+           aria-label="Create new player analysis report with artificial intelligence">
+          <h4 class="btn-title">📊 New Report</h4>
+          <p class="btn-subtitle">AI-powered player analysis</p>
         </a>
 
         <a class="action-btn btn-success" href="{% url 'dashboard:player_search' %}"
-           data-bs-toggle="tooltip" data-bs-placement="top" 
-           title="Compare players and analyze performance metrics"
            role="button"
-           aria-label="Search and compare players with detailed metrics analysis"
-           aria-describedby="buscar-jugadores-desc">
-          <div class="btn-icon" aria-hidden="true">🔍</div>
-          <div class="btn-content">
-            <h4 class="btn-title">Search Players</h4>
-          </div>
-          <span id="buscar-jugadores-desc" class="sr-only">Button to search and compare players. Allows filtering by league, team, position and nationality, select up to 3 players and generate comparison charts with customizable metrics.</span>
+           aria-label="Search and compare players with detailed metrics">
+          <h4 class="btn-title">🔍 Search Players</h4>
+          <p class="btn-subtitle">Compare and analyze stats</p>
         </a>
 
         <a class="action-btn btn-info" href="{% url 'chats:list' %}"
-           data-bs-toggle="tooltip" data-bs-placement="top" 
-           title="Review all your previous and saved reports"
            role="button"
-           aria-label="View all previously created reports"
-           aria-describedby="mis-informes-desc">
-          <div class="btn-icon" aria-hidden="true">📋</div>
-          <div class="btn-content">
-            <h4 class="btn-title">My Reports</h4>
-          </div>
-          <span id="mis-informes-desc" class="sr-only">Button to access all previously saved reports. Allows reviewing, editing and downloading player analysis reports created previously.</span>
+           aria-label="View all previously created reports">
+          <h4 class="btn-title">📋 My Reports</h4>
+          <p class="btn-subtitle">Review saved analysis</p>
         </a>
       </div>
     </nav>
@@ -94,23 +60,19 @@
       </div>
     {% endif %}
 
-    {# — Carousel automático de titulares (ticker) — #}
+    {# — Continuous scrolling news ticker — #}
     {% if headlines %}
     <div class="home-news">
-      <div class="text-center mt-5 mb-4">
+      <div class="text-center mt-5 mb-3">
         <h4 class="news-title">📰 Sport News</h4>
       </div>
-      <div id="newsCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000" data-bs-pause="false">
-        <div class="carousel-inner">
-          {% for h in headlines %}
-            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-              <div class="bg-dark text-light py-3">
-                <div class="news-content">
-                  <p class="h5 text-center mb-0">{{ h }}</p>
-                </div>
-              </div>
-            </div>
-          {% endfor %}
+      <div class="news-ticker-wrapper">
+        <div class="news-ticker">
+          <div class="news-ticker-content">
+            {% for h in headlines %}{{ h }} <span class="news-separator">|</span> {% endfor %}
+            {# Duplicate for seamless loop #}
+            {% for h in headlines %}{{ h }} <span class="news-separator">|</span> {% endfor %}
+          </div>
         </div>
       </div>
     </div>

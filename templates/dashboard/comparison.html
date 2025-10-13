@@ -6,12 +6,6 @@
 <div class="container-fluid mt-3">
 <script src="{% static 'js/metric_tooltips.js' %}"></script>
 {% csrf_token %}
-  <!-- Logo de la aplicación -->
-  <section class="text-center py-3">
-    <img src="{% static 'img/app_logo_6.png' %}"    
-         alt="Smart Scout logo"
-         class="img-fluid app-logo">
-  </section>
   
   {% if error %}
   <div class="alert alert-danger" role="alert">
