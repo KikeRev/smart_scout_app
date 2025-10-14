@@ -2501,11 +2501,12 @@ textarea.chat-input {
   margin-bottom: 0.5rem;
   margin-top: 1.5rem;
   font-family: 'Saira Semi Condensed', sans-serif;
+  text-align: center;
 }
 
 .fut-player-card .overall-display {
-  width: 150px;
-  height: 150px;
+  width: 130px;
+  height: 130px;
   display: flex;
   align-items: center;
   justify-content: center;

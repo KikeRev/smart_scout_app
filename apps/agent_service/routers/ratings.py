@@ -519,3 +519,70 @@ async def get_available_nationalities(season: Optional[str] = "2024-25"):
     
     return [row[0] for row in results]
 
+
+@router.get("/comparison/{player1_id}/{player2_id}")
+async def get_players_comparison(player1_id: int, player2_id: int):
+    """Get comparison data for two players including ratings"""
+    try:
+        # Get player 1 rating
+        player1_rating = await get_player_rating(player1_id)
+        if not player1_rating:
+            raise HTTPException(status_code=404, detail=f"Player {player1_id} not found")
+        
+        # Get player 2 rating
+        player2_rating = await get_player_rating(player2_id)
+        if not player2_rating:
+            raise HTTPException(status_code=404, detail=f"Player {player2_id} not found")
+        
+        return {
+            "player1": player1_rating,
+            "player2": player2_rating
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching players comparison: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching players comparison")
+
+
+@router.get("/comparison/{player1_id}/{player2_id}/radar")
+async def get_players_comparison_radar(player1_id: int, player2_id: int):
+    """Generate radar chart comparing FIFA-style ratings for two players"""
+    try:
+        from apps.agent_service.viz_tools import radar_rating_comparison_chart
+        
+        # Get player names
+        with engine.connect() as conn:
+            query = text("SELECT full_name FROM players WHERE id IN (:id1, :id2)")
+            result = conn.execute(query, {"id1": player1_id, "id2": player2_id})
+            rows = result.fetchall()
+            
+            if len(rows) < 2:
+                raise HTTPException(status_code=404, detail="One or both players not found")
+            
+            player1_name = rows[0][0] if rows[0][0] else f"Player {player1_id}"
+            player2_name = rows[1][0] if rows[1][0] else f"Player {player2_id}"
+        
+        # Get rating data for both players
+        player1_rating = await get_player_rating(player1_id)
+        player2_rating = await get_player_rating(player2_id)
+        
+        if not player1_rating or not player2_rating:
+            raise HTTPException(status_code=404, detail="Rating data not found for one or both players")
+        
+        # Generate radar chart
+        radar_url = radar_rating_comparison_chart(
+            player1_name=player1_name,
+            player2_name=player2_name,
+            rating_data1=player1_rating,
+            rating_data2=player2_rating
+        )
+        
+        return {"radar_url": radar_url}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating comparison radar: {e}")
+        raise HTTPException(status_code=500, detail="Error generating comparison radar")
+

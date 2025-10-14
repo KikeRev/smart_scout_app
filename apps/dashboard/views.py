@@ -114,15 +114,70 @@ def _context(base_id: int, cand_id: int, cand_ids: list[int], metrics: list[str]
 
     players = list(stats_map.values())
 
+    # ── 3) Load player ratings and generate rating radar ─────────────
+    base_rating = None
+    cand_rating = None
+    radar_rating_url = None
+    
+    try:
+        # Import here to avoid circular imports
+        import requests
+        
+        # Get available seasons for ratings
+        seasons_response = requests.get("http://api:8001/api/ratings/leagues")
+        available_seasons = ["2024-25", "2023-24", "2022-23", "2021-22", "2020-21"]  # Fallback seasons
+        
+        # Get ratings for base player - try multiple seasons
+        base_rating = None
+        for season in available_seasons:
+            base_rating_response = requests.get(f"http://api:8001/api/ratings/player/{base_id}?season={season}")
+            if base_rating_response.status_code == 200:
+                base_rating = base_rating_response.json()
+                print(f"Found base player rating for season: {season}")
+                break
+        
+        # Get ratings for candidate player - try multiple seasons
+        cand_rating = None
+        for season in available_seasons:
+            cand_rating_response = requests.get(f"http://api:8001/api/ratings/player/{cand_id}?season={season}")
+            if cand_rating_response.status_code == 200:
+                cand_rating = cand_rating_response.json()
+                print(f"Found candidate player rating for season: {season}")
+                break
+        
+        # Generate rating radar if both ratings exist
+        if base_rating and cand_rating:
+            from apps.agent_service.viz_tools import radar_rating_comparison_chart
+            radar_rating_result = radar_rating_comparison_chart(
+                player1_name=base_stats["full_name"],
+                player2_name=cand_stats["full_name"],
+                rating_data1=base_rating,
+                rating_data2=cand_rating
+            )
+            radar_rating_url = radar_rating_result
+            print(f"""
+            base_rating: {base_rating}
+            cand_rating: {cand_rating}
+            """)
+            
+    except Exception as e:
+        print(f"Error loading ratings: {e}")
+        # Continue without ratings
+
     return {
         "base_id": base_id,
         "cand_id": cand_id,
         "cand_ids": cand_ids,
         "players": players,
+        "base_player": base_stats,
+        "cand_player": cand_stats,
+        "base_rating": base_rating,
+        "cand_rating": cand_rating,
         "metrics": metrics,
         "radar_cmp": radar_cmp["attachments"][0]["url"],
         "pizza_cmp":  pizza_cmp["attachments"][0]["url"],
         "table_html": table_html,
+        "radar_rating_url": radar_rating_url,
     }
 
 
