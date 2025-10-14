@@ -88,6 +88,13 @@ class TeamRatingResponse(BaseModel):
     substitutes: List[dict]  # Players with 300-1299 minutes
     youth: List[dict]  # Players with < 300 minutes
     breakdown: dict  # {starters_avg: 85.2, substitutes_avg: 78.5, youth_avg: 72.1}
+    # FIFA attributes for the team (weighted averages)
+    team_att: float
+    team_ply: float
+    team_def: float
+    team_ctr: float
+    team_phy: float
+    team_gkp: float
 
 
 # ============================================================================
@@ -368,7 +375,8 @@ async def get_team_rating(
             pr.ply,
             pr.def_rating,
             pr.ctr,
-            pr.phy
+            pr.phy,
+            pr.gkp
         FROM player_ratings pr
         JOIN players p ON pr.player_id = p.id
         WHERE p.club = :team_name
@@ -400,7 +408,8 @@ async def get_team_rating(
             "ply": row[5],
             "def": row[6],
             "ctr": row[7],
-            "phy": row[8]
+            "phy": row[8],
+            "gkp": row[9] or 0
         }
         
         if row[3] >= 1300:
@@ -410,7 +419,7 @@ async def get_team_rating(
         else:
             youth.append(player_data)
     
-    # Calculate weighted team rating
+    # Calculate weighted team rating and FIFA attributes
     starters_avg = sum(p["rating"] for p in starters) / len(starters) if starters else 0
     substitutes_avg = sum(p["rating"] for p in substitutes) / len(substitutes) if substitutes else 0
     youth_avg = sum(p["rating"] for p in youth) / len(youth) if youth else 0
@@ -421,6 +430,26 @@ async def get_team_rating(
         substitutes_avg * 0.25 +
         youth_avg * 0.05
     )
+    
+    # Calculate weighted FIFA attributes for the team
+    def calculate_weighted_attribute(attr_name):
+        starters_attr = sum(p[attr_name] for p in starters) / len(starters) if starters else 0
+        substitutes_attr = sum(p[attr_name] for p in substitutes) / len(substitutes) if substitutes else 0
+        youth_attr = sum(p[attr_name] for p in youth) / len(youth) if youth else 0
+        
+        return int(round(
+            starters_attr * 0.70 +
+            substitutes_attr * 0.25 +
+            youth_attr * 0.05,
+            0
+        ))
+    
+    team_att = calculate_weighted_attribute("att")
+    team_ply = calculate_weighted_attribute("ply")
+    team_def = calculate_weighted_attribute("def")
+    team_ctr = calculate_weighted_attribute("ctr")
+    team_phy = calculate_weighted_attribute("phy")
+    team_gkp = calculate_weighted_attribute("gkp")
     
     return TeamRatingResponse(
         team_name=team_name,
@@ -437,7 +466,13 @@ async def get_team_rating(
             "substitutes_count": len(substitutes),
             "youth_avg": round(youth_avg, 1),
             "youth_count": len(youth)
-        }
+        },
+        team_att=team_att,
+        team_ply=team_ply,
+        team_def=team_def,
+        team_ctr=team_ctr,
+        team_phy=team_phy,
+        team_gkp=team_gkp
     )
 
 

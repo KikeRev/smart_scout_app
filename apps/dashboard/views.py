@@ -16,7 +16,8 @@ from django.http import HttpResponseBadRequest, HttpResponse, HttpResponseBadReq
 from apps.agent_service.viz_tools import (
     radar_chart,
     radar_comparison_chart,
-    pizza_comparison_chart
+    pizza_comparison_chart,
+    radar_rating_chart
 )
 from apps.agent_service.dashboard_viz_tools import dashboard_radar_single
 from apps.agent_service.utils import compare_stats_to_html_table
@@ -321,6 +322,40 @@ def player_profile(request, player_id: int):
         if not player:
             return render(request, "dashboard/profile.html", {"error": "Player not found"})
 
+        # Fetch player rating data from API
+        player_rating = None
+        team_rating = None
+        radar_rating_data = None
+        
+        try:
+            # Get player rating
+            rating_response = requests.get(
+                f"{API_HOST}/api/ratings/player/{player_id}",
+                timeout=10
+            )
+            if rating_response.status_code == 200:
+                player_rating = rating_response.json()
+            
+            # Get team rating
+            if player.get("club"):
+                team_response = requests.get(
+                    f"{API_HOST}/api/ratings/team/{player['club']}",
+                    timeout=10
+                )
+                if team_response.status_code == 200:
+                    team_rating = team_response.json()
+            
+            # Get radar rating data
+            radar_response = requests.get(
+                f"{API_HOST}/api/ratings/player/{player_id}/radar",
+                timeout=10
+            )
+            if radar_response.status_code == 200:
+                radar_rating_data = radar_response.json()
+                
+        except Exception as e:
+            logger.warning(f"Could not fetch rating data: {e}")
+
         # Default metrics depending on position (compact set ~12)
         pos = player.get("position") or "MF"
         # Exclude stats already shown in the side table (age, minutes,
@@ -378,6 +413,29 @@ def player_profile(request, player_id: int):
         radar_url = None
         if radar.get("attachments"):
             radar_url = radar["attachments"][0].get("url")
+        
+        # Generate ratings radar if rating data is available
+        radar_rating_url = None
+        if player_rating and radar_rating_data:
+            rating_attributes = {
+                "ATT": player_rating.get("att", 50),
+                "PLY": player_rating.get("ply", 50),
+                "DEF": player_rating.get("def_rating", 50),
+                "CTR": player_rating.get("ctr", 50),
+                "PHY": player_rating.get("phy", 50),
+            }
+            if player_rating.get("gkp"):
+                rating_attributes["GKP"] = player_rating.get("gkp", 50)
+            
+            radar_rating = radar_rating_chart(
+                player_name=player["full_name"],
+                rating_data=rating_attributes,
+                team=player["club"],
+                position=pos,
+                nationality=player.get("nationality", ""),
+            )
+            if radar_rating:
+                radar_rating_url = radar_rating
 
         # Select KPI table metrics that don't overlap with radar
         # Radar has: Min/Games, Games_90s, Goals, Asist, G+A, %Pass, Tackles Won, Interceptions, Challenges, Progressive Passes, Progressive Passes Received
@@ -394,7 +452,11 @@ def player_profile(request, player_id: int):
             "player": player,
             "metrics": metrics,
             "radar_url": radar_url,
+            "radar_rating_url": radar_rating_url,
             "kpis": kpis,
+            "player_rating": player_rating,
+            "team_rating": team_rating,
+            "radar_rating_data": radar_rating_data,
         }
         return render(request, "dashboard/player_profile.html", ctx)
     except Exception as e:
