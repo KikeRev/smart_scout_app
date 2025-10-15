@@ -313,11 +313,48 @@ def comparison_dashboard(request):
     if chart_result.get('attachments') and len(chart_result['attachments']) > 0:
         chart_url = chart_result['attachments'][0]['url']
     
+    # Load FIFA-style ratings for players and build ratings radar (1-3 players)
+    ratings_map = {}
+    radar_rating_url = None
+    try:
+        seasons_try = ["2024-25", "2023-24", "2022-23", "2021-22", "2020-21", "2019-20", "2018-19", "2017-18", "2016-17", "2015-16", "2014-15", "2013-14", "2012-13"]
+        
+        for p in players_data:
+            pid = p.get('id') or p.get('player_id') or p.get('pk')
+            if not pid:
+                continue
+            rating = None
+            for season in seasons_try:
+                r = requests.get(f"{API_HOST}/api/ratings/player/{pid}?season={season}", timeout=10)
+                if r.status_code == 200:
+                    rating = r.json()
+                    break
+            if rating:
+                ratings_map[pid] = rating
+
+        # Build multi radar if we have at least one rating
+        from apps.agent_service.viz_tools import radar_rating_multi_chart
+        players_for_radar = []
+        for p in players_data:
+            pid = p.get('id')
+            rating = ratings_map.get(pid)
+            if not rating:
+                continue
+            name = p.get('full_name') or p.get('name')
+            pos = p.get('position')
+            players_for_radar.append((name, rating, pos))
+        if players_for_radar:
+            radar_rating_url = radar_rating_multi_chart(players_for_radar)
+    except Exception as e:
+        logger.warning(f"comparison_dashboard ratings load error: {e}")
+
     context = {
         'players': players_data,
         'chart_url': chart_url,
         'selected_metrics': selected_metrics,
-        'player_count': len(players_data)
+        'player_count': len(players_data),
+        'ratings_map': ratings_map,
+        'radar_rating_url': radar_rating_url
     }
     
     return render(request, "dashboard/comparison.html", context)
@@ -927,10 +964,11 @@ def history_chart_comparison_api(request):
         indices1 = [all_seasons.index(s) for s in seasons1]
         indices2 = [all_seasons.index(s) for s in seasons2]
         
+        # unified palette with dashboards (base green, candidate magenta)
         ax.plot(indices1, y1, marker='o', linewidth=2, markersize=4, 
-                label=name1, color='#3b82f6', alpha=0.8)
+                label=name1, color='#01c49d', alpha=0.9)
         ax.plot(indices2, y2, marker='s', linewidth=2, markersize=4, 
-                label=name2, color='#ef4444', alpha=0.8)
+                label=name2, color='#d80499', alpha=0.9)
         
         ax.set_xticks(range(len(all_seasons)))
         ax.set_xticklabels(all_seasons, rotation=45, fontsize=7, ha='right')
@@ -1040,7 +1078,8 @@ def history_chart_multi_api(request):
         # Build unified seasons
         all_seasons = sorted(set(s for _,_,seas,_ in histories for s in seas))
 
-        colors = ['#3b82f6', '#ef4444', '#10b981']  # blue, red, green
+        # unified palette with dashboards: green, magenta, blue
+        colors = ['#01c49d', '#d80499', '#3b82f6']
         markers = ['o', 's', 'D']
         fig, ax = plt.subplots(figsize=(8, 3))
         for idx, (pid, name, seasons, y_vals) in enumerate(histories):

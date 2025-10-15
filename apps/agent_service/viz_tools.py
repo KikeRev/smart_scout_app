@@ -453,7 +453,7 @@ def pizza_chart(
     # add credits
     CREDIT_1 = "Data Source: fbref"
     CREDIT_2 = "Inspired by: @Worville, @FootballSlices, @somazerofc & @Soumyaj15209314"
-    CREDIT_3 = "Created by: Enrique Revuelta"
+    CREDIT_3 = "Created by: Enrique Revuelta - Smart Scout App"
 
     fig.text(
         0.99, 0.02, f"{CREDIT_3}\n{CREDIT_1}\n{CREDIT_2}", size=9,
@@ -673,9 +673,12 @@ def radar_rating_chart(
     
     
     # Add endnote
-    endnote_text = axs['endnote'].text(0.99, 1.4, 'FIFA-Style Ratings / Smart Scout App', fontsize=15,
-                                    fontproperties=robotto_thin.prop,
-                                    ha='right', va='center', color='#000000')
+    endnote_text = axs['endnote'].text(0.99, 1.4, 'Inspired By: StatsBomb / Rami Moghadam', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+    endnote_text2 = axs['endnote'].text(0.99, 0.7, 'Created by: Enrique Revuelta - Smart Scout App', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+    endnote_text2 = axs['endnote'].text(0.99, 0.0, 'Data Source: FBref.com', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
     
     result = _save(fig, label=f"{player_name}_ratings")
     if isinstance(result, dict) and result.get("attachments"):
@@ -757,7 +760,7 @@ def radar_rating_comparison_chart(
     range_labels = radar.draw_range_labels(ax=axs['radar'], fontsize=25,
                                         fontproperties=robotto_thin.prop)
     param_labels = radar.draw_param_labels(ax=axs['radar'], fontsize=25,
-                                        fontproperties=robotto_thin.prop)
+                                        fontproperties=robotto_bold.prop)
 
     # Add title
     title_text = f"FIFA-Style Player Ratings"
@@ -776,17 +779,132 @@ def radar_rating_comparison_chart(
                                     fontproperties=robotto_thin.prop,
                                     ha='right', va='center', color='#d80499')
 
-    # Add legend
-    """
+    # Legend at upper right, bold
     legend_elements = [
-        plt.Line2D([0], [0], color='#0b3d0b', lw=4, alpha=0.8, label=player1_name),
-        plt.Line2D([0], [0], color='#28a745', lw=4, alpha=0.8, label=player2_name)
+        plt.Line2D([0], [0], color='#01c49d', lw=6, alpha=0.85, label=player1_name),
+        plt.Line2D([0], [0], color='#d80499', lw=6, alpha=0.85, label=player2_name),
     ]
-    fig.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, 0.02),
-               ncol=2, fontsize=16, frameon=False)
-    """
+    lgd = fig.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(0.98, 0.98),
+                     ncol=1, fontsize=14, frameon=False)
+    for txt in lgd.get_texts():
+        txt.set_fontproperties(robotto_bold.prop)
+
+    # Endnote credits
+    endnote_text = axs['endnote'].text(0.99, 1.4, 'Inspired By: StatsBomb / Rami Moghadam', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+    endnote_text2 = axs['endnote'].text(0.99, 0.7, 'Created by: Enrique Revuelta - Smart Scout App', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+    endnote_text2 = axs['endnote'].text(0.99, 0.0, 'Data Source: FBref.com', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+
     result = _save(fig, label=f"{player1_name}_vs_{player2_name}_ratings")
     if isinstance(result, dict) and result.get("attachments"):
         return result["attachments"][0].get("url", "")
     return result
 
+
+def radar_rating_multi_chart(
+    players: List[Tuple[str, Dict[str, Any], Optional[str]]],
+    *,
+    title: str = "Players Ratings",
+) -> str:
+    """Create a radar chart overlaying FIFA-style ratings for up to 3 players.
+
+    Parameters
+    ----------
+    players : list of tuples
+        Each item is (player_name, rating_data_dict, position) where rating_data_dict
+        contains keys in lower-case as returned by FastAPI (att, ply, def_rating, ctr, phy, gkp).
+    title : str
+        Title for the chart.
+
+    Returns
+    -------
+    str
+        URL to the generated image (when Django TempChart is available) or path string.
+    """
+    if not players:
+        raise ValueError("At least one player is required")
+
+    # Determine params (exclude GKP for outfield; map GK to include GKP instead of DEF)
+    # We'll standardize to 5 metrics to keep chart readable across 3 players
+    # For GK entries we map DEF->GKP for that specific values array
+    base_params = ["ATT", "PLY", "DEF", "CTR", "PHY"]
+
+    # Prepare arrays for each player
+    value_arrays: List[np.ndarray] = []
+    names: List[str] = []
+    for name, data, pos in players:
+        att = data.get("att", data.get("ATT", 0))
+        ply = data.get("ply", data.get("PLY", 0))
+        def_val = data.get("def_rating", data.get("def", data.get("DEF", 0)))
+        ctr = data.get("ctr", data.get("CTR", 0))
+        phy = data.get("phy", data.get("PHY", 0))
+        gkp = data.get("gkp", data.get("GKP", None))
+
+        if (pos or "").upper() == "GK" and gkp is not None:
+            vals = [att, ply, gkp, ctr, phy]
+        else:
+            vals = [att, ply, def_val, ctr, phy]
+        value_arrays.append(np.array(vals, dtype=float))
+        names.append(name)
+
+    low = np.zeros_like(value_arrays[0])
+    high = np.full_like(value_arrays[0], 100)
+
+    radar = Radar(base_params, low, high,
+                  lower_is_better=[],
+                  round_int=[True]*len(base_params),
+                  num_rings=5,
+                  ring_width=1, center_circle_radius=1)
+
+    fig, axs = grid(figheight=14, grid_height=0.915, title_height=0.06, endnote_height=0.025,
+                    title_space=0, endnote_space=0, grid_key='radar', axis=False)
+
+    radar.setup_axis(ax=axs['radar'])
+    _ = radar.draw_circles(ax=axs['radar'], facecolor='#f0f0f0', edgecolor='#d0d0d0')
+
+    # Colors aligned with app palette and stats radar order: base green, magenta, third blue
+    palette = ['#01c49d', '#d80499', '#3b82f6']
+
+    vertices_list = []
+    for idx, vals_arr in enumerate(value_arrays):
+        color = palette[idx % len(palette)]
+        out = radar.draw_radar(vals_arr, ax=axs['radar'],
+                               kwargs_radar={'facecolor': color, 'alpha': 0.65},
+                               kwargs_rings={'facecolor': '#e0e0e0', 'alpha': 0.0})
+        _, _, vertices = out
+        vertices_list.append((vertices, color))
+
+    _ = radar.draw_range_labels(ax=axs['radar'], fontsize=25, fontproperties=robotto_thin.prop)
+    _ = radar.draw_param_labels(ax=axs['radar'], fontsize=25, fontproperties=robotto_bold.prop)
+
+    # Add vertices points
+    for vertices, color in vertices_list:
+        axs['radar'].scatter(vertices[:, 0], vertices[:, 1], c=color, edgecolors='#6d6c6d',
+                             marker='o', s=120, zorder=2)
+
+    # Title and legend (match stats radar styling)
+    fig.text(0.5, 0.99, title, fontsize=20, fontweight='bold', ha='center', va='top',
+             fontproperties=robotto_bold.prop)
+
+    # Build legend lines (upper right to match other radars)
+    legend_elements = [plt.Line2D([0], [0], color=palette[i % len(palette)], lw=6, alpha=0.85, label=names[i])
+                       for i in range(len(names))]
+    lgd = fig.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(0.98, 0.98),
+                     ncol=1, fontsize=14, frameon=False)
+    for txt in lgd.get_texts():
+        txt.set_fontproperties(robotto_bold.prop)
+
+    # Endnote credits
+    endnote_text = axs['endnote'].text(0.99, 1.4, 'Inspired By: StatsBomb / Rami Moghadam', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+    endnote_text2 = axs['endnote'].text(0.99, 0.7, 'Created by: Enrique Revuelta - Smart Scout App', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+    endnote_text2 = axs['endnote'].text(0.99, 0.0, 'Data Source: FBref.com', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+
+    result = _save(fig, label="ratings_multi")
+    if isinstance(result, dict) and result.get("attachments"):
+        return result["attachments"][0].get("url", "")
+    return result

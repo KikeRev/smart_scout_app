@@ -37,8 +37,16 @@ TempChart = _django_model("apps.charts.models.TempChart")
 
 # Fonts - initialize safely
 try:
-    robotto_bold = FontManager('apps/agent_service/fonts/robotto_bold.ttf')
-    robotto_thin = FontManager('apps/agent_service/fonts/robotto_thin.ttf')
+    FONTS_PATH = Path(__file__).resolve().parent / "fonts"
+
+    serif_regular     = FontManager((FONTS_PATH / "serif_regular.ttf").as_uri())
+    serif_extra_light = FontManager((FONTS_PATH / "serif_extra_light.ttf").as_uri())
+    rubik_regular     = FontManager((FONTS_PATH / "rubik_regular.ttf").as_uri())
+    robotto_thin      = FontManager((FONTS_PATH / "robotto_thin.ttf").as_uri())
+    robotto_bold      = FontManager((FONTS_PATH / "robotto_bold.ttf").as_uri())
+    font_bold         = FontManager((FONTS_PATH / "RobotoSlab-Bold.ttf").as_uri())
+    font_normal       = FontManager((FONTS_PATH / "RobotoSlab-Regular.ttf").as_uri())
+    font_italic       = FontManager((FONTS_PATH / "RobotoSlab-Italic.ttf").as_uri())
 except:
     # Fallback to default fonts if not available
     robotto_bold = None
@@ -356,13 +364,15 @@ def dashboard_radar_single(player_data: dict, selected_metrics: List[str] = None
         range_labels = radar.draw_range_labels(ax=axs['radar'], fontsize=25,
                                             fontproperties=robotto_thin.prop if robotto_thin else None)
         param_labels = radar.draw_param_labels(ax=axs['radar'], fontsize=25,
-                                            fontproperties=robotto_thin.prop if robotto_thin else None)
+                                            fontproperties=robotto_bold.prop if robotto_bold else None)
 
         # Titles and text
-        endnote_text = axs['endnote'].text(0.99, 1.4, 'Smart Scout Dashboard', fontsize=15,
-                                        fontproperties=robotto_thin.prop if robotto_thin else None, ha='right', va='center')
-        endnote_text2 = axs['endnote'].text(0.99, 0.7, 'Data Source: FBref.com', fontsize=15,
-                                        fontproperties=robotto_thin.prop if robotto_thin else None, ha='right', va='center')
+        endnote_text = axs['endnote'].text(0.99, 1.4, 'Inspired By: StatsBomb / Rami Moghadam', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+        endnote_text2 = axs['endnote'].text(0.99, 0.7, 'Created by: Enrique Revuelta - Smart Scout App', fontsize=15,
+                                        fontproperties=robotto_thin.prop, ha='right', va='center')
+        endnote_text2 = axs['endnote'].text(0.99, 0.0, 'Data Source: FBref.com', fontsize=15,
+                                        fontproperties=robotto_thin.prop, ha='right', va='center')
         
         title1_text = axs['title'].text(0.01, 0.65, player_name, fontsize=25,
                                         fontproperties=robotto_bold.prop if robotto_bold else None, ha='left', va='center')
@@ -487,18 +497,20 @@ def dashboard_radar_comparison(players_data: List[dict], selected_metrics: List[
                     num_rings=5, 
                     ring_width=1, center_circle_radius=1)
 
-        # Crear la figura usando grid de mplsoccer
+        
+        # Creating the figure using the grid function from mplsoccer:
         fig, axs = grid(figheight=14, grid_height=0.915, title_height=0.06, endnote_height=0.025,
                         title_space=0, endnote_space=0, grid_key='radar', axis=False)
 
-        # Plotear el radar
+    
+        # Plot the radar
         radar.setup_axis(ax=axs['radar'])
         rings_inner = radar.draw_circles(ax=axs['radar'], facecolor='#f0f0f0', edgecolor='#d0d0d0')
         
-        # Colores para cada jugador
+        # Colors for each player
         colors = ['#00f2c1', '#d80499', '#ff6b35']
         
-        # Plotear cada jugador
+        # Plot each player
         for i, player_data in enumerate(all_players_data):
             vals_arr = np.array(player_data['vals'], dtype=float)
             color = colors[i % len(colors)]
@@ -508,11 +520,11 @@ def dashboard_radar_comparison(players_data: List[dict], selected_metrics: List[
                                             kwargs_rings={'facecolor': '#e0e0e0', 'alpha': 0.4})
             radar_poly, rings_outer, vertices = radar_output
             
-            # Puntos en los vértices
+            # Points in the vertices
             axs['radar'].scatter(vertices[:, 0], vertices[:, 1],
                                 c=color, edgecolors='#6d6c6d', marker='o', s=150, zorder=2)
         
-        # Etiquetas y rangos
+        # Labels and ranges
         range_labels = radar.draw_range_labels(ax=axs['radar'], fontsize=25,
                                             fontproperties=robotto_thin.prop if robotto_thin else None)
         param_labels = radar.draw_param_labels(ax=axs['radar'], fontsize=25,
@@ -527,10 +539,12 @@ def dashboard_radar_comparison(players_data: List[dict], selected_metrics: List[
         axs['radar'].legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(1.1, 1.0))
         
         # Titles and text
-        endnote_text = axs['endnote'].text(0.99, 1.4, 'Smart Scout Dashboard', fontsize=15,
-                                        fontproperties=robotto_thin.prop if robotto_thin else None, ha='right', va='center')
-        endnote_text2 = axs['endnote'].text(0.99, 0.7, 'Data Source: FBref.com', fontsize=15,
-                                        fontproperties=robotto_thin.prop if robotto_thin else None, ha='right', va='center')
+        endnote_text = axs['endnote'].text(0.99, 1.4, 'Inspired By: StatsBomb / Rami Moghadam', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+        endnote_text2 = axs['endnote'].text(0.99, 0.7, 'Created by: Enrique Revuelta - Smart Scout App', fontsize=15,
+                                        fontproperties=robotto_thin.prop, ha='right', va='center')
+        endnote_text2 = axs['endnote'].text(0.99, 0.0, 'Data Source: FBref.com', fontsize=15,
+                                        fontproperties=robotto_thin.prop, ha='right', va='center')
         
         # Main title
         title_text = axs['title'].text(0.5, 0.65, 'Player Comparison', fontsize=25,
@@ -542,7 +556,7 @@ def dashboard_radar_comparison(players_data: List[dict], selected_metrics: List[
         fig.savefig(chart_path, dpi=300, bbox_inches='tight', facecolor='white')
         plt.close(fig)
         
-        # URL relativa para el template
+        # Relative URL for the template
         chart_url = chart_path.replace('/app/media', '/media')
         
         return {

@@ -22,7 +22,7 @@
           <span>Historical metrics</span>
           <small class="text-muted" id="metric-count">0 / 3</small>
         </div>
-        <div class="card-body" id="metrics-sidebar" style="max-height: 75vh; overflow-y: auto;">
+        <div class="card-body" id="metrics-sidebar" style="max-height: 100vh; overflow-y: auto;">
           <div id="metricsList"><p class="text-muted">Loading metrics…</p></div>
         </div>
       </div>
@@ -34,21 +34,15 @@
     {% for player in players %}
     <div class="col-md-{% if player_count == 1 %}12{% elif player_count == 2 %}6{% else %}4{% endif %}">
       <div class="card h-100">
-        <div class="card-body text-center">
-          <!-- Team logo -->
-          {% if player.team_logo %}
-          <div class="mb-3">
-            <img src="{{ player.team_logo }}" 
-                 alt="{{ player.club }} logo" 
-                 class="img-fluid" 
-                 style="max-height: 60px; max-width: 60px;"
-                 onerror="this.style.display='none'">
-          </div>
-          {% endif %}
+        <div class="card-body text-center" style="display:flex; gap:0.5rem; align-items:stretch;">
           
           <!-- Player information -->
+          <div style="flex:0 0 75%; min-width:0; text-align:center;">
+          {% if player.team_logo %}
+            <img src="{{ player.team_logo }}" alt="{{ player.club }} logo" class="img-fluid mb-2" style="max-height: 60px; max-width: 60px;" onerror="this.style.display='none'">
+          {% endif %}
           <h5 class="card-title">{{ player.full_name|default:"N/A" }}</h5>
-          <p class="card-text">
+          <p class="card-text mb-2">
             <strong>Team:</strong> {{ player.club|default:"N/A" }}<br>
             <strong>Nationality:</strong> {{ player.nationality|default:"N/A" }}<br>
             <strong>Age:</strong> {{ player.age|default:"N/A" }} years<br>
@@ -70,6 +64,64 @@
               <strong>{{ player.assists|default:"0" }}</strong>
             </div>
           </div>
+          </div>
+
+          <!-- Mini FIFA rating card (25%) -->
+          <div style="flex:0 0 25%; height:100%; min-width:140px;">
+            {% with pid=player|player_id_of %}
+            {% with r=ratings_map|dict_get:pid %}
+            {% if r %}
+            <div class="fut-player-card h-100 w-100" style="padding:0.75rem;">
+              <div class="player-card-top" style="display: flex; justify-content: center; align-items: center;">
+                
+                <div class="player-right-ovr" style="display: flex; justify-content: center; align-items: center;">
+                  <div class="ovr-title">OVR</div>
+                  <div class="overall-display"style="width: 100px; height: 100px; font-size: 2rem; font-weight: 800;">{{ r.overall_rating }}</div>
+                </div>
+              </div>
+              <div class="player-card-bottom" style="margin-top:2.5rem;">
+                <div class="player-info">
+                  <div class="player-features">
+                    <div class="player-features-col">
+                      <span>
+                        <div class="player-feature-title">ATT</div>
+                        <div class="player-feature-value">{{ r.att }}</div>
+                      </span>
+                      <span>
+                        <div class="player-feature-title">PLY</div>
+                        <div class="player-feature-value">{{ r.ply }}</div>
+                      </span>
+                      <span>
+                        <div class="player-feature-title">CTR</div>
+                        <div class="player-feature-value">{{ r.ctr }}</div>
+                      </span>
+                    </div>
+                    <div class="player-features-col">
+                      <span>
+                        <div class="player-feature-title">DEF</div>
+                        <div class="player-feature-value">{{ r.def_rating }}</div>
+                      </span>
+                      <span>
+                        <div class="player-feature-title">PHY</div>
+                        <div class="player-feature-value">{{ r.phy }}</div>
+                      </span>
+                      {% if r.gkp %}
+                      <span>
+                        <div class="player-feature-title">GKP</div>
+                        <div class="player-feature-value">{{ r.gkp }}</div>
+                      </span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% else %}
+              <small class="text-muted">No ratings</small>
+            {% endif %}
+            {% endwith %}
+            {% endwith %}
+          </div>
         </div>
       </div>
     </div>
@@ -81,11 +133,15 @@
     <div class="col-12 col-xl-6">
       {% if chart_url %}
       <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
           <h5 class="mb-0">{% if player_count == 1 %}📊 Individual Analysis{% else %}📊 Player Comparison{% endif %}</h5>
+          <div class="radar-toggle-container">
+            <button class="btn btn-sm btn-outline-success me-2" id="btn-stats" onclick="toggleRadar('stats')">Stats</button>
+            <button class="btn btn-sm btn-outline-success" id="btn-ratings" onclick="toggleRadar('ratings')">Ratings</button>
+          </div>
         </div>
         <div class="card-body text-center">
-          <img src="{{ chart_url }}" alt="Comparison chart" class="img-fluid" style="max-width: 100%; height: auto; max-height: 1050px;">
+          <img id="radar-img" src="{{ chart_url }}" data-stats-url="{{ chart_url }}" data-ratings-url="{{ radar_rating_url|default:'' }}" alt="Comparison chart" class="img-fluid" style="max-width: 100%; height: auto; max-height: 1050px;">
         </div>
       </div>
       {% endif %}
@@ -398,6 +454,40 @@ function confirmSaveSearch() {
         console.error('Error:', error);
         alert('Error saving search: ' + error.message);
     });
+}
+</script>
+<script>
+// Initialize toggle state and URLs
+document.addEventListener('DOMContentLoaded', function(){
+  const img = document.getElementById('radar-img');
+  const btnStats = document.getElementById('btn-stats');
+  const btnRatings = document.getElementById('btn-ratings');
+  if (!img || !btnStats || !btnRatings) return;
+  const ratingsUrl = (img.getAttribute('data-ratings-url') || '').trim();
+  if (!ratingsUrl){
+    // Disable ratings if not available
+    btnRatings.disabled = true;
+  }
+});
+
+// Toggle radar between stats and ratings
+function toggleRadar(mode){
+  const img = document.getElementById('radar-img');
+  const btnStats = document.getElementById('btn-stats');
+  const btnRatings = document.getElementById('btn-ratings');
+  if (!img) return;
+  const statsUrl = (img.getAttribute('data-stats-url') || '').trim();
+  const ratingsUrl = (img.getAttribute('data-ratings-url') || '').trim();
+  if (mode === 'ratings'){
+    if (!ratingsUrl) return; // nothing to show
+    img.src = ratingsUrl + (ratingsUrl.includes('?') ? '&' : '?') + '_ts=' + Date.now();
+    if (btnRatings){ btnRatings.classList.add('active'); }
+    if (btnStats){ btnStats.classList.remove('active'); }
+  } else {
+    img.src = statsUrl + (statsUrl.includes('?') ? '&' : '?') + '_ts=' + Date.now();
+    if (btnStats){ btnStats.classList.add('active'); }
+    if (btnRatings){ btnRatings.classList.remove('active'); }
+  }
 }
 </script>
 {% endblock %}
