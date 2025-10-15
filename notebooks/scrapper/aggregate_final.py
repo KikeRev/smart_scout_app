@@ -1,6 +1,49 @@
 import pandas as pd
 import numpy as np
 
+def normalize_position(pos):
+    """
+    Normalize position to one of the 4 main positions: GK, DF, MF, FW
+    Priority: GK > FW > MF > DF
+    """
+    if not pos or pd.isna(pos):
+        return ''
+    pos = str(pos).upper().strip()
+    
+    # If has GK, it's GK
+    if 'GK' in pos:
+        return 'GK'
+    # If has FW, it's FW
+    elif 'FW' in pos:
+        return 'FW'
+    # If has MF, it's MF
+    elif 'MF' in pos:
+        return 'MF'
+    # If has DF, it's DF
+    elif 'DF' in pos:
+        return 'DF'
+    else:
+        return ''
+
+def calculate_birth_year(row):
+    """
+    Calculate birth year from age and season.
+    Season format: "2024-25" -> use first year (2024)
+    birth_year = season_year - age
+    """
+    try:
+        if pd.isna(row['age']) or pd.isna(row['Season']):
+            return None
+        
+        # Extract first year from season (e.g., "2024-25" -> 2024)
+        season_year = int(str(row['Season']).split('-')[0])
+        age = int(float(row['age']))
+        birth_year = season_year - age
+        
+        return birth_year
+    except:
+        return None
+
 def main():
     print("=== Loading data ===")
     # Load current season data
@@ -8,7 +51,7 @@ def main():
     print(f"Current season (all_players_cleaned): {df1.shape}")
     
     # Load historical data
-    df2 = pd.read_csv('data/historical_players_raw.csv')
+    df2 = pd.read_csv('data/all_historical_raw_2014_2024.csv')
     print(f"Historical data: {df2.shape}")
     
     # Add season column to current data
@@ -28,6 +71,29 @@ def main():
     df_final = pd.concat([df1, df2], axis=0)
     print(f"Concatenated data: {df_final.shape}")
     
+    # Calculate birth_year for player disambiguation
+    print("\n=== Player disambiguation ===")
+    df_final['birth_year'] = df_final.apply(calculate_birth_year, axis=1)
+    print(f"Calculated birth_year for {df_final['birth_year'].notna().sum()} rows")
+    
+    # Normalize positions to 4 main categories
+    df_final['position_normalized'] = df_final['position'].apply(normalize_position)
+    print(f"Normalized positions: {df_final['position_normalized'].value_counts().to_dict()}")
+    
+    # Create unique player ID: player_birth_year
+    df_final['player_uid'] = df_final.apply(
+        lambda row: f"{row['player']}_{int(row['birth_year'])}" if pd.notna(row['birth_year']) else row['player'],
+        axis=1
+    )
+    print(f"Created player_uid for disambiguation")
+    
+    # Show example: Rodri
+    rodri_data = df_final[df_final.player == "Rodri"][['player', 'player_uid', 'birth_year', 'position', 'position_normalized', 'Team', 'Season', 'age']].sort_values(['player_uid', 'Season'])
+    if len(rodri_data) > 0:
+        print("\nExample - Rodri disambiguation:")
+        print(rodri_data.head(20))
+        print(f"\nUnique Rodri players: {rodri_data['player_uid'].nunique()}")
+    
     # Clean minutes columns (as in notebook)
     df_final["minutes"] = df_final["minutes"].fillna("0")
     if "minutes.1" in df_final.columns:
@@ -39,14 +105,16 @@ def main():
         df_final["minutes.1"] = df_final["minutes.1"].apply(lambda x: float(str(x).replace(",", ".")))
     
     print("Cleaned minutes columns")
+    df_final = df_final.sort_values(["player_uid", "position_normalized", "Season"], ascending=[False, False, False])
     # Save result
     output_path = "data/all_players_plus_historic_data_non_aggregated_v2.csv"
     df_final.to_csv(output_path, index=False)
     print(f"Saved to: {output_path}")
     
-    # Define categorical and numerical columns (as in notebook)
-    cat_cols = ["player", "nationality", "position", "age", "Team", "League", "Team_Logo", "Season"]
-    num_cols = ["player"] + [c for c in df_final.columns if c not in cat_cols]
+    # Define categorical and numerical columns (updated to use player_uid)
+    # birth_year is categorical (for identification), position_normalized is categorical (most recent)
+    cat_cols = ["player", "player_uid", "birth_year", "nationality", "position", "position_normalized", "age", "Team", "League", "Team_Logo", "Season"]
+    num_cols = ["player_uid"] + [c for c in df_final.columns if c not in cat_cols]
     
     print(f"Categorical columns: {len(cat_cols)}")
     print(f"Numerical columns: {len(num_cols)}")
@@ -56,11 +124,13 @@ def main():
     df_num = df_final[num_cols]
     
     # Aggregate categorical data (take most recent season)
-    df_cat_agg = df_cat.sort_values(["player", "Season"], ascending=[False, False]).groupby("player").first().reset_index()
+    # Use only player_uid for grouping (one player = one record)
+    # Position is categorical: use the most recent one
+    df_cat_agg = df_cat.sort_values(["player_uid", "Season"], ascending=[False, False]).groupby("player_uid").first().reset_index()
     print(f"Categorical aggregation: {df_cat_agg.shape}")
     
     # Verify no duplicates
-    assert df_cat_agg.shape[0] == df_final["player"].nunique(), "Duplicate players found!"
+    assert df_cat_agg.shape[0] == df_final.groupby("player_uid").ngroups, "Duplicate players found!"
     print("✓ No duplicate players")
     
     # Add player_status based on most recent season
@@ -75,16 +145,19 @@ def main():
     print(f"Rows with 0 minutes: {zero_minutes}/{total_rows}")
     
     # Aggregate numerical data (average of all seasons with minutes > 0)
-    df_num_agg = df_num[df_num.minutes > 0].groupby("player").mean().reset_index()
+    # Use only player_uid for grouping (average all seasons of the same player)
+    df_num_agg = df_num[df_num.minutes > 0].groupby("player_uid").mean().reset_index()
     print(f"Numerical aggregation (minutes > 0): {df_num_agg.shape}")
     
     # Merge categorical and numerical data
-    df_final_agg = df_cat_agg.merge(df_num_agg, on="player", how="left")
+    df_final_agg = df_cat_agg.merge(df_num_agg, on="player_uid", how="left")
     print(f"Final merged data: {df_final_agg.shape}")
     
-    # Keep only original columns plus player_status
-    original_cols = list(df1.columns) + ["player_status"]
-    df_final_agg = df_final_agg[original_cols]
+    # Keep original columns plus new ones (player_uid, birth_year, position_normalized, player_status)
+    original_cols = list(df1.columns) + ["player_uid", "birth_year", "position_normalized", "player_status"]
+    # Filter to only existing columns
+    original_cols = [c for c in original_cols if c in df_final_agg.columns]
+    df_final_agg = df_final_agg[original_cols].sort_values(["player", "position_normalized"], ascending=[False, False])
     print(f"Final columns: {len(df_final_agg.columns)}")
     
     # Save result
@@ -105,8 +178,11 @@ def main():
         print(f"  - Active: {len(rm[rm.player_status == 'active'])}")
         print(f"  - Retired: {len(rm[rm.player_status == 'retired or inactive'])}")
     
-    print("\n=== Sample data ===")
-    print(df_final_agg[['player', 'Team', 'Season', 'player_status']].head(10))
+    print("\n=== Sample data: Rodri disambiguation ===")
+    print("Non-aggregated data:")
+    print(df_final[df_final.player == "Rodri"][['player', 'player_uid', 'birth_year', 'position', 'position_normalized', 'Team', 'Season', 'age']].head(20))
+    print("\nAggregated data:")
+    print(df_final_agg[df_final_agg.player == "Rodri"][['player', 'player_uid', 'birth_year', 'position_normalized', 'Team', 'Season', 'age', 'player_status']].head(10))
     
     return df_final_agg
 

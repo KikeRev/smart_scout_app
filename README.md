@@ -1,4 +1,4 @@
-<h1 align="center">SMART SCOUT APP v1.5</h1>
+<h1 align="center">SMART SCOUT APP v1.6</h1>
 
 <p align="center">
   <img src="./static/img/app_logo_6.png" alt="Logo">
@@ -6,7 +6,7 @@
 
 # 🚀 Welcome
 
-Welcome to **Smart Scout App v1.5** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
+Welcome to **Smart Scout App v1.6** — an application created to help football teams scout and evaluate new players. It assists in finding suitable replacements for players who leave the team or identifying similar profiles to those who have signed with other clubs.
 
 ## ✨ Features Overview
 
@@ -67,13 +67,16 @@ Welcome to **Smart Scout App v1.5** — an application created to help football 
 ## Historical Data Structure
 - **Source**: fbref.com (Top 5 European leagues + additional leagues in 2024-25)
 - **Period**: 2014-15 to 2024-25 seasons (11 seasons)
-- **Players**: 22,797 total (16,827 active, 5,970 retired/inactive)
-- **Records**: 51,759 seasonal records for evolution tracking
+- **Players**: 23,716 unique players (⭐ improved with player disambiguation)
+- **Records**: 51,761 seasonal records for evolution tracking
 - **Update Frequency**: End of each season
 
+
+
 ## Data Files
-- **Aggregated Dataset**: `data/all_players_with_historical_aggregated.csv` (22,797 players)
-- **Historical Dataset**: `data/historical_players_raw.csv` (51,759 seasonal records)
+- **Aggregated Dataset**: `data/all_players_plus_historic_data_aggregated_v2.csv` (23,716 unique players)
+- **Historical Dataset**: `data/all_players_plus_historic_data_non_aggregated_v2.csv` (51,761 seasonal records)
+- **Player Disambiguation**: Calculated `birth_year` from age and season to distinguish players with same name
 - **Backup Strategy**: Automated backups with timestamps
 - **Version Control**: Git + optional DVC for data versioning
 
@@ -82,21 +85,213 @@ Welcome to **Smart Scout App v1.5** — an application created to help football 
 # 1. Update data (when new season available)
 python scripts/update_data.py --season 2025-26
 
-# 2. Ingest aggregated data to players table
+# 2. Aggregate and disambiguate players
+python notebooks/scrapper/aggregate_final.py
+
+# 3. Ingest aggregated data to players table
 python -m apps.ingestion.seed_and_ingest \
-  --players-csv data/all_players_with_historical_aggregated.csv \
+  --players-csv data/all_players_plus_historic_data_aggregated_v2.csv \
   --replace --verbose --refresh-embs
 
-# 3. Ingest historical data to player_history table
+# 4. Ingest historical data to player_history table
 python -m apps.ingestion.seed_and_ingest \
-  --history-csv data/historical_players_raw.csv \
+  --history-csv data/all_players_plus_historic_data_non_aggregated_v2.csv \
   --replace-history --verbose
+
+# 5. Calculate FIFA-style ratings for all players
+python -m apps.ingestion.seed_and_ingest \
+  --calculate-ratings --replace-ratings --verbose
 ```
 
 ## Future Data Versioning
 - **DVC Implementation**: See `docs/DVC_IMPLEMENTATION.md` for advanced data versioning
 - **Benefits**: Reproducible experiments, team collaboration, data lineage tracking
 - **When to Use**: Multi-developer teams, frequent data updates, research projects
+
+# ⭐ FIFA-Style Player Ratings System (⭐ NEW in v1.6)
+
+## Overview
+The Smart Scout App now includes a comprehensive **FIFA-style rating system** that evaluates players on a 0-100 scale across multiple attributes. This system provides instant, objective player evaluations and enables easy team-level comparisons.
+
+## 🎯 Rating Components
+
+### Overall Rating (OVR)
+The final player rating combines two factors:
+```
+OVR = (League Base Rating × 60%) + (Performance Rating × 40%)
+```
+
+- **League Base Rating**: Quality tier of player's league (70-92 points)
+  - Premier League: 92
+  - La Liga: 90
+  - Serie A, Bundesliga, Ligue 1: 88
+  - Eredivisie, Primeira Liga: 79
+  - Belgian Pro League: 75
+  - Default: 70
+
+- **Performance Rating**: Weighted combination of 6 attributes (ATT, PLY, DEF, CTR, PHY, GKP)
+
+### 📊 Six Core Attributes (0-100)
+
+#### 1. **ATT - Attacking** (Goals + Expected Goals + Assists)
+- Goals per 90 (40%)
+- Expected Goals per 90 (30%)
+- Assists per 90 (20%)
+- Progressive Passes Received per 90 (10%)
+
+#### 2. **PLY - Playmaking** (Passing + Assists + Progression)
+- Assists per 90 (25%)
+- Expected Assists per 90 (20%)
+- Progressive Passes per 90 (25%)
+- Pass Completion % (15%)
+- Progressive Passing Distance (15%)
+
+#### 3. **DEF - Defending** (Tackles + Interceptions + Clearances)
+- Tackles per 90 (30%)
+- Interceptions per 90 (30%)
+- Clearances per 90 (25%)
+- Blocks per 90 (15%)
+
+#### 4. **CTR - Control** (Ball Control + Passing)
+- Pass Completion % (35%)
+- Passes Completed (25%)
+- Progressive Carries per 90 (40%)
+
+#### 5. **PHY - Physical** (⭐ Enhanced with League Base)
+```
+PHY = (League Base Rating + Performance) / 2
+```
+- Performance component:
+  - Tackles per 90 (30%)
+  - Progressive Carries per 90 (30%)
+  - Clearances per 90 (20%)
+  - Blocks per 90 (20%)
+- Ensures players from top leagues have realistic physical ratings (60-85 range)
+
+#### 6. **GKP - Goalkeeping** (⭐ Enhanced with League Base + Blending)
+```
+GKP = (League Base Rating + Performance) / 2
+```
+- Performance component:
+  - Goals Against per 90 (40%, inverse)
+  - Post-Shot xG per 90 (35%, inverse)
+  - PSxG per Shot (25%, inverse)
+- **Special Blending (1100 minutes)**: Goalkeepers with fewer minutes are smoothly regressed toward league average
+  - Formula: `blended_value = (minutes / (minutes + 1100)) × player_value + (1100 / (minutes + 1100)) × league_avg`
+  - Prevents extreme ratings from small sample sizes
+
+### 🏆 Position-Specific Weights
+
+Each position uses different attribute weights for calculating Performance Rating:
+
+| Position | ATT | PLY | DEF | CTR | PHY | GKP |
+|----------|-----|-----|-----|-----|-----|-----|
+| **GK** | 0% | 0% | 10% | 0% | 10% | 80% |
+| **DF** | 10% | 20% | 35% | 10% | 25% | 0% |
+| **MF** | 20% | 35% | 15% | 20% | 10% | 0% |
+| **FW** | 45% | 20% | 0% | 25% | 10% | 0% |
+
+## 🔧 Technical Implementation
+
+### Confidence Factors & Regression to Mean
+Players with fewer minutes have their stats blended with league averages:
+
+- **Standard Stats** (ATT, PLY, DEF, CTR, PHY):
+  - ≥1500 min: 100% player stats
+  - 1200-1499: 90% player, 10% league avg
+  - 900-1199: 80% player, 20% league avg
+  - 600-899: 70% player, 30% league avg
+  - 300-599: 60% player, 40% league avg
+  - <300: 50% player, 50% league avg
+
+- **GKP Stats** (Special Blending):
+  - Uses continuous blending formula instead of tiers
+  - Threshold: 1100 minutes
+  - Formula: `w = minutes / (minutes + 1100)`
+  - More aggressive regression for goalkeepers with limited playing time
+
+### Percentile Normalization
+All raw stats are normalized to 0-100 using percentiles within the same league and position:
+- Compares players only against similar players (same league + position + min 500 minutes)
+- 50th percentile = 50 points (not just min-max scaling)
+- More realistic distribution of ratings
+
+## 📊 Team Ratings
+
+Team-level ratings are calculated using **minute-weighted averages** of all players:
+
+```
+Team Attribute = Σ(Player Attribute × Minutes) / Σ(Minutes)
+```
+
+- **No bucket weighting**: All players contribute proportionally to their playing time
+- **Separate calculations**:
+  - GKP: Only from goalkeepers
+  - ATT/PLY/DEF/CTR/PHY: Only from outfield players
+- **Overall Team Rating**: Minute-weighted average of all player OVRs
+
+### Example: Real Madrid (La Liga 2024-25)
+- Overall: 82.1
+- ATT: 72 | PLY: 75 | DEF: 54 | CTR: 80 | PHY: 74 | GKP: 75
+
+## 🎨 FIFA-Style Cards
+
+### Player Cards
+Displayed in player profiles and comparison dashboards:
+- **Large OVR circle** (top-right)
+- **Position badge** (left)
+- **Nationality flag** (left)
+- **Club logo** (left)
+- **Six attributes** (bottom, 2 columns)
+- Color scheme: App's green palette
+
+### Team Cards
+Displayed in team contexts:
+- **Team name** (centered, large)
+- **Overall rating** (top, large)
+- **Six team attributes** (grid layout)
+- **Club logo** (contextual)
+
+## 🔌 API Endpoints
+
+### Get Player Rating
+```
+GET /api/ratings/player/{player_id}?season=2024-25
+```
+
+### Get Team Rating
+```
+GET /api/ratings/team/{team_name}?season=2024-25
+```
+
+### Get Ratings Comparison Radar
+```
+GET /api/ratings/comparison/{player1_id}/{player2_id}/radar
+```
+
+## 📈 Data Updates
+
+Ratings are automatically calculated during data ingestion:
+
+```bash
+# Recalculate all ratings with new logic
+docker compose run --rm api python scripts/calculate_all_ratings.py --replace --verbose
+
+# Or during full ingestion
+python -m apps.ingestion.seed_and_ingest \
+  --players-csv data/all_players_plus_historic_data_aggregated_v2.csv \
+  --calculate-ratings \
+  --replace-ratings
+```
+
+## 🎯 Benefits
+
+✅ **Instant Player Evaluation**: Quick assessment of any player's strengths/weaknesses  
+✅ **Fair Cross-League Comparison**: League base ensures realistic ratings across competitions  
+✅ **Team-Level Analysis**: Aggregate metrics for squad planning  
+✅ **Visual Clarity**: FIFA-style cards for instant recognition  
+✅ **Data-Driven**: Based on actual performance metrics, not subjective opinions  
+✅ **Historical Tracking**: Track player rating evolution across seasons  
 
 # 🧱 Project Structure
 
@@ -1026,6 +1221,62 @@ docker-compose exec api python -m pytest tests/ --cov=. --cov-report=html
 
 
 # 📋 Release Notes
+
+## 🚀 Version 1.6 - FIFA-Style Ratings & Player Disambiguation (October 2025)
+
+### ✨ New Features
+- **FIFA-Style Rating System**: Comprehensive 0-100 player evaluation across 6 attributes
+  - ATT (Attacking), PLY (Playmaking), DEF (Defending), CTR (Control), PHY (Physical), GKP (Goalkeeping)
+  - Position-specific attribute weighting (GK, DF, MF, FW)
+  - Overall Rating = 60% League Base + 40% Performance
+  - Confidence factors based on minutes played (regression to league mean)
+  
+- **Enhanced PHY & GKP Calculations**:
+  - PHY = (League Base + Performance) / 2
+  - GKP = (League Base + Performance) / 2 with special 1100-minute blending
+  - Ensures realistic ratings across different league tiers
+  - Top league players have appropriately higher baseline ratings
+
+- **Team Rating System**:
+  - Minute-weighted team averages (no bucket weighting)
+  - Separate GKP calculation (only goalkeepers)
+  - Separate outfield attributes (only outfield players)
+  - Example: Real Madrid OVR 82.1, GKP 75, PHY 74
+
+- **FIFA-Style Visual Cards**:
+  - Player cards with OVR, position, nationality, club, and 6 attributes
+  - Team cards with overall and team-level metrics
+  - Integrated in player profiles and comparison dashboards
+  - App's green color palette for modern look
+
+- **Player Disambiguation System**:
+  - `player_uid` = name + birth_year for unique identification
+  - Calculated birth_year from age and season
+  - Reduced duplicates from 27,877 to 23,716 unique players
+
+### 🔧 Improvements
+- **Data Quality**: Improved player identification prevents same-name conflicts (e.g., 2 different "Rodri" players)
+- **Rating Accuracy**: League-based baselines ensure fair cross-league comparisons
+- **Team Metrics**: More accurate team ratings using minute-weighted averages
+- **Visual Consistency**: Unified color schemes across all rating displays
+
+### 📊 Technical Details
+- **Rating Calculator**: `apps/rating_system/calculator.py` with league-aware PHY/GKP
+- **API Endpoints**: 
+  - `/api/ratings/player/{id}` - Get player ratings
+  - `/api/ratings/team/{name}` - Get team ratings
+  - `/api/ratings/comparison/{id1}/{id2}/radar` - Comparison radar with ratings
+- **Database**: `player_ratings` table with OVR, ATT, PLY, DEF, CTR, PHY, GKP
+- **Aggregation Script**: `notebooks/scrapper/aggregate_final.py` for player disambiguation
+
+### 🎯 Benefits
+- ✅ Instant player evaluation with FIFA-familiar metrics
+- ✅ Fair comparisons across different leagues
+- ✅ Team-level squad analysis capabilities
+- ✅ No more duplicate player confusion
+- ✅ Historical rating tracking ready
+
+---
 
 ## 🚀 Version 1.5 - TAO Agent Transparency & Context Persistence (October 2025)
 

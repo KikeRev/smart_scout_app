@@ -92,12 +92,17 @@ def weighted_stat_by_minutes(
     raw_stat_per90: float, 
     league_avg_per90: float, 
     minutes_played: int,
-    inverse: bool = False
+    inverse: bool = False,
+    is_gkp: bool = False
 ) -> float:
     """
     Weights the player's stat with the league average based on minutes played.
     
-    Uses tiered confidence factors to penalize small sample sizes:
+    For GKP stats, uses a different blending approach with 1100 minutes threshold:
+    - Uses minute-weighted blending: (m/(m+1100))*player + (1100/(m+1100))*league_avg
+    - This provides more aggressive regression for goalkeepers with low minutes
+    
+    For other stats, uses tiered confidence factors:
     - >= 1500 min: 100% player stats (1.0 weight)
     - 1200-1499:   90% player, 10% league avg
     - 900-1199:    80% player, 20% league avg
@@ -115,6 +120,7 @@ def weighted_stat_by_minutes(
         league_avg_per90: League average per 90 minutes
         minutes_played: Minutes played by the player
         inverse: If True, lower values are better (e.g., goals conceded)
+        is_gkp: If True, uses GKP-specific blending with 1100 minutes threshold
     
     Returns:
         Weighted statistic
@@ -124,7 +130,15 @@ def weighted_stat_by_minutes(
     if minutes_played < MIN_MINUTES:
         return league_avg_per90
     
-    # Get confidence factor based on minutes
+    # Special blending for GKP stats
+    if is_gkp:
+        BLEND_MINUTES = 1100.0
+        player_weight = minutes_played / (minutes_played + BLEND_MINUTES)
+        league_weight = 1.0 - player_weight
+        weighted = (raw_stat_per90 * player_weight) + (league_avg_per90 * league_weight)
+        return weighted
+    
+    # Standard confidence factor for non-GKP stats
     player_weight = get_confidence_factor(minutes_played)
     league_weight = 1.0 - player_weight
     
@@ -404,16 +418,18 @@ def calculate_player_rating(
         player_gk_goals_per90 = gk_goals_against / player_minutes_90s
         player_gk_psxg_per90 = gk_psxg / player_minutes_90s
         
-        # Apply minute weighting to GK stats
+        # Apply minute weighting to GK stats with GKP-specific blending
         weighted_stats['gk_goals_against_per90'] = weighted_stat_by_minutes(
             player_gk_goals_per90,
             league_avgs.get('gk_goals_against_per90', 1.0),
-            minutes
+            minutes,
+            is_gkp=True
         )
         weighted_stats['gk_psxg_per90'] = weighted_stat_by_minutes(
             player_gk_psxg_per90,
             league_avgs.get('gk_psxg_per90', 1.0),
-            minutes
+            minutes,
+            is_gkp=True
         )
         weighted_stats['gk_psnpxg_per_shot'] = player_stats.get('gk_psnpxg_per_shot', 0.0)
     
@@ -511,25 +527,30 @@ def calculate_player_rating(
         normalized['progressive_carries_per90'] * 0.40
     ))
     
-    # PHY - Physical (45% base)
-    phy = max(45, (
+    # Get league base rating for PHY and GKP calculations
+    league_base = LEAGUE_BASE_RATINGS.get(league, LEAGUE_BASE_RATINGS['default'])
+    
+    # PHY - Physical (blend league base with performance)
+    phy_performance = (
         normalized['tackles_per90'] * 0.30 +
         normalized['progressive_carries_per90'] * 0.30 +
         normalized['clearances_per90'] * 0.20 +
         normalized['blocks_per90'] * 0.20
-    ))
+    )
+    # Average of league base and performance (ensures league level matters)
+    phy = round((league_base + phy_performance) / 2)
     
-    # GKP - Goalkeeping (only for goalkeepers)
+    # GKP - Goalkeeping (only for goalkeepers, blend league base with performance)
     gkp = None
     if position == 'GK':
-        # Calculate GKP using weighted and normalized per-90 stats
-        gkp_raw = (
+        # Calculate GKP performance using weighted and normalized per-90 stats
+        gkp_performance = (
             normalized.get('gk_goals_against_per90', 50) * 0.40 +  # Main factor: goals conceded
             normalized.get('gk_psxg_per90', 50) * 0.35 +           # Post-shot xG (shot-stopping)
             normalized.get('gk_psnpxg_per_shot', 50) * 0.25        # Quality of saves
         )
-        # Lower floor for GK to allow more differentiation (45 instead of 60)
-        gkp = max(45, gkp_raw)
+        # Average of league base and performance (ensures league level matters)
+        gkp = round((league_base + gkp_performance) / 2)
     
     # ========================================================================
     # CALCULATE OVR

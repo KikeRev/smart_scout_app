@@ -71,10 +71,14 @@ LEAGUE_WEIGHT_MAX = 0.35
 # FUNCIONES
 # ============================================================================
 
-def weighted_stat_by_minutes(raw_stat_per90, league_avg_per90, minutes_played):
+def weighted_stat_by_minutes(raw_stat_per90, league_avg_per90, minutes_played, is_gkp=False):
     """
     Pondera la estadística del jugador con la media de la liga según minutos.
     
+    Para GKP usa blending específico con 1100 minutos:
+    - Usa blending ponderado: (m/(m+1100))*player + (1100/(m+1100))*league_avg
+    
+    Para otras stats usa factores de confianza:
     - >= 1500 min → 100% confianza en stat del jugador
     - < 1500 min → regresión a la media de la liga
     """
@@ -83,6 +87,15 @@ def weighted_stat_by_minutes(raw_stat_per90, league_avg_per90, minutes_played):
     if minutes_played < MIN_MINUTES:
         return league_avg_per90
     
+    # Blending específico para GKP
+    if is_gkp:
+        BLEND_MINUTES = 1100.0
+        player_weight = minutes_played / (minutes_played + BLEND_MINUTES)
+        league_weight = 1.0 - player_weight
+        weighted = (raw_stat_per90 * player_weight) + (league_avg_per90 * league_weight)
+        return weighted
+    
+    # Blending estándar para otras stats
     player_weight = min(minutes_played / SUFFICIENT_SAMPLE_MINUTES, 1.0)
     league_weight = 1.0 - player_weight
     
@@ -254,9 +267,9 @@ def calculate_rating(player_name):
     blocks_w = weighted_stat_by_minutes(blocks_per90, league_avg.avg_blocks_per90, player.minutes)
     clearances_w = weighted_stat_by_minutes(clearances_per90, league_avg.avg_clearances_per90, player.minutes)
     
-    # Regresión para stats de portero
-    gk_goals_against_w = weighted_stat_by_minutes(gk_goals_against_per90, league_avg.avg_gk_goals_against_per90 or 1.0, player.minutes)
-    gk_psxg_w = weighted_stat_by_minutes(gk_psxg_per90, league_avg.avg_gk_psxg_per90 or 1.0, player.minutes)
+    # Regresión para stats de portero con blending específico
+    gk_goals_against_w = weighted_stat_by_minutes(gk_goals_against_per90, league_avg.avg_gk_goals_against_per90 or 1.0, player.minutes, is_gkp=True)
+    gk_psxg_w = weighted_stat_by_minutes(gk_psxg_per90, league_avg.avg_gk_psxg_per90 or 1.0, player.minutes, is_gkp=True)
     
     # 6. Normalizar usando percentiles (0-100)
     goals_norm = normalize_stat_percentile(goals_w, goals_values)
@@ -306,21 +319,26 @@ def calculate_rating(player_name):
         passes_pct_norm * 0.15
     )
     
-    PHY = round(
-        65 * 0.40 +  # Piso más alto
-        prog_carries_norm * 0.35 +
-        tackles_won_norm * 0.25
-    )
+    # Obtener el base rating de la liga para PHY y GKP
+    league_base_rating = LEAGUE_BASE_RATINGS.get(player.league, LEAGUE_BASE_RATINGS['default'])
     
-    # Atributo GKP (solo para porteros)
-    # Usamos stats inversas: menos goles = mejor
-    # Combinamos con passes_pct y blocks (portero con los pies y blocajes)
-    GKP = round(
-        gk_goals_against_norm * 0.50 +  # Lo más importante: pocos goles
-        gk_psxg_norm * 0.30 +            # Calidad de paradas (vs xG)
-        passes_pct_norm * 0.10 +         # Portero con los pies
-        blocks_norm * 0.10               # Blocajes/despejes
+    # PHY - Físico (promedio de base de liga + performance)
+    phy_performance = (
+        tackles_won_norm * 0.30 +
+        prog_carries_norm * 0.30 +
+        clearances_norm * 0.20 +
+        blocks_norm * 0.20
     )
+    PHY = round((league_base_rating + phy_performance) / 2)
+    
+    # Atributo GKP (solo para porteros, promedio de base de liga + performance)
+    # Usamos stats inversas: menos goles = mejor
+    gkp_performance = (
+        gk_goals_against_norm * 0.40 +  # Lo más importante: pocos goles
+        gk_psxg_norm * 0.35 +            # Calidad de paradas (vs xG)
+        gk_psxg_norm * 0.25              # Calidad de paradas por disparo
+    )
+    GKP = round((league_base_rating + gkp_performance) / 2)
     
     # Mostrar atributos (incluir GKP solo para porteros)
     if player.position == 'GK':

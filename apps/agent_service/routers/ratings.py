@@ -376,7 +376,8 @@ async def get_team_rating(
             pr.def_rating,
             pr.ctr,
             pr.phy,
-            pr.gkp
+            pr.gkp,
+            p.league
         FROM player_ratings pr
         JOIN players p ON pr.player_id = p.id
         WHERE p.club = :team_name
@@ -397,7 +398,15 @@ async def get_team_rating(
     starters = []
     substitutes = []
     youth = []
+    # Track goalkeepers separately to avoid diluting GKP with outfield zeros
+    starters_gk = []
+    substitutes_gk = []
+    youth_gk = []
+    starters_nongk = []
+    substitutes_nongk = []
+    youth_nongk = []
     
+    team_league = None
     for row in results:
         player_data = {
             "name": row[0],
@@ -411,38 +420,94 @@ async def get_team_rating(
             "phy": row[8],
             "gkp": row[9] or 0
         }
+        if team_league is None and len(row) > 10:
+            team_league = row[10]
         
+        is_gk = (player_data["position"] or "").upper() == "GK"
         if row[3] >= 1300:
             starters.append(player_data)
+            if is_gk:
+                starters_gk.append(player_data)
+            else:
+                starters_nongk.append(player_data)
         elif row[3] >= 300:
             substitutes.append(player_data)
+            if is_gk:
+                substitutes_gk.append(player_data)
+            else:
+                substitutes_nongk.append(player_data)
         else:
             youth.append(player_data)
+            if is_gk:
+                youth_gk.append(player_data)
+            else:
+                youth_nongk.append(player_data)
     
-    # Calculate weighted team rating and FIFA attributes
+    # Calculate minute-weighted team overall rating (all players)
+    all_team_players = starters + substitutes + youth
+    total_weighted_rating = sum(p["rating"] * p["minutes"] for p in all_team_players)
+    total_minutes = sum(p["minutes"] for p in all_team_players)
+    team_rating = total_weighted_rating / total_minutes if total_minutes > 0 else 0
+    
+    # Keep bucket averages for breakdown info
     starters_avg = sum(p["rating"] for p in starters) / len(starters) if starters else 0
     substitutes_avg = sum(p["rating"] for p in substitutes) / len(substitutes) if substitutes else 0
     youth_avg = sum(p["rating"] for p in youth) / len(youth) if youth else 0
     
-    # Weighted average: 70% starters, 25% substitutes, 5% youth
-    team_rating = (
-        starters_avg * 0.70 +
-        substitutes_avg * 0.25 +
-        youth_avg * 0.05
-    )
-    
     # Calculate weighted FIFA attributes for the team
+    # Compute league GK average for blending (stabilize low-minute GKs)
+    league_gkp_avg = 0.0
+    if team_league:
+        try:
+            engine2 = sa.create_engine(DATABASE_URL)
+            league_q = text("""
+                SELECT AVG(pr.gkp) FROM player_ratings pr
+                JOIN players p ON pr.player_id = p.id
+                WHERE pr.season = :season AND p.league = :league AND p.position = 'GK' AND pr.gkp IS NOT NULL
+            """)
+            with engine2.connect() as c2:
+                rowavg = c2.execute(league_q, {"season": season, "league": team_league}).fetchone()
+                league_gkp_avg = float(rowavg[0] or 0.0)
+        except Exception:
+            league_gkp_avg = 0.0
+
+    BLEND_MINUTES = 1100.0
+
     def calculate_weighted_attribute(attr_name):
-        starters_attr = sum(p[attr_name] for p in starters) / len(starters) if starters else 0
-        substitutes_attr = sum(p[attr_name] for p in substitutes) / len(substitutes) if substitutes else 0
-        youth_attr = sum(p[attr_name] for p in youth) / len(youth) if youth else 0
+        """
+        Calculate minute-weighted average of attribute across ALL players.
+        No separate buckets - just weight by minutes played.
+        """
+        # Select appropriate player list based on attribute
+        if attr_name == "gkp":
+            # Only goalkeepers for GKP metric
+            all_players = starters_gk + substitutes_gk + youth_gk
+            use_blend = True
+        else:
+            # Only outfield players for other metrics
+            all_players = starters_nongk + substitutes_nongk + youth_nongk
+            use_blend = False
         
-        return int(round(
-            starters_attr * 0.70 +
-            substitutes_attr * 0.25 +
-            youth_attr * 0.05,
-            0
-        ))
+        if not all_players:
+            return 0
+        
+        # Calculate minute-weighted average
+        total_weighted = 0.0
+        total_minutes = 0.0
+        
+        for p in all_players:
+            val = float(p[attr_name] or 0)
+            minutes = float(p["minutes"] or 0)
+            
+            # Apply GKP blending if needed
+            if use_blend and minutes > 0:
+                w = minutes / (minutes + BLEND_MINUTES)
+                val = w * val + (1 - w) * league_gkp_avg
+            
+            total_weighted += val * minutes
+            total_minutes += minutes
+        
+        return int(round(total_weighted / total_minutes, 0)) if total_minutes > 0 else 0
     
     team_att = calculate_weighted_attribute("att")
     team_ply = calculate_weighted_attribute("ply")
