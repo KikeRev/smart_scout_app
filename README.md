@@ -977,10 +977,10 @@ flowchart TB
     end
 
     subgraph Backend_Services["📊 FastAPI Backend Services"]
-        PlayersAPI[/players/*<br/>Search, Similarity, Batch]
-        RatingsAPI[/ratings/*<br/>Player, Team, Comparison]
-        NewsAPI[/news/*<br/>Search, Player News]
-        ChatAPI[/chat/*<br/>Stream, Non-stream]
+        PlayersAPI[Players API<br/>Search, Similarity, Batch]
+        RatingsAPI[Ratings API<br/>Player, Team, Comparison]
+        NewsAPI[News API<br/>Search, Player News]
+        ChatAPI[Chat API<br/>Stream, Non-stream]
     end
 
     subgraph Data_Storage["💾 Data Storage"]
