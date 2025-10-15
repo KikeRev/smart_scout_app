@@ -817,145 +817,257 @@ make ingest-news
 # 🔹 System Architecture Diagram
 
 ```mermaid
-flowchart TD
-    subgraph Frontend
-        Web[Web-Django]
+flowchart TB
+    subgraph User_Layer["👤 User Layer"]
+        User[User Browser]
     end
 
-    subgraph Backend
-        API[API-FastAPI]
-        Agent[Agent Service]
-        LangChain[LangChain]
-        Jupyter[Jupyter Notebook]
+    subgraph Frontend_Layer["🌐 Frontend Layer - Django"]
+        Web[Django Web Server]
+        Templates[Templates & UI]
+        StaticFiles[Static Assets CSS/JS]
     end
 
-    subgraph Data
-        Redis[Redis]
-        Postgres[PostgreSQL DB]
-        Ingest[Ingestion Service]
+    subgraph Backend_Layer["⚙️ Backend Layer - FastAPI"]
+        API[FastAPI Server]
+        
+        subgraph Agent_System["🤖 Single Agent System"]
+            Agent[Scout Agent<br/>LangChain OpenAI Functions]
+            Memory[Conversation Memory<br/>Redis-backed]
+            SystemPrompt[TAO System Prompt<br/>Multi-lingual]
+        end
+        
+        subgraph Tools_Layer["🔧 Specialized Tools"]
+            PlayerTools[Player Tools<br/>lookup, similarity, team_fit]
+            NewsTools[News Tools<br/>search, player_news]
+            VizTools[Visualization Tools<br/>radar, pizza, dashboard]
+            ReportTools[Report Tools<br/>PDF generation, best_candidate]
+        end
+        
+        subgraph Services_Layer["📊 Backend Services"]
+            PlayerService[Player Service]
+            RatingService[Rating Service FIFA]
+            NewsService[News Service]
+            VizService[Visualization Service]
+        end
     end
 
-    User[User] --> Web
+    subgraph Data_Layer["💾 Data Layer"]
+        Postgres[(PostgreSQL<br/>players, ratings,<br/>news, history)]
+        Redis[(Redis<br/>context cache,<br/>sessions)]
+        Storage[File Storage<br/>PDFs, Charts]
+    end
+
+    subgraph Ingestion_Layer["📥 Data Ingestion"]
+        Ingest[Ingestion Service<br/>One-time bootstrap]
+    end
+
+    %% User interactions
+    User --> Web
+    Web --> Templates
+    Web --> StaticFiles
     Web --> API
+
+    %% API to Agent
     API --> Agent
-    Agent --> LangChain
-    Jupyter --> API
-    API --> Redis
-    API --> Postgres
+    Agent --> Memory
+    Agent --> SystemPrompt
+    
+    %% Agent to Tools
+    Agent --> PlayerTools
+    Agent --> NewsTools
+    Agent --> VizTools
+    Agent --> ReportTools
+    
+    %% Tools to Services
+    PlayerTools --> PlayerService
+    PlayerTools --> RatingService
+    NewsTools --> NewsService
+    VizTools --> VizService
+    VizTools --> RatingService
+    ReportTools --> PlayerService
+    ReportTools --> RatingService
+    
+    %% Services to Data
+    PlayerService --> Postgres
+    RatingService --> Postgres
+    NewsService --> Postgres
+    VizService --> Postgres
+    VizService --> Storage
+    ReportTools --> Storage
+    
+    %% Context Management
+    Agent --> Redis
+    Memory --> Redis
+    
+    %% Ingestion
     Ingest --> Postgres
     Ingest --> Redis
+
+    %% Styling
+    classDef userStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef frontendStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef agentStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef toolStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    classDef serviceStyle fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef dataStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    
+    class User userStyle
+    class Web,Templates,StaticFiles frontendStyle
+    class Agent,Memory,SystemPrompt agentStyle
+    class PlayerTools,NewsTools,VizTools,ReportTools toolStyle
+    class PlayerService,RatingService,NewsService,VizService,API serviceStyle
+    class Postgres,Redis,Storage,Ingest dataStyle
 ```
 
-# 🧐 Application Workflow Diagram
+# 🧐 AI Agent Workflow (TAO Framework)
 
 ```mermaid
-flowchart TD
-    %% User Entry Points
-    User[👤 User] -->|"Natural Language Query"| ChatInterface[💬 Chat Interface]
-    User -->|"Manual Search"| SearchInterface[🔍 Search Interface]
-    User -->|"View Reports"| ReportsInterface[📊 Reports Interface]
-    
-    %% Chat Flow - AI Agent
-    ChatInterface -->|"Process Query"| Agent[🤖 Scout Agent - LangChain]
-    Agent -->|"Parse Intent"| LLM[🧠 OpenAI GPT-4]
-    Agent -->|"Store Context"| Memory[💾 Conversation Memory]
-    Agent -->|"Apply Rules"| SystemPrompt[📋 Scouting System Prompt]
-    
-    %% Tool Selection & Execution
-    LLM -->|"Select Tools"| ToolRouter{🔀 Tool Router}
-    
-    %% Chat Flow Tools
-    ToolRouter -->|"Player Analysis"| ChatPlayerTools[👥 Player Analysis Tools]
-    ToolRouter -->|"News Research"| ChatNewsTools[📰 News Research Tools]
-    ToolRouter -->|"Data Visualization"| ChatVizTools[📊 Visualization Tools]
-    ToolRouter -->|"Report Generation"| ChatReportTools[📄 Report Tools]
-    
-    %% Chat Player Tools Detail
-    subgraph ChatPlayerTools[👥 Player Analysis Tools]
-        CPT1[player_lookup<br/>🔍 Find player by name]
-        CPT2[player_stats<br/>📊 Get player statistics]
-        CPT3[similar_players<br/>🔍 Find similar players]
-        CPT4[stats_table<br/>📋 Format stats table]
-        CPT5[compare_stats_table<br/>⚖️ Compare players]
+flowchart TB
+    subgraph User_Interaction["👤 User Interaction"]
+        User[User Query<br/>Natural Language]
     end
-    
-    %% Chat News Tools Detail
-    subgraph ChatNewsTools[📰 News Research Tools]
-        CNT1[news_search<br/>🔍 Search football news]
-        CNT2[player_news<br/>👤 Get player news]
-        CNT3[summarize_player_news<br/>📝 Summarize news]
+
+    subgraph Agent_Core["🤖 Single Scout Agent - LangChain"]
+        direction TB
+        
+        subgraph TAO_Cycle["TAO Framework Cycle"]
+            Think[🧠 THINK<br/>Understand Intent]
+            Action[⚡ ACTION<br/>Execute Tools]
+            Observe[👁️ OBSERVE<br/>Validate Results]
+        end
+        
+        LLM[OpenAI GPT-4<br/>Function Calling]
+        ContextMgr[Context Manager<br/>Redis + Thread-local]
+        SystemPrompt[System Prompt<br/>TAO Rules + Multi-lingual]
     end
-    
-    %% Chat Visualization Tools Detail
-    subgraph ChatVizTools[📊 Visualization Tools]
-        CVT1[radar_chart<br/>📊 Single player radar]
-        CVT2[pizza_chart<br/>🍕 Single player pizza]
-        CVT3[dashboard_inline<br/>📊 Interactive dashboard]
+
+    subgraph Available_Tools["🔧 Available Tools (18 total)"]
+        direction LR
+        
+        subgraph PlayerTools["👥 Player Tools 7"]
+            PT1[player_lookup]
+            PT2[similar_players]
+            PT3[similar_players_team_fit_table]
+            PT4[player_stats]
+            PT5[stats_table]
+            PT6[compare_stats_table]
+            PT7[choose_best_candidate]
+        end
+        
+        subgraph NewsTools["📰 News Tools 3"]
+            NT1[news_search]
+            NT2[player_news]
+            NT3[summarize_player_news]
+        end
+        
+        subgraph VizTools["📊 Visualization Tools 5"]
+            VT1[radar_chart]
+            VT2[pizza_chart]
+            VT3[radar_comparison]
+            VT4[pizza_comparison]
+            VT5[dashboard_inline]
+        end
+        
+        subgraph ReportTools["📄 Report Tools 3"]
+            RT1[build_scouting_report]
+            RT2[build_report_pdf]
+            RT3[get_saved_reports]
+        end
     end
-    
-    %% Chat Report Tools Detail
-    subgraph ChatReportTools[📄 Report Tools]
-        CRT1[build_scouting_report<br/>📋 Generate recommendation]
-        CRT2[build_report_pdf<br/>📄 Create PDF report]
+
+    subgraph Backend_Services["📊 FastAPI Backend Services"]
+        PlayersAPI[/players/*<br/>Search, Similarity, Batch]
+        RatingsAPI[/ratings/*<br/>Player, Team, Comparison]
+        NewsAPI[/news/*<br/>Search, Player News]
+        ChatAPI[/chat/*<br/>Stream, Non-stream]
     end
-    
-    %% Manual Search Flow
-    SearchInterface -->|"Apply Filters"| SearchAPI[🔍 Search API]
-    SearchAPI -->|"Filter Data"| Database[(🗄️ PostgreSQL)]
-    SearchAPI -->|"Generate Charts"| SearchVizTools[📊 Search Visualization Tools]
-    SearchAPI -->|"Save Search"| SavedSearches[💾 Saved Searches]
-    
-    %% Manual Search Visualization Tools
-    subgraph SearchVizTools[📊 Search Visualization Tools]
-        SVT1[dashboard_radar_single<br/>📊 Single player radar]
-        SVT2[dashboard_radar_comparison<br/>📊 Multi-player comparison]
-        SVT3[get_available_metrics<br/>📋 Available metrics]
-        SVT4[get_metrics_percentiles_95<br/>📊 Metric percentiles]
+
+    subgraph Data_Storage["💾 Data Storage"]
+        PostgreSQL[(PostgreSQL<br/>players, ratings, news,<br/>player_history)]
+        RedisCache[(Redis<br/>context cache,<br/>conversation memory)]
+        FileStorage[File Storage<br/>PDFs, Charts PNG]
     end
+
+    %% User to Agent
+    User --> Think
+    Think --> LLM
+    LLM --> ContextMgr
+    ContextMgr --> SystemPrompt
     
-    %% Reports Flow
-    ReportsInterface -->|"View Reports"| ReportsAPI[📊 Reports API]
-    ReportsAPI -->|"Load Reports"| PDFStorage[📁 PDF Storage]
-    ReportsAPI -->|"Generate New"| ReportTools[📄 Report Tools]
+    %% TAO Cycle
+    Think --> Action
+    Action --> Observe
+    Observe -.->|"Loop if needed"| Think
+    Observe -->|"Final Response"| User
     
-    %% Data Sources
-    ChatPlayerTools -->|"Query"| Database
-    ChatNewsTools -->|"Query"| Database
-    SearchAPI -->|"Query"| Database
-    ChatVizTools -->|"Generate"| ChartStorage[🖼️ Chart Storage]
-    SearchVizTools -->|"Generate"| ChartStorage
-    ChatReportTools -->|"Generate"| PDFStorage
-    ReportTools -->|"Generate"| PDFStorage
+    %% Action calls Tools
+    Action --> PlayerTools
+    Action --> NewsTools
+    Action --> VizTools
+    Action --> ReportTools
     
-    %% Output Generation
-    ToolRouter -->|"Results"| ResponseBuilder[🏗️ Response Builder]
-    ResponseBuilder -->|"Format Output"| OutputFormatter[📝 Output Formatter]
+    %% Tools call Backend Services
+    PlayerTools --> PlayersAPI
+    PlayerTools --> RatingsAPI
+    NewsTools --> NewsAPI
+    VizTools --> PlayersAPI
+    VizTools --> RatingsAPI
+    ReportTools --> PlayersAPI
+    ReportTools --> RatingsAPI
     
-    %% Output Types
-    OutputFormatter -->|"Text + Charts"| ChatResponse[💬 Chat Response]
-    OutputFormatter -->|"Interactive Dashboard"| DashboardResponse[📊 Dashboard Response]
-    OutputFormatter -->|"PDF Report"| PDFResponse[📄 PDF Response]
+    %% Backend Services use Data
+    PlayersAPI --> PostgreSQL
+    RatingsAPI --> PostgreSQL
+    NewsAPI --> PostgreSQL
+    ChatAPI --> RedisCache
     
-    %% User Interfaces
-    ChatResponse -->|"Display"| ChatInterface
-    DashboardResponse -->|"Display"| SearchInterface
-    PDFResponse -->|"Download"| ReportsInterface
+    %% File Generation
+    VizTools --> FileStorage
+    ReportTools --> FileStorage
+    
+    %% Context Persistence
+    ContextMgr --> RedisCache
     
     %% Styling
-    classDef userInterface fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef agent fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef chatTools fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
-    classDef searchTools fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef data fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef output fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef userStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
+    classDef agentStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px
+    classDef taoStyle fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    classDef toolStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    classDef serviceStyle fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef dataStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px
     
-    class User,ChatInterface,SearchInterface,ReportsInterface userInterface
-    class Agent,LLM,Memory,SystemPrompt agent
-    class ChatPlayerTools,ChatNewsTools,ChatVizTools,ChatReportTools chatTools
-    class SearchVizTools,SearchAPI,ReportsAPI,ReportTools searchTools
-    class Database,ChartStorage,PDFStorage,SavedSearches data
-    class ResponseBuilder,OutputFormatter,ChatResponse,DashboardResponse,PDFResponse output
+    class User userStyle
+    class LLM,ContextMgr,SystemPrompt agentStyle
+    class Think,Action,Observe taoStyle
+    class PlayerTools,NewsTools,VizTools,ReportTools toolStyle
+    class PlayersAPI,RatingsAPI,NewsAPI,ChatAPI serviceStyle
+    class PostgreSQL,RedisCache,FileStorage dataStyle
 ```
+
+## 🔑 Key Architecture Points
+
+### **Single-Agent Design**
+- **One LangChain Agent** orchestrates all operations
+- **18 specialized tools** (not independent agents)
+- **TAO Framework** for transparency and structured thinking
+- **Stateful context** persisted in Redis across conversation turns
+
+### **Tool Categories**
+1. **Player Tools (7)**: Search, similarity, stats, comparison, team fit analysis
+2. **News Tools (3)**: News search, player-specific news, summarization
+3. **Visualization Tools (5)**: Radar/pizza charts, comparative visualizations, dashboards
+4. **Report Tools (3)**: PDF generation, candidate selection, report history
+
+### **Context Management**
+- **Redis-backed memory**: Conversation history and search context
+- **Thread-local storage**: User-specific context during request
+- **Dual cache system**: Primary + backup for reliability
+
+### **NOT Multi-Agent**
+- Single agent with multiple tools (not autonomous sub-agents)
+- No agent-to-agent communication or coordination
+- Simpler than multi-agent but still highly capable
 
 # 📄 Prompt Examples
 
