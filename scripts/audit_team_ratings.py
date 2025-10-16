@@ -51,16 +51,26 @@ def fetch_player_ratings(
 
 
 def weighted_team_aggregates(rows: List[Tuple]) -> Dict[str, Dict[str, float]]:
-    """Compute weighted aggregates per team using 70/25/5 weights by minutes buckets.
+    """Compute weighted aggregates per team using position-based weights.
 
     Returns mapping team -> {overall, att, ply, def, ctr, phy, gkp}.
     """
     from collections import defaultdict
 
-    team_to_players: Dict[str, List[Dict[str, float]]] = defaultdict(list)
+    # Position weights per attribute
+    ATT_WEIGHTS = {'FW': 0.60, 'MF': 0.30, 'DF': 0.10, 'GK': 0.0}
+    DEF_WEIGHTS = {'DF': 0.50, 'MF': 0.35, 'FW': 0.10, 'GK': 0.05}
+    PLY_WEIGHTS = {'FW': 0.40, 'MF': 0.40, 'DF': 0.20, 'GK': 0.0}
+    CTR_WEIGHTS = {'FW': 0.40, 'MF': 0.40, 'DF': 0.20, 'GK': 0.0}
+    PHY_WEIGHTS = {'FW': 0.333, 'MF': 0.333, 'DF': 0.333, 'GK': 0.0}
+    GKP_WEIGHTS = {'GK': 1.0, 'DF': 0.0, 'MF': 0.0, 'FW': 0.0}
+    BLEND_MINUTES = 1100.0
+
+    team_to_players: Dict[str, List[Dict[str, object]]] = defaultdict(list)
     for (team, name, pos, minutes, ovr, att, ply, d, ctr, phy, gkp) in rows:
         team_to_players[team].append(
             {
+                "position": (pos or "MF").upper(),
                 "minutes": float(minutes or 0),
                 "ovr": float(ovr or 0),
                 "att": float(att or 0),
@@ -72,82 +82,85 @@ def weighted_team_aggregates(rows: List[Tuple]) -> Dict[str, Dict[str, float]]:
             }
         )
 
-    def avg(players: List[Dict[str, float]], key: str) -> float:
-        return sum(p[key] for p in players) / len(players) if players else 0.0
-
-    def minute_weighted_avg(players: List[Dict[str, float]], key: str, use_blend: bool = False) -> float:
-        """Calculate minute-weighted average with optional GKP blending."""
-        if not players:
-            return 0.0
+    def calculate_weighted_attribute(players: List[Dict[str, object]], attr: str, position_weights: Dict[str, float]) -> float:
+        """Calculate team attribute with position-based weighting."""
+        # Group players by position
+        position_groups: Dict[str, List[Dict[str, object]]] = {'GK': [], 'DF': [], 'MF': [], 'FW': []}
         
-        # For GKP, use blending with 1100 minutes threshold
-        if use_blend:
-            BLEND_MINUTES = 1100.0
+        for p in players:
+            pos = p.get('position', 'MF')
+            if pos not in position_groups:
+                pos = 'MF'  # fallback
+            position_groups[pos].append(p)
+        
+        # Calculate minute-weighted average per position
+        position_averages: Dict[str, float] = {}
+        
+        for pos, pos_players in position_groups.items():
+            if not pos_players or position_weights.get(pos, 0) == 0:
+                continue
+            
             total_weighted = 0.0
             total_minutes = 0.0
-            for p in players:
-                minutes = p["minutes"]
-                val = p[key]
-                # Apply blending: (m/(m+1100))*val + (1100/(m+1100))*league_avg
-                # For simplicity, use 50 as league average (will be refined later)
-                league_avg = 50.0
-                w = minutes / (minutes + BLEND_MINUTES)
-                blended_val = w * val + (1 - w) * league_avg
-                total_weighted += blended_val * minutes
+            
+            for player in pos_players:
+                val = float(player.get(attr, 0) or 0)
+                minutes = float(player.get('minutes', 0) or 0)
+                
+                # Apply GKP blending only for GKP attribute and GK position
+                if attr == "gkp" and pos == "GK" and minutes > 0:
+                    league_avg = 50.0  # simplified league average
+                    w = minutes / (minutes + BLEND_MINUTES)
+                    val = w * val + (1 - w) * league_avg
+                
+                total_weighted += val * minutes
                 total_minutes += minutes
-            return total_weighted / total_minutes if total_minutes > 0 else 0.0
-        else:
-            # Standard minute-weighted average
-            total_weighted = sum(p[key] * p["minutes"] for p in players)
-            total_minutes = sum(p["minutes"] for p in players)
-            return total_weighted / total_minutes if total_minutes > 0 else 0.0
+            
+            if total_minutes > 0:
+                position_averages[pos] = total_weighted / total_minutes
+        
+        # Apply position weights to get final attribute
+        final_attr = 0.0
+        for pos, weight in position_weights.items():
+            if pos in position_averages:
+                final_attr += position_averages[pos] * weight
+        
+        return final_attr
 
     out: Dict[str, Dict[str, float]] = {}
     for team, plist in team_to_players.items():
+        # Calculate minute-weighted overall (simple average across all players)
+        total_weighted_ovr = sum(p["ovr"] * p["minutes"] for p in plist)
+        total_minutes = sum(p["minutes"] for p in plist)
+        overall = total_weighted_ovr / total_minutes if total_minutes > 0 else 0.0
+        
+        # Calculate position-weighted attributes
+        team_att = calculate_weighted_attribute(plist, "att", ATT_WEIGHTS)
+        team_ply = calculate_weighted_attribute(plist, "ply", PLY_WEIGHTS)
+        team_def = calculate_weighted_attribute(plist, "def", DEF_WEIGHTS)
+        team_ctr = calculate_weighted_attribute(plist, "ctr", CTR_WEIGHTS)
+        team_phy = calculate_weighted_attribute(plist, "phy", PHY_WEIGHTS)
+        team_gkp = calculate_weighted_attribute(plist, "gkp", GKP_WEIGHTS)
+        
+        # Bucket counts for info
         starters = [p for p in plist if p["minutes"] >= 1300]
         subs = [p for p in plist if 300 <= p["minutes"] < 1300]
         youth = [p for p in plist if p["minutes"] < 300]
-
-        # Split GK vs non-GK lists by bucket
-        starters_gk = [p for p in starters if p.get("gkp", 0) > 0]
-        subs_gk = [p for p in subs if p.get("gkp", 0) > 0]
-        youth_gk = [p for p in youth if p.get("gkp", 0) > 0]
-        starters_nongk = [p for p in starters if p.get("gkp", 0) == 0]
-        subs_nongk = [p for p in subs if p.get("gkp", 0) == 0]
-        youth_nongk = [p for p in youth if p.get("gkp", 0) == 0]
-
-        def weighted(avg_starters: float, avg_subs: float, avg_youth: float) -> float:
-            return round(avg_starters * 0.70 + avg_subs * 0.25 + avg_youth * 0.05, 1)
-
-        def wattr(attr: str) -> float:
-            if attr == "gkp":
-                return weighted(
-                    minute_weighted_avg(starters_gk, attr, use_blend=True),
-                    minute_weighted_avg(subs_gk, attr, use_blend=True),
-                    minute_weighted_avg(youth_gk, attr, use_blend=True)
-                )
-            else:
-                return weighted(
-                    minute_weighted_avg(starters_nongk, attr, use_blend=False),
-                    minute_weighted_avg(subs_nongk, attr, use_blend=False),
-                    minute_weighted_avg(youth_nongk, attr, use_blend=False)
-                )
-
-        # overall keeps all players (including GK), same as backend endpoint
-        overall = weighted(avg(starters, "ovr"), avg(subs, "ovr"), avg(youth, "ovr"))
+        gks = [p for p in plist if p["position"] == "GK"]
+        
         out[team] = {
-            "overall": overall,
-            "att": round(wattr("att")),
-            "ply": round(wattr("ply")),
-            "def": round(wattr("def")),
-            "ctr": round(wattr("ctr")),
-            "phy": round(wattr("phy")),
-            "gkp": round(wattr("gkp")),
+            "overall": round(overall, 1),
+            "att": round(team_att),
+            "ply": round(team_ply),
+            "def": round(team_def),
+            "ctr": round(team_ctr),
+            "phy": round(team_phy),
+            "gkp": round(team_gkp),
             "players": len(plist),
             "starters": len(starters),
             "subs": len(subs),
             "youth": len(youth),
-            "gk_buckets": f"{len(starters_gk)}/{len(subs_gk)}/{len(youth_gk)}",
+            "gks": len(gks),
         }
     return out
 
@@ -178,22 +191,23 @@ def main() -> None:
 
     agg = weighted_team_aggregates(rows)
     # Print header
-    print("TEAM;SEASON;PLAYERS;STARTERS;SUBS;YOUTH;OVR;ATT;PLY;DEF;CTR;PHY;GKP")
+    print("\n=== TEAM RATINGS (Position-Weighted) ===\n")
     count = 0
     for team, vals in sorted(agg.items(), key=lambda kv: kv[0]):
         print(
-            f"TM:{team}; SEASON:{args.season} \n"
-            f"OVR:{vals['overall']}; ATT:{vals['att']}; PLY:{vals['ply']}; DEF:{vals['def']}; CTR:{vals['ctr']}; PHY:{vals['phy']}; GKP:{vals['gkp']}"
+            f"TEAM: {team} | SEASON: {args.season}\n"
+            f"  PLAYERS: {vals['players']} (Starters: {vals['starters']}, Subs: {vals['subs']}, Youth: {vals['youth']}, GKs: {vals['gks']})\n"
+            f"  OVR: {vals['overall']} | ATT: {vals['att']} | PLY: {vals['ply']} | DEF: {vals['def']} | CTR: {vals['ctr']} | PHY: {vals['phy']} | GKP: {vals['gkp']}\n"
         )
         count += 1
         if args.limit and count >= args.limit:
             break
 
     # Goalkeepers list (for quick inspection)
-    print("\n# Goalkeepers ratings (team; name; minutes; gkp)")
+    print("\n=== GOALKEEPERS DETAIL ===\n")
     gks = list_goalkeepers(rows)
     for team, name, minutes, gkp in gks:
-        print(f"TEAM: {team}; NAME: {name}; MINUTES: {int(minutes)}; GKP:{gkp}")
+        print(f"  {team} | {name} | Minutes: {int(minutes)} | GKP: {gkp}")
 
 
 if __name__ == "__main__":

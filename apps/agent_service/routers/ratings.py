@@ -473,48 +473,71 @@ async def get_team_rating(
 
     BLEND_MINUTES = 1100.0
 
-    def calculate_weighted_attribute(attr_name):
+    # Position weights per attribute
+    ATT_WEIGHTS = {'FW': 0.60, 'MF': 0.30, 'DF': 0.10, 'GK': 0.0}
+    DEF_WEIGHTS = {'DF': 0.50, 'MF': 0.35, 'FW': 0.10, 'GK': 0.05}
+    PLY_WEIGHTS = {'FW': 0.40, 'MF': 0.40, 'DF': 0.20, 'GK': 0.0}
+    CTR_WEIGHTS = {'FW': 0.40, 'MF': 0.40, 'DF': 0.20, 'GK': 0.0}
+    PHY_WEIGHTS = {'FW': 0.333, 'MF': 0.333, 'DF': 0.333, 'GK': 0.0}
+
+    def calculate_weighted_attribute(attr_name, position_weights):
         """
-        Calculate minute-weighted average of attribute across ALL players.
-        No separate buckets - just weight by minutes played.
+        Calculate team attribute with position-based weighting.
+        
+        Steps:
+        1. Group players by normalized position
+        2. Calculate minute-weighted average per position group
+        3. Apply position weights to get final team attribute
         """
-        # Select appropriate player list based on attribute
-        if attr_name == "gkp":
-            # Only goalkeepers for GKP metric
-            all_players = starters_gk + substitutes_gk + youth_gk
-            use_blend = True
-        else:
-            # Only outfield players for other metrics
-            all_players = starters_nongk + substitutes_nongk + youth_nongk
-            use_blend = False
+        # Group all players by position
+        position_groups = {'GK': [], 'DF': [], 'MF': [], 'FW': []}
         
-        if not all_players:
-            return 0
+        for p in all_team_players:
+            pos = p.get('position', 'MF').upper()
+            # Normalize position to one of the 4 main categories
+            if pos not in position_groups:
+                pos = 'MF'  # default fallback
+            position_groups[pos].append(p)
         
-        # Calculate minute-weighted average
-        total_weighted = 0.0
-        total_minutes = 0.0
+        # Calculate minute-weighted average per position
+        position_averages = {}
         
-        for p in all_players:
-            val = float(p[attr_name] or 0)
-            minutes = float(p["minutes"] or 0)
+        for pos, players in position_groups.items():
+            if not players or position_weights.get(pos, 0) == 0:
+                continue
             
-            # Apply GKP blending if needed
-            if use_blend and minutes > 0:
-                w = minutes / (minutes + BLEND_MINUTES)
-                val = w * val + (1 - w) * league_gkp_avg
+            total_weighted = 0.0
+            total_minutes = 0.0
             
-            total_weighted += val * minutes
-            total_minutes += minutes
+            for player in players:
+                val = float(player.get(attr_name, 0) or 0)
+                minutes = float(player.get('minutes', 0) or 0)
+                
+                # Apply GKP blending only for GKP attribute and GK position
+                if attr_name == "gkp" and pos == "GK" and minutes > 0:
+                    w = minutes / (minutes + BLEND_MINUTES)
+                    val = w * val + (1 - w) * league_gkp_avg
+                
+                total_weighted += val * minutes
+                total_minutes += minutes
+            
+            if total_minutes > 0:
+                position_averages[pos] = total_weighted / total_minutes
         
-        return int(round(total_weighted / total_minutes, 0)) if total_minutes > 0 else 0
+        # Apply position weights to get final attribute
+        final_attr = 0.0
+        for pos, weight in position_weights.items():
+            if pos in position_averages:
+                final_attr += position_averages[pos] * weight
+        
+        return int(round(final_attr, 0))
     
-    team_att = calculate_weighted_attribute("att")
-    team_ply = calculate_weighted_attribute("ply")
-    team_def = calculate_weighted_attribute("def")
-    team_ctr = calculate_weighted_attribute("ctr")
-    team_phy = calculate_weighted_attribute("phy")
-    team_gkp = calculate_weighted_attribute("gkp")
+    team_att = calculate_weighted_attribute("att", ATT_WEIGHTS)
+    team_ply = calculate_weighted_attribute("ply", PLY_WEIGHTS)
+    team_def = calculate_weighted_attribute("def", DEF_WEIGHTS)
+    team_ctr = calculate_weighted_attribute("ctr", CTR_WEIGHTS)
+    team_phy = calculate_weighted_attribute("phy", PHY_WEIGHTS)
+    team_gkp = calculate_weighted_attribute("gkp", {'GK': 1.0, 'DF': 0.0, 'MF': 0.0, 'FW': 0.0})
     
     return TeamRatingResponse(
         team_name=team_name,
