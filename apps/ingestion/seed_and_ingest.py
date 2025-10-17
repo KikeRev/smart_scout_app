@@ -286,6 +286,9 @@ player_news = sa.Table(
     Base.metadata,
     sa.Column("player_id", sa.Integer, sa.ForeignKey("players.id", ondelete="CASCADE")),
     sa.Column("news_id",   sa.Integer, sa.ForeignKey("football_news.id", ondelete="CASCADE")),
+    sa.Column("player_club", sa.String(128), nullable=True),
+    sa.Column("player_league", sa.String(64), nullable=True),
+    sa.Column("linked_at", sa.DateTime, server_default=sa.func.now()),
     sa.PrimaryKeyConstraint("player_id", "news_id"),
 )
 
@@ -738,7 +741,7 @@ def compute_and_store_player_vectors(engine: sa.Engine, refresh: bool=False):
 # ---------------------------------------------------------------------------
 
 def _norm(text: str) -> str:
-    """lower‑case, strip diacritics & collapse spaces – for matching."""
+    """lower‑case, strip diacritics & collapse spaces – for matching."""
     if not text:
         return ""
     text = unidecode.unidecode(
@@ -746,13 +749,67 @@ def _norm(text: str) -> str:
     ).lower()
     return _WS.sub(" ", text).strip()
 
+def _get_club_variations(club: str) -> set:
+    """
+    Return normalized variations of club name for matching in titles.
+    Handles common abbreviations and alternative names.
+    """
+    if not club or club == 'Unknown':
+        return set()
+    
+    club_lower = _norm(club)
+    variations = {club_lower}
+    
+    # Map of full club names to their common variations
+    club_map = {
+        'manchester city': {'man city', 'manchester city', 'mcfc'},
+        'manchester united': {'man united', 'man utd', 'manchester united', 'mufc'},
+        'real madrid': {'real madrid', 'madrid', 'real'},
+        'atletico madrid': {'atletico madrid', 'atletico', 'atleti'},
+        'barcelona': {'barcelona', 'barca', 'barça', 'fcb'},
+        'paris saint germain': {'psg', 'paris saint germain', 'paris sg', 'paris'},
+        'bayern munich': {'bayern munich', 'bayern', 'fc bayern'},
+        'borussia dortmund': {'borussia dortmund', 'dortmund', 'bvb'},
+        'inter milan': {'inter milan', 'inter'},
+        'ac milan': {'ac milan', 'milan'},
+        'liverpool': {'liverpool', 'lfc'},
+        'chelsea': {'chelsea', 'cfc'},
+        'arsenal': {'arsenal', 'afc'},
+        'tottenham': {'tottenham', 'spurs', 'tottenham hotspur'},
+        'real betis': {'real betis', 'betis'},
+        'sevilla': {'sevilla', 'sevilla fc'},
+        'villarreal': {'villarreal', 'villarreal cf'},
+        'athletic bilbao': {'athletic bilbao', 'athletic', 'athletic club'},
+        'valencia': {'valencia', 'valencia cf'},
+        'real sociedad': {'real sociedad', 'la real', 'sociedad'},
+        'juventus': {'juventus', 'juve'},
+        'napoli': {'napoli', 'ssc napoli'},
+        'roma': {'roma', 'as roma'},
+        'lazio': {'lazio', 'ss lazio'},
+        'ajax': {'ajax', 'afc ajax'},
+        'benfica': {'benfica', 'sl benfica'},
+        'porto': {'porto', 'fc porto'},
+        'sporting': {'sporting', 'sporting cp', 'sporting lisboa'},
+    }
+    
+    # Find matching club and add variations
+    for full_name, abbrevs in club_map.items():
+        if full_name in club_lower or club_lower in full_name:
+            variations.update(abbrevs)
+            break
+    
+    return variations
+
 def ensure_link_index(engine: sa.Engine):
     with engine.begin() as conn:
         conn.exec_driver_sql(
             """
             CREATE TABLE IF NOT EXISTS player_news (
-              player_id  INTEGER NOT NULL REFERENCES players(id)  ON DELETE CASCADE,
-              news_id    INTEGER NOT NULL REFERENCES football_news(id) ON DELETE CASCADE,
+              player_id     INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+              news_id       INTEGER NOT NULL REFERENCES football_news(id) ON DELETE CASCADE,
+              player_club   VARCHAR(128),
+              player_league VARCHAR(64),
+              linked_at     TIMESTAMP DEFAULT NOW(),
               PRIMARY KEY (player_id, news_id)
             );
             """
@@ -763,32 +820,57 @@ def ensure_link_index(engine: sa.Engine):
               ON player_news(player_id);
             """
         )
+        conn.exec_driver_sql(
+            """
+            CREATE INDEX IF NOT EXISTS player_news_club_idx
+              ON player_news(player_club);
+            """
+        )
 
 def link_player_news(engine: sa.Engine, only_new: bool = True) -> None:
     """
-    Populate `player_news` by regex‑matching player names inside each article.
-    If `only_new` is True we link only news entries not yet in the bridge table.
+    Link news to players by matching ONLY in article TITLE:
+    1. Player name in title, OR
+    2. Player's club in title
+    
+    This ensures only relevant news where the player is a protagonist,
+    reduces token usage, and improves precision.
+    
+    Args:
+        engine: SQLAlchemy engine
+        only_new: If True, only process articles not yet linked
     """
     ensure_link_index(engine)
 
     with orm.Session(engine) as sess:
+        # 1️⃣ Build mapping: normalized_name → list of {id, name, club, league}
+        from collections import defaultdict
+        name_to_players = defaultdict(list)
+        
+        for pid, name, club, league in sess.query(
+            Player.id, 
+            Player.full_name, 
+            Player.club, 
+            Player.league
+        ):
+            normalized_name = _norm(name)
+            name_to_players[normalized_name].append({
+                'id': pid,
+                'full_name': name,
+                'club': club or 'Unknown',
+                'league': league or 'Unknown'
+            })
 
-        # 1️⃣ Dict {normalized_name: player_id}
-        name_to_id = {
-            _norm(name): pid
-            for pid, name in sess.query(Player.id, Player.full_name)
-        }
-
-        if not name_to_id:
-            print("⚠️  No players to link – skipping player_news linking.")
+        if not name_to_players:
+            print("⚠️  No players to link – skipping player_news linking.")
             return
 
-        # Build single regex (word boundary) e.g.  \b(mbappe|vinicius jr|...) \b
-        pattern = r"\b(" + "|".join(re.escape(n) for n in name_to_id) + r")\b"
+        # 2️⃣ Build regex pattern for player names
+        pattern = r"\b(" + "|".join(re.escape(n) for n in name_to_players) + r")\b"
         name_re = re.compile(pattern, re.I)
 
-        # 2️⃣ Rows to scan
-        q = sess.query(FootballNews.id, FootballNews.article_text)
+        # 3️⃣ Get articles to process (ONLY TITLE)
+        q = sess.query(FootballNews.id, FootballNews.title)
         if only_new:
             q = q.filter(
                 ~FootballNews.id.in_(
@@ -802,21 +884,92 @@ def link_player_news(engine: sa.Engine, only_new: bool = True) -> None:
             return
 
         inserted = 0
-        for news_id, article in tqdm(rows, desc="Linking news↔players", unit="article"):
-            matches = { _norm(m.group(0)) for m in name_re.finditer(article or "") }
-
-            for n in matches:
-                pid = name_to_id.get(n)
-                if not pid:
-                    continue
-
-                stmt = pg_insert(player_news).values(player_id=pid, news_id=news_id)
-                stmt = stmt.on_conflict_do_nothing()
-                sess.execute(stmt)
-                inserted += 1
+        player_name_matches = 0
+        club_matches = 0
+        ambiguous_links = 0
+        
+        for news_id, title in tqdm(rows, desc="Linking news↔players (title only)", unit="article"):
+            if not title:
+                continue
+                
+            title_normalized = _norm(title)
+            
+            # 🎯 STRATEGY 1: Check if player NAME is in title
+            player_matches_in_title = {_norm(m.group(0)) for m in name_re.finditer(title)}
+            
+            if player_matches_in_title:
+                # Player name found in title → link based on disambiguation
+                for normalized_name in player_matches_in_title:
+                    players = name_to_players.get(normalized_name, [])
+                    
+                    if len(players) == 1:
+                        # Single player with this name → direct link
+                        pdata = players[0]
+                        stmt = pg_insert(player_news).values(
+                            player_id=pdata['id'],
+                            news_id=news_id,
+                            player_club=pdata['club'],
+                            player_league=pdata['league']
+                        )
+                        stmt = stmt.on_conflict_do_nothing()
+                        sess.execute(stmt)
+                        inserted += 1
+                        player_name_matches += 1
+                    else:
+                        # Multiple players with same name → try club disambiguation
+                        matched = False
+                        for pdata in players:
+                            club_variations = _get_club_variations(pdata['club'])
+                            if any(var in title_normalized for var in club_variations):
+                                stmt = pg_insert(player_news).values(
+                                    player_id=pdata['id'],
+                                    news_id=news_id,
+                                    player_club=pdata['club'],
+                                    player_league=pdata['league']
+                                )
+                                stmt = stmt.on_conflict_do_nothing()
+                                sess.execute(stmt)
+                                inserted += 1
+                                player_name_matches += 1
+                                matched = True
+                        
+                        if not matched:
+                            # Ambiguous: club not mentioned, link to all
+                            for pdata in players:
+                                stmt = pg_insert(player_news).values(
+                                    player_id=pdata['id'],
+                                    news_id=news_id,
+                                    player_club=pdata['club'],
+                                    player_league=pdata['league']
+                                )
+                                stmt = stmt.on_conflict_do_nothing()
+                                sess.execute(stmt)
+                                inserted += 1
+                                ambiguous_links += 1
+            else:
+                # 🎯 STRATEGY 2: Player name NOT in title → check if CLUB is in title
+                for normalized_name, players in name_to_players.items():
+                    for pdata in players:
+                        club_variations = _get_club_variations(pdata['club'])
+                        
+                        # If player's club is mentioned in title → link
+                        if any(var in title_normalized for var in club_variations):
+                            stmt = pg_insert(player_news).values(
+                                player_id=pdata['id'],
+                                news_id=news_id,
+                                player_club=pdata['club'],
+                                player_league=pdata['league']
+                            )
+                            stmt = stmt.on_conflict_do_nothing()
+                            sess.execute(stmt)
+                            inserted += 1
+                            club_matches += 1
 
         sess.commit()
-        print(f"🔗  player_news linked: {inserted}")
+        print(f"🔗  player_news linked: {inserted} total")
+        print(f"    ├─ By player name in title: {player_name_matches}")
+        print(f"    ├─ By club in title (no player name): {club_matches}")
+        print(f"    └─ Ambiguous (name without club): {ambiguous_links}")
 
 
 # ----------------------------- CLI --------------------------------

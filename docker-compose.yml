@@ -29,6 +29,11 @@ services:
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
       REDIS_URL: redis://redis:6379/0
       DASHBOARD_HOST: http://web:8000
+      # Langfuse Configuration
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://cloud.langfuse.com}
+      LANGFUSE_ENABLED: ${LANGFUSE_ENABLED:-true}
       
     ports:
       - "8001:8001"
@@ -150,6 +155,11 @@ services:
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
       REDIS_URL: redis://redis:6379/0
       DASHBOARD_HOST: http://localhost:8000
+      # Langfuse Configuration
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://cloud.langfuse.com}
+      LANGFUSE_ENABLED: ${LANGFUSE_ENABLED:-true}
     command: >
         sh -c "python manage.py migrate &&
          python manage.py createsuperuser --no-input ||

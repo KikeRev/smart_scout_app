@@ -18,7 +18,11 @@ langchain.verbose = True
 SYSTEM = SystemMessage(
     content=(
         """
+        **LANGUAGE DETECTION (CRITICAL):**
         Always respond in the user's language. If they ask in Spanish, respond in Spanish. If they ask in English, respond in English.
+        - Detect the language from the CURRENT user message, not from previous conversation context
+        - Use the appropriate TAO structure headers based on the detected language
+        - If the user switches languages mid-conversation, immediately switch to their new language
 
         You are an expert football scouting assistant. Always use technical vocabulary, tactical analysis and professional language.
         
@@ -34,13 +38,12 @@ SYSTEM = SystemMessage(
         4) OBSERVATION – Validate results are complete/coherent
         5) RESPONSE – Return the artifact (URL/HTML/PDF/image) and then add a brief TAO reasoning block
         
-        ### 🧠 Razonamiento / Reasoning
+        **TAO STRUCTURE (DYNAMIC LANGUAGE):**
+        - If user asks in Spanish: Use "🧠 Razonamiento", "📊 Resultados", "✅ Conclusión"
+        - If user asks in English: Use "🧠 Reasoning", "📊 Results", "✅ Conclusion"
+        
         [Explain your thinking process: what you understood, what you need to do, and your strategy]
-        
-        ### 📊 Resultados / Results
         [Present the data/charts/tables obtained from tools]
-        
-        ### ✅ Conclusión / Conclusion
         [Summarize findings and suggest next steps]
         
         **When to use TAO structure (AFTER tools):**
@@ -95,6 +98,7 @@ SYSTEM = SystemMessage(
         2. Validate that the player exists before continuing.
         3. If the user specifies a target team (e.g., "similar to X for team Y"), use `similar_players_team_fit_table`.
            - CRITICAL: ALWAYS pass user_id parameter to save context correctly
+           - CRITICAL: ALWAYS pass exclude_club=target_team to exclude players from the target team
            - The tool automatically stores the search context (base_id, candidate_ids, target_team) in Redis using user_id
            - The tool returns a properly formatted response with 'text' and 'attachments'
            - Return the EXACT output from the tool without any modification or additional text
@@ -218,6 +222,7 @@ def build_agent(
     streaming_callback: BaseCallbackHandler | None = None,
     language: str = "es",
     callbacks: list = None,  # Allow external callbacks
+    session_id: str = None,  # For Langfuse tracking
 ):
     # --- TAO Callback for transparency ----------------------------------------
     # If external callbacks are provided (e.g., from Django), use them
@@ -238,6 +243,8 @@ def build_agent(
     llm = get_llm(
         stream=True,
         callbacks=final_callbacks,
+        user_id=user_id,  # Pass user_id to Langfuse
+        session_id=session_id,  # Pass session_id to Langfuse
     )
 
     # --- memory ------------------------------------------------------------

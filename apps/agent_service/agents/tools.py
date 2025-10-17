@@ -471,9 +471,9 @@ class PlayerLookupInput(BaseModel):
     """Quick player search by name (and optionally position)"""
     name: str = Field(..., description="Player name or part of the name")
     position: str = Field("MF", description="Position to filter (e.g. 'FW', 'MF')")
-    limit: int = Field(5, description="Number of results to return")
+    limit: int = Field(15, description="Number of results to return")
 
-def _player_lookup(name: str, position: str = "MF", limit: int = 5) -> List[dict]:
+def _player_lookup(name: str, position: str = "MF", limit: int = 15) -> List[dict]:
     """Calls /players/search and returns the found candidates."""
     url = "http://api:8001/players/search"
     resp = requests.get(url, params=dict(query=name, position=position, limit=limit), timeout=30)

@@ -82,6 +82,7 @@ def chat(req: ChatRequest):
     agent = build_agent(
         user_id=req.user_id or "anon",
         messages=req.messages,            # ← history arrives here
+        session_id=req.session_id,        # ← Langfuse tracking
     )
     
     # Add user_id to the input context so tools can access it
@@ -100,6 +101,7 @@ async def chat_stream(req: ChatRequest):
         user_id=req.user_id or "anon",
         messages=req.messages,
         streaming_callback=callback,
+        session_id=req.session_id,  # ← Langfuse tracking
     )
 
     async def event_generator():

@@ -46,17 +46,21 @@
 ## 🤖 AI-Powered Scouting
 
 ### Natural Language Queries
-Ask questions in English or Spanish:
+Ask questions in English or Spanish with intelligent language detection:
 - *"Find players similar to Pedri for Real Madrid"*
 - *"Who can replace Rodri at Manchester City?"*
 - *"Generate a PDF report for left-backs under 25 similar to Alphonso Davies"*
+- *"Could you find and create a summary of the news about Teun Koopmeiners?"*
 
-### TAO Transparency (v1.5)
-Real-time visibility into agent's thinking process:
-- 🧠 **Think**: Agent analyzes your request
+**Smart Language Detection**: The agent automatically detects your language and responds accordingly, switching seamlessly between English and Spanish within the same conversation.
+
+### TAO Transparency (v1.5+)
+Real-time visibility into agent's thinking process with dynamic language support:
+- 🧠 **Think/Reasoning**: Agent analyzes your request
 - ⚡ **Action**: Executes specialized tools
 - 👁️ **Observe**: Validates results and responds
 - Live streaming of tool execution with visual indicators
+- **Dynamic Language Headers**: TAO structure adapts to your language (English/Spanish)
 
 ### Agent Capabilities
 - **18 Specialized Tools**: Player search, similarity analysis, statistics, visualizations, reports
@@ -1338,6 +1342,12 @@ smart_scout_app/
 # OpenAI (for AI agent)
 OPENAI_API_KEY=sk-...
 
+# Langfuse (for LLM observability - optional)
+LANGFUSE_PUBLIC_KEY=pk-...
+LANGFUSE_SECRET_KEY=sk-...
+LANGFUSE_HOST=https://cloud.langfuse.com
+LANGFUSE_ENABLED=true
+
 # Database
 DATABASE_URL=postgresql+psycopg2://scout:scout@db:5432/scouting
 
@@ -1355,6 +1365,33 @@ ALLOWED_HOSTS=localhost,127.0.0.1
 cp .env.example .env
 # Edit .env with your API keys
 ```
+
+### LLM Observability with Langfuse (v1.6)
+
+Smart Scout App v1.6 includes comprehensive LLM observability through Langfuse integration:
+
+#### Features
+- **Real-time Cost Tracking**: Monitor token usage and costs per conversation
+- **Performance Monitoring**: Track latency and response times
+- **Quality Assessment**: Analyze conversation success rates
+- **Production Insights**: Make data-driven scaling decisions
+
+#### Setup
+1. **Register at [Langfuse](https://cloud.langfuse.com)** (free tier available)
+2. **Get API Keys**: Copy your public and secret keys from the dashboard
+3. **Configure Environment**: Add keys to your `.env` file (see above)
+4. **Restart Services**: `docker-compose restart api web`
+
+#### Usage
+- **Automatic Tracking**: All LLM calls are automatically tracked
+- **Dashboard Access**: View detailed analytics at [cloud.langfuse.com](https://cloud.langfuse.com)
+- **Cost Analysis**: Monitor daily/monthly costs and optimize usage
+- **Performance Tuning**: Identify slow queries and optimize agent responses
+
+#### Example Metrics
+- **Player Search**: ~$0.016 per query (6,175 tokens)
+- **Dashboard Generation**: ~$0.008 per dashboard (2,987 tokens)
+- **PDF Report**: ~$0.043 per report (14,685 tokens)
 
 ---
 
@@ -1720,11 +1757,32 @@ docker-compose exec api python -m pytest tests/unit/test_validation.py::TestPlay
   - Calculated birth_year from age and season
   - Reduced duplicates from 27,877 to 23,716 unique players
 
+- **Intelligent Search Logic**:
+  - Automatic `exclude_club` parameter when searching "for [team]"
+  - Prevents showing players already on the target team
+  - Example: "similar to Pedri for Real Madrid" automatically excludes Real Madrid players
+
+- **Enhanced Language Detection**:
+  - Dynamic language detection from current user message (not conversation history)
+  - TAO framework headers adapt to user language:
+    - English: "🧠 Reasoning", "📊 Results", "✅ Conclusion"
+    - Spanish: "🧠 Razonamiento", "📊 Resultados", "✅ Conclusión"
+  - Seamless language switching within conversations
+
+- **LLM Observability with Langfuse**:
+  - Real-time cost tracking and performance monitoring
+  - Token usage analysis per conversation
+  - Latency monitoring for optimization
+  - Production-ready observability for scaling decisions
+
 ### 🔧 Improvements
 - **Data Quality**: Improved player identification prevents same-name conflicts (e.g., 2 different "Rodri" players)
 - **Rating Accuracy**: League-based baselines ensure fair cross-league comparisons
 - **Team Metrics**: Position-weighted team ratings reflect tactical roles (forwards dominate ATT, defenders lead DEF)
 - **Visual Consistency**: Unified color schemes across all rating displays
+- **Search Intelligence**: Automatic exclusion of target team players in similarity searches
+- **Language Experience**: Consistent language detection and response formatting
+- **Production Monitoring**: Comprehensive LLM usage tracking for cost optimization
 
 ### 📊 Technical Details
 - **Rating Calculator**: `apps/rating_system/calculator.py` with league-aware PHY/GKP
@@ -1734,6 +1792,9 @@ docker-compose exec api python -m pytest tests/unit/test_validation.py::TestPlay
   - `/api/ratings/comparison/{id1}/{id2}/radar` - Comparison radar with ratings
 - **Database**: `player_ratings` table with OVR, ATT, PLY, DEF, CTR, PHY, GKP
 - **Aggregation Script**: `notebooks/scrapper/aggregate_final.py` for player disambiguation
+- **Agent Intelligence**: `apps/agent_service/agents/factory.py` with dynamic language detection
+- **Observability**: Langfuse integration for LLM cost and performance tracking
+- **Search Logic**: Enhanced `similar_players_team_fit_table` with automatic `exclude_club` parameter
 
 ### 🎯 Benefits
 - ✅ Instant player evaluation with FIFA-familiar metrics
@@ -1741,6 +1802,9 @@ docker-compose exec api python -m pytest tests/unit/test_validation.py::TestPlay
 - ✅ Team-level squad analysis capabilities
 - ✅ No more duplicate player confusion
 - ✅ Historical rating tracking ready
+- ✅ Intelligent search results (no target team players in recommendations)
+- ✅ Seamless multilingual experience with dynamic language detection
+- ✅ Production-ready cost monitoring and optimization insights
 
 ---
 
@@ -1883,4 +1947,5 @@ This project is proprietary. All rights reserved.
 <p align="center">
   Made with ❤️ for football analytics
 </p>
+
 
