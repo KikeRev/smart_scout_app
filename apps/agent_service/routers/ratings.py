@@ -671,6 +671,5 @@ async def get_players_comparison_radar(player1_id: int, player2_id: int):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error generating comparison radar: {e}")
         raise HTTPException(status_code=500, detail="Error generating comparison radar")
 

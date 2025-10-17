@@ -36,6 +36,8 @@
             .logo-center {
             display: block;
             margin: 0 auto;
+            max-width: 60px;
+            max-height: 60px;
             }
             .site-footer {
                 margin-top: 60px;
@@ -48,6 +50,94 @@
                 text-align: center;
                 margin: 0 auto;
                 width: 100%;
+            }
+
+            /* Rating card styles */
+            .rating-card {
+                background: linear-gradient(135deg, #0b3d0b 0%, #1a5a1a 100%);
+                border: 2px solid #28a745;
+                border-radius: 15px;
+                padding: 1rem;
+                color: white;
+                text-align: center;
+                margin: 1rem auto;
+                max-width: 250px;
+                width: 100%;
+            }
+
+            .rating-card h4 {
+                color: white;
+                margin-bottom: 1rem;
+                font-size: 1.2rem;
+            }
+
+            .overall-rating {
+                font-size: 2.5rem;
+                font-weight: bold;
+                color: white;
+                margin-bottom: 0.5rem;
+            }
+
+            .position {
+                font-size: 1.2rem;
+                color: white;
+                margin-bottom: 1rem;
+            }
+
+            .rating-attributes {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+            }
+
+            .rating-attr {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.3rem 0.5rem;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
+            }
+
+            /* Force grid layout for charts */
+            .charts-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5rem;
+                margin: 2rem 0;
+                width: 100%;
+            }
+
+            .chart-item {
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+
+            .chart-item h4 {
+                margin-bottom: 1rem;
+                font-size: 1.1rem;
+                width: 100%;
+            }
+
+            .chart-item img {
+                max-height: 350px;
+                max-width: 100%;
+                width: auto;
+                height: auto;
+                object-fit: contain;
+            }
+
+            .attr-name {
+                font-size: 0.9rem;
+                font-weight: 600;
+            }
+
+            .attr-value {
+                font-size: 1.1rem;
+                font-weight: bold;
             }
 
             .footer-container a {
@@ -79,6 +169,41 @@
 
             <h2>3. Recommendation</h2>
             <p><strong>Chosen player:</strong> {{ chosen.full_name }} ({{ chosen.club }})</p>
+            
+            {% if chosen_rating %}
+            <div class="rating-card">
+                <h4>{{ chosen.full_name }}</h4>
+                <div class="overall-rating">{{ chosen_rating.overall_rating|floatformat:0 }}</div>
+                <div class="position">{{ chosen_rating.position }}</div>
+                <div class="rating-attributes">
+                    <div class="rating-attr">
+                        <span class="attr-name">ATT</span>
+                        <span class="attr-value">{{ chosen_rating.att|floatformat:0 }}</span>
+                    </div>
+                    <div class="rating-attr">
+                        <span class="attr-name">PLY</span>
+                        <span class="attr-value">{{ chosen_rating.ply|floatformat:0 }}</span>
+                    </div>
+                    <div class="rating-attr">
+                        <span class="attr-name">DEF</span>
+                        <span class="attr-value">{{ chosen_rating.def_rating|floatformat:0 }}</span>
+                    </div>
+                    <div class="rating-attr">
+                        <span class="attr-name">CTR</span>
+                        <span class="attr-value">{{ chosen_rating.ctr|floatformat:0 }}</span>
+                    </div>
+                    <div class="rating-attr">
+                        <span class="attr-name">PHY</span>
+                        <span class="attr-value">{{ chosen_rating.phy|floatformat:0 }}</span>
+                    </div>
+                    <div class="rating-attr">
+                        <span class="attr-name">GKP</span>
+                        <span class="attr-value">{{ chosen_rating.gkp|floatformat:0 }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
             {{ summary|safe }}
 
             <div class="row g-4">
@@ -113,14 +238,20 @@
             <h2 class="mt-4">5. Statistical comparison</h2>
             {{ table_html|safe }}
 
-            <div class="row text-center my-4">
-                <div class="col-md-6">
-                    <img src="{{ radar_base_url }}" class="img-fluid" alt="Radar Base" style="max-height:450px;">
+            <div class="charts-grid">
+                <div class="chart-item">
+                    <h4>Statistical Comparison</h4>
+                    <img src="{{ radar_base_url }}" alt="Radar Base">
                 </div>
-            </div>
-
-            <div class="text-center">
-                <img src="{{ pizza_url }}" class="img-fluid" style="max-width:450px" alt="Pizza Plot Comp">
+                <div class="chart-item">
+                    {% if ratings_radar_url %}
+                    <h4>FIFA-Style Ratings Comparison</h4>
+                    <img src="{{ ratings_radar_url }}" alt="Ratings Radar Comparison">
+                    {% else %}
+                    <h4>Pizza Comparison</h4>
+                    <img src="{{ pizza_url }}" alt="Pizza Plot Comp">
+                    {% endif %}
+                </div>
             </div>
 
             <h2 class="mt-4">6. Historical evolution (individual)</h2>
