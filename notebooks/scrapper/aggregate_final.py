@@ -52,6 +52,8 @@ def main():
     
     # Load historical data
     df2 = pd.read_csv('data/all_historical_raw_2014_2024.csv')
+    df3 = pd.read_csv('data/historical_secondary_leagues_players_raw.csv')
+    df2 = pd.concat([df2, df3], axis=0)
     print(f"Historical data: {df2.shape}")
     
     # Add season column to current data
@@ -107,7 +109,7 @@ def main():
     print("Cleaned minutes columns")
     df_final = df_final.sort_values(["player_uid", "position_normalized", "Season"], ascending=[False, False, False])
     # Save result
-    output_path = "data/all_players_plus_historic_data_non_aggregated_v2.csv"
+    output_path = "data/all_players_plus_historic_data_non_aggregated_v3.csv"
     df_final.to_csv(output_path, index=False)
     print(f"Saved to: {output_path}")
     
@@ -161,7 +163,7 @@ def main():
     print(f"Final columns: {len(df_final_agg.columns)}")
     
     # Save result
-    output_path = "data/all_players_plus_historic_data_aggregated_v2.csv"
+    output_path = "data/all_players_plus_historic_data_aggregated_v3.csv"
     df_final_agg.to_csv(output_path, index=False)
     print(f"Saved to: {output_path}")
     

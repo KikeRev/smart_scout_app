@@ -463,7 +463,7 @@ def load_players(engine: sa.Engine, csv_path: Path,  if_exists: str = "append"):
                 TRUNCATE TABLE player_news, players
                 RESTART IDENTITY CASCADE
             """))
-
+    print(f"🔎 Upserting {len(df)} players")
     df.to_sql("players", con=engine, if_exists="append", index=False, method="multi")
     print(f"✅ Players upserted: {len(df)}")
 

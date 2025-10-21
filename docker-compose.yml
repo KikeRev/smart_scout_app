@@ -61,16 +61,16 @@ services:
         elif [ "$${INGEST_MODE:-}" = "players" ]; then
           echo "▶ Players-only ingestion (players + history + ratings)"
           python -m apps.ingestion.seed_and_ingest \
-            --players-csv data/all_players_plus_historic_data_aggregated_v2.csv \
-            --history-csv data/all_players_plus_historic_data_non_aggregated_v2.csv \
+            --players-csv data/all_players_plus_historic_data_aggregated_v3.csv \
+            --history-csv data/all_players_plus_historic_data_non_aggregated_v3.csv \
             --replace --replace-history --refresh-embs \
             --calculate-ratings --replace-ratings \
             --verbose
         else
           echo "▶ Full bootstrap (players + history + ratings + news)"
           python -m apps.ingestion.seed_and_ingest \
-            --players-csv data/all_players_plus_historic_data_aggregated_v2.csv \
-            --history-csv data/all_players_plus_historic_data_non_aggregated_v2.csv \
+            --players-csv data/all_players_plus_historic_data_aggregated_v3.csv \
+            --history-csv data/all_players_plus_historic_data_non_aggregated_v3.csv \
             --replace --replace-history --refresh-embs \
             --calculate-ratings --replace-ratings \
             --ingest-news --verbose

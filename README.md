@@ -181,11 +181,13 @@ Viability Score = Success Index v2.1 × Feasibility Multiplier
 ## 📊 Historical Data
 
 ### Coverage
-- **Seasons**: 2014-15 to 2024-25 (11 seasons)
-- **Unique Players**: 23,716 (improved with disambiguation)
-- **Seasonal Records**: 51,761 for evolution tracking
-- **Active Players**: 16,827 (2024-25 season)
-- **Leagues**: Top 5 European + additional in 2024-25
+- **Seasons**: 
+  - Top 5 European Leagues: 2014-15 to 2024-25 (11 seasons)
+  - Secondary Leagues (25): 2019-20 to 2024-25 (6 seasons)
+- **Unique Players**: 46,435 (improved with disambiguation + secondary leagues)
+- **Seasonal Records**: 132,509 for evolution tracking
+- **Active Players**: 38,796 with FIFA-style ratings (2024-25 season)
+- **Leagues**: Top 5 European + 25 secondary leagues
 
 ### Dual Data Structure
 1. **`players` table**: Aggregated profiles for similarity search
@@ -193,8 +195,7 @@ Viability Score = Success Index v2.1 × Feasibility Multiplier
 
 ### Player Disambiguation (v1.6)
 - **`player_uid`**: name + birth_year for unique identification
-- Reduced duplicates from 27,877 to 23,716 unique players
-- Prevents same-name conflicts (e.g., 2 different "Rodri" players)
+- Prevents same-name conflicts (e.g., 4 different "Rodri" players)
 
 ---
 

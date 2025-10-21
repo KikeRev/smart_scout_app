@@ -1,0 +1,873 @@
+{
+    "Major League Soccer Eastern Conf":[
+        {
+            "league_name": "Major League Soccer Eastern Conf",
+            "season": "2019",
+            "url": "https://fbref.com/en/comps/22/2019/2019-Major-League-Soccer-Stats",
+            "table_id": "results2019221Eastern-Conference_overall"
+        },
+        {
+            "league_name": "Major League Soccer Eastern Conf",
+            "season": "2020",
+            "url": "https://fbref.com/en/comps/22/2020/2020-Major-League-Soccer-Stats",
+            "table_id": "results2020221Eastern-Conference_overall"
+        },
+        {
+            "league_name": "Major League Soccer Eastern Conf",
+            "season": "2021",
+            "url": "https://fbref.com/en/comps/22/2021/2021-Major-League-Soccer-Stats",
+            "table_id": "results2021221Eastern-Conference_overall"
+        },
+        {
+            "league_name": "Major League Soccer Eastern Conf",
+            "season": "2022",
+            "url": "https://fbref.com/en/comps/22/2022/2022-Major-League-Soccer-Stats",
+            "table_id": "results2022221Eastern-Conference_overall"
+        },
+        {
+            "league_name": "Major League Soccer Eastern Conf",
+            "season": "2023",
+            "url": "https://fbref.com/en/comps/22/2023/2023-Major-League-Soccer-Stats",
+            "table_id": "results2023221Eastern-Conference_overall"
+        }
+    ],
+    "Major League Soccer Western Conf":[
+        {
+            "league_name": "Major League Soccer Western Conf",
+            "season": "2019",
+            "url": "https://fbref.com/en/comps/22/2019/2019-Major-League-Soccer-Stats",
+            "table_id": "results2019221Western-Conference_overall"
+        },
+        {
+            "league_name": "Major League Soccer Western Conf",
+            "season": "2020",
+            "url": "https://fbref.com/en/comps/22/2020/2020-Major-League-Soccer-Stats",
+            "table_id": "results2020221Western-Conference_overall"
+        },
+        {
+            "league_name": "Major League Soccer Western Conf",
+            "season": "2021",
+            "url": "https://fbref.com/en/comps/22/2021/2021-Major-League-Soccer-Stats",
+            "table_id": "results2021221Western-Conference_overall"
+        },
+        {
+            "league_name": "Major League Soccer Western Conf",
+            "season": "2022",
+            "url": "https://fbref.com/en/comps/22/2022/2022-Major-League-Soccer-Stats",
+            "table_id": "results2022221Western-Conference_overall"
+        },
+        {
+            "league_name": "Major League Soccer Western Conf",
+            "season": "2023",
+            "url": "https://fbref.com/en/comps/22/2023/2023-Major-League-Soccer-Stats",
+            "table_id": "results2023221Western-Conference_overall"
+        }
+    ],
+    "Championship Links":[
+        {
+            "league_name": "Championship",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/10/2019-2020/2019-2020-Championship-Stats",
+            "table_id": "div_results2019-2020101_overall"
+        },
+        {
+            "league_name": "Championship",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/10/2020-2021/2020-2021-Championship-Stats",
+            "table_id": "div_results2020-2021101_overall"
+        },
+        {
+            "league_name": "Championship",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/10/2021-2022/2021-2022-Championship-Stats",
+            "table_id": "div_results2021-2022101_overall"
+        },
+        {
+            "league_name": "Championship",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/10/2022-2023/2022-2023-Championship-Stats",
+            "table_id": "div_results2022-2023101_overall"
+        },
+        {
+            "league_name": "Championship",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/10/2023-2024/2023-2024-Championship-Stats",
+            "table_id": "div_results2023-2024101_overall"
+        }
+    ],
+    "Brasileirao Links":[
+        {
+            "league_name": "Brasileirao",
+            "season": "2019",
+            "url": "https://fbref.com/en/comps/24/2019/2019-Serie-A-Stats",
+            "table_id": "div_results2019241_overall"
+        },
+        {
+            "league_name": "Brasileirao",
+            "season": "2020",
+            "url": "https://fbref.com/en/comps/24/2020/2020-Serie-A-Stats",
+            "table_id": "div_results2020241_overall"
+        },
+        {
+            "league_name": "Brasileirao",
+            "season": "2021",
+            "url": "https://fbref.com/en/comps/24/2021/2021-Serie-A-Stats",
+            "table_id": "div_results2021241_overall"
+        },
+        {
+            "league_name": "Brasileirao",
+            "season": "2022",
+            "url": "https://fbref.com/en/comps/24/2022/2022-Serie-A-Stats",
+            "table_id": "div_results2022241_overall"
+        },
+        {
+            "league_name": "Brasileirao",
+            "season": "2023",
+            "url": "https://fbref.com/en/comps/24/2023/2023-Serie-A-Stats",
+            "table_id": "div_results2023241_overall"
+        }
+    ],
+    "Primeira Liga Links":[
+        {
+            "league_name": "Primeira Liga",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/32/2019-2020/2019-2020-Primeira-Liga-Stats",
+            "table_id": "div_results2019-2020321_overall"
+        },
+        {
+            "league_name": "Primeira Liga",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/32/2020-2021/2020-2021-Primeira-Liga-Stats",
+            "table_id": "div_results2020-2021321_overall"
+        },
+        {
+            "league_name": "Primeira Liga",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/32/2021-2022/2021-2022-Primeira-Liga-Stats",
+            "table_id": "div_results2021-2022321_overall"
+        },
+        {
+            "league_name": "Primeira Liga",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/32/2022-2023/2022-2023-Primeira-Liga-Stats",
+            "table_id": "div_results2022-2023321_overall"
+        },
+        {
+            "league_name": "Primeira Liga",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/32/2023-2024/2023-2024-Primeira-Liga-Stats",
+            "table_id": "div_results2023-2024321_overall"
+        }
+    ],
+    "Eredivisie Links":[
+        {
+            "league_name": "Eredivisie",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/23/2019-2020/2019-2020-Eredivisie-Stats",
+            "table_id": "div_results2019-2020231_overall"
+        },
+        {
+            "league_name": "Eredivisie",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/23/2020-2021/2020-2021-Eredivisie-Stats",
+            "table_id": "div_results2020-2021231_overall"
+        },
+        {
+            "league_name": "Eredivisie",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/23/2021-2022/2021-2022-Eredivisie-Stats",
+            "table_id": "div_results2021-2022231_overall"
+        },
+        {
+            "league_name": "Eredivisie",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/23/2022-2023/2022-2023-Eredivisie-Stats",
+            "table_id": "div_results2022-2023231_overall"
+        },
+        {
+            "league_name": "Eredivisie",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/23/2023-2024/2023-2024-Eredivisie-Stats",
+            "table_id": "div_results2023-2024231_overall"
+        }
+    ],
+    "Liga MX Links":[
+        {
+            "league_name": "Liga MX",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/31/2019-2020/2019-2020-Liga-MX-Stats",
+            "table_id": "div_results2019-2020310_overall"
+        },
+        {
+            "league_name": "Liga MX",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/31/2020-2021/2020-2021-Liga-MX-Stats",
+            "table_id": "div_results2020-2021310_overall"
+        },
+        {
+            "league_name": "Liga MX",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/31/2021-2022/2021-2022-Liga-MX-Stats",
+            "table_id": "div_results2021-2022310_overall"
+        },
+        {
+            "league_name": "Liga MX",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/31/2022-2023/2022-2023-Liga-MX-Stats",
+            "table_id": "div_results2022-2023310_overall"
+        },
+        {
+            "league_name": "Liga MX",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/31/2023-2024/2023-2024-Liga-MX-Stats",
+            "table_id": "div_results2023-2024310_overall"
+        }
+    ],
+    "Liga Argentina Links":[
+        {
+            "league_name": "Liga Argentina",
+            "season": "2019",
+            "url": "https://fbref.com/en/comps/21/2018-2019/2018-2019-Liga-Profesional-Argentina-Stats",
+            "table_id": "div_results2018-2019211_overall"
+        },
+        {
+            "league_name": "Liga Argentina",
+            "season": "2020",
+            "url": "https://fbref.com/en/comps/21/2019-2020/2019-2020-Liga-Profesional-Argentina-Stats",
+            "table_id": "div_results2019-2020211_overall"
+        },
+        {
+            "league_name": "Liga Argentina",
+            "season": "2021",
+            "url": "https://fbref.com/en/comps/21/2021/2021-Liga-Profesional-Argentina-Stats",
+            "table_id": "div_results2021211_overall"
+        },
+        {
+            "league_name": "Liga Argentina",
+            "season": "2022",
+            "url": "https://fbref.com/en/comps/21/2022/2022-Liga-Profesional-Argentina-Stats",
+            "table_id": "div_results2022211_overall"
+        },
+        {
+            "league_name": "Liga Argentina",
+            "season": "2023",
+            "url": "https://fbref.com/en/comps/21/2023/2023-Liga-Profesional-Argentina-Stats",
+            "table_id": "div_results2023211_overall"
+        },
+        {
+            "league_name": "Liga Argentina",
+            "season": "2024",
+            "url": "https://fbref.com/en/comps/21/2024/2024-Liga-Profesional-Argentina-Stats",
+            "table_id": "div_results2024211_overall"
+        }
+    ],
+    "Belgian Pro League Links":[
+        {
+            "league_name": "Belgian Pro League",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/37/2019-2020/2019-2020-Belgian-Pro-League-Stats",
+            "table_id": "div_results2019-2020371_overall"
+        },
+        {
+            "league_name": "Belgian Pro League",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/37/2020-2021/2020-2021-Belgian-Pro-League-Stats",
+            "table_id": "div_results2020-2021371_overall"
+        },
+        {
+            "league_name": "Belgian Pro League",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/37/2021-2022/2021-2022-Belgian-Pro-League-Stats",
+            "table_id": "div_results2021-2022371_overall"
+        },
+        {
+            "league_name": "Belgian Pro League",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/37/2022-2023/2022-2023-Belgian-Pro-League-Stats",
+            "table_id": "div_results2022-2023371_overall"
+        },
+        {
+            "league_name": "Belgian Pro League",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/37/2023-2024/2023-2024-Belgian-Pro-League-Stats",
+            "table_id": "div_results2023-2024371_overall"
+        }
+    ],
+    "Segunda Division Links":[
+        {
+            "league_name": "Segunda Division",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/17/2019-2020/2019-2020-Segunda-Division-Stats",
+            "table_id": "div_results2019-2020171_overall"
+        },
+        {
+            "league_name": "Segunda Division",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/17/2020-2021/2020-2021-Segunda-Division-Stats",
+            "table_id": "div_results2020-2021171_overall"
+        },
+        {
+            "league_name": "Segunda Division",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/17/2021-2022/2021-2022-Segunda-Division-Stats",
+            "table_id": "div_results2021-2022171_overall"
+        },
+        {
+            "league_name": "Segunda Division",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/17/2022-2023/2022-2023-Segunda-Division-Stats",
+            "table_id": "div_results2022-2023171_overall"
+        },
+        {
+            "league_name": "Segunda Division",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/17/2023-2024/2023-2024-Segunda-Division-Stats",
+            "table_id": "div_results2023-2024171_overall"
+        }
+    ],
+    "J1 League Links":[
+        {
+            "league_name": "J1 League",
+            "season": "2019",
+            "url": "https://fbref.com/en/comps/25/2019/2019-J1-League-Stats",
+            "table_id": "div_results2019251_overall"
+        },
+        {
+            "league_name": "J1 League",
+            "season": "2020",
+            "url": "https://fbref.com/en/comps/25/2020/2020-J1-League-Stats",
+            "table_id": "div_results2020251_overall"
+        },
+        {
+            "league_name": "J1 League",
+            "season": "2021",
+            "url": "https://fbref.com/en/comps/25/2021/2021-J1-League-Stats",
+            "table_id": "div_results2021251_overall"
+        },
+        {
+            "league_name": "J1 League",
+            "season": "2022",
+            "url": "https://fbref.com/en/comps/25/2022/2022-J1-League-Stats",
+            "table_id": "div_results2022251_overall"
+        },
+        {
+            "league_name": "J1 League",
+            "season": "2023",
+            "url": "https://fbref.com/en/comps/25/2023/2023-J1-League-Stats",
+            "table_id": "div_results2023251_overall"
+        }
+    ],
+    "Super Lig Links":[
+        {
+            "league_name": "Super Lig",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/26/2019-2020/2019-2020-Super-Lig-Stats",
+            "table_id": "div_results2019-2020261_overall"
+        },
+        {
+            "league_name": "Super Lig",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/26/2020-2021/2020-2021-Super-Lig-Stats",
+            "table_id": "div_results2020-2021261_overall"
+        },
+        {
+            "league_name": "Super Lig",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/26/2021-2022/2021-2022-Super-Lig-Stats",
+            "table_id": "div_results2021-2022261_overall"
+        },
+        {
+            "league_name": "Super Lig",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/26/2022-2023/2022-2023-Super-Lig-Stats",
+            "table_id": "div_results2022-2023261_overall"
+        },
+        {
+            "league_name": "Super Lig",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/26/2023-2024/2023-2024-Super-Lig-Stats",
+            "table_id": "div_results2023-2024261_overall"
+        }
+    ],
+    "Brasileirao B Links":[
+        {
+            "league_name": "Brasileirao B",
+            "season": "2019",
+            "url": "https://fbref.com/en/comps/38/2019/2019-Serie-B-Stats",
+            "table_id": "div_results2019381_overall"
+        },
+        {
+            "league_name": "Brasileirao B",
+            "season": "2020",
+            "url": "https://fbref.com/en/comps/38/2020/2020-Serie-B-Stats",
+            "table_id": "div_results2020381_overall"
+        },
+        {
+            "league_name": "Brasileirao B",
+            "season": "2021",
+            "url": "https://fbref.com/en/comps/38/2021/2021-Serie-B-Stats",
+            "table_id": "div_results2021381_overall"
+        },
+        {
+            "league_name": "Brasileirao B",
+            "season": "2022",
+            "url": "https://fbref.com/en/comps/38/2022/2022-Serie-B-Stats",
+            "table_id": "div_results2022381_overall"
+        },
+        {
+            "league_name": "Brasileirao B",
+            "season": "2023",
+            "url": "https://fbref.com/en/comps/38/2023/2023-Serie-B-Stats",
+            "table_id": "div_results2023381_overall"
+        }
+    ],
+    "Saudi Pro League Links":[
+        {
+            "league_name": "Saudi Pro League",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/70/2019-2020/2019-2020-Saudi-Professional-League-Stats",
+            "table_id": "div_results2019-2020701_overall"
+        },
+        {
+            "league_name": "Saudi Pro League",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/70/2020-2021/2020-2021-Saudi-Professional-League-Stats",
+            "table_id": "div_results2020-2021701_overall"
+        },
+        {
+            "league_name": "Saudi Pro League",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/70/2021-2022/2021-2022-Saudi-Professional-League-Stats",
+            "table_id": "div_results2021-2022701_overall"
+        },
+        {
+            "league_name": "Saudi Pro League",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/70/2022-2023/2022-2023-Saudi-Professional-League-Stats",
+            "table_id": "div_results2022-2023701_overall"
+        },
+        {
+            "league_name": "Saudi Pro League",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/70/2023-2024/2023-2024-Saudi-Professional-League-Stats",
+            "table_id": "div_results2023-2024701_overall"
+        }
+    ],
+    "Serie B Links":[
+        {
+            "league_name": "Serie B",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/18/2019-2020/2019-2020-Serie-B-Stats",
+            "table_id": "div_results2019-2020181_overall"
+        },
+        {
+            "league_name": "Serie B",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/18/2020-2021/2020-2021-Serie-B-Stats",
+            "table_id": "div_results2020-2021181_overall"
+        },
+        {
+            "league_name": "Serie B",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/18/2021-2022/2021-2022-Serie-B-Stats",
+            "table_id": "div_results2021-2022181_overall"
+        },
+        {
+            "league_name": "Serie B",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/18/2022-2023/2022-2023-Serie-B-Stats",
+            "table_id": "div_results2022-2023181_overall"
+        },
+        {
+            "league_name": "Serie B",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/18/2023-2024/2023-2024-Serie-B-Stats",
+            "table_id": "div_results2023-2024181_overall"
+        }
+    ],
+    "Austrian Bundesliga Links":[
+        {
+            "league_name": "Austrian Bundesliga",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/56/2019-2020/2019-2020-Austrian-Bundesliga-Stats",
+            "table_id": "div_results2019-2020560_overall"
+        },
+        {
+            "league_name": "Austrian Bundesliga",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/56/2020-2021/2020-2021-Austrian-Bundesliga-Stats",
+            "table_id": "div_results2020-2021560_overall"
+        },
+        {
+            "league_name": "Austrian Bundesliga",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/56/2021-2022/2021-2022-Austrian-Bundesliga-Stats",
+            "table_id": "div_results2021-2022560_overall"
+        },
+        {
+            "league_name": "Austrian Bundesliga",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/56/2022-2023/2022-2023-Austrian-Bundesliga-Stats",
+            "table_id": "div_results2022-2023560_overall"
+        },
+        {
+            "league_name": "Austrian Bundesliga",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/56/2023-2024/2023-2024-Austrian-Bundesliga-Stats",
+            "table_id": "div_results2023-2024560_overall"
+        }
+    ],
+    "Bulgarian First League Links":[
+        {
+            "league_name": "Bulgarian First League",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/67/2019-2020/2019-2020-Bulgarian-First-League-Stats",
+            "table_id": "div_results2019-2020670_overall"
+        },
+        {
+            "league_name": "Bulgarian First League",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/67/2020-2021/2020-2021-Bulgarian-First-League-Stats",
+            "table_id": "div_results2020-2021670_overall"
+        },
+        {
+            "league_name": "Bulgarian First League",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/67/2021-2022/2021-2022-Bulgarian-First-League-Stats",
+            "table_id": "div_results2021-2022670_overall"
+        },
+        {
+            "league_name": "Bulgarian First League",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/67/2022-2023/2022-2023-Bulgarian-First-League-Stats",
+            "table_id": "div_results2022-2023670_overall"
+        },
+        {
+            "league_name": "Bulgarian First League",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/67/2023-2024/2023-2024-Bulgarian-First-League-Stats",
+            "table_id": "div_results2023-2024670_overall"
+        }
+    ],
+    "Chinese Super League Links":[
+        {
+            "league_name": "Chinese Super League",
+            "season": "2019",
+            "url": "https://fbref.com/en/comps/62/2019/2019-Chinese-Super-League-Stats",
+            "table_id": "div_results2019621_overall"
+        },
+        {
+            "league_name": "Chinese Super League",
+            "season": "2020",
+            "url": "https://fbref.com/en/comps/62/2020/2020-Chinese-Super-League-Stats",
+            "table_id": "div_results2020620_overall"
+        },
+        {
+            "league_name": "Chinese Super League",
+            "season": "2021",
+            "url": "https://fbref.com/en/comps/62/2021/2021-Chinese-Super-League-Stats",
+            "table_id": "div_results2021620_overall"
+        },
+        {
+            "league_name": "Chinese Super League",
+            "season": "2022",
+            "url": "https://fbref.com/en/comps/62/2022/2022-Chinese-Super-League-Stats",
+            "table_id": "div_results2022621_overall"
+        },
+        {
+            "league_name": "Chinese Super League",
+            "season": "2023",
+            "url": "https://fbref.com/en/comps/62/2023/2023-Chinese-Super-League-Stats",
+            "table_id": "div_results2023621_overall"
+        }
+    ],
+    "Croatian League Links":[
+        {
+            "league_name": "Croatian League",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/63/2019-2020/2019-2020-Hrvatska-NL-Stats",
+            "table_id": "div_results2019-2020631_overall"
+        },
+        {
+            "league_name": "Croatian League",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/63/2020-2021/2020-2021-Hrvatska-NL-Stats",
+            "table_id": "div_results2020-2021631_overall"
+        },
+        {
+            "league_name": "Croatian League",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/63/2021-2022/2021-2022-Hrvatska-NL-Stats",
+            "table_id": "div_results2021-2022631_overall"
+        },
+        {
+            "league_name": "Croatian League",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/63/2022-2023/2022-2023-Hrvatska-NL-Stats",
+            "table_id": "div_results2022-2023631_overall"
+        },
+        {
+            "league_name": "Croatian League",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/63/2023-2024/2023-2024-Hrvatska-NL-Stats",
+            "table_id": "div_results2023-2024631_overall"
+        }
+    ],
+    "Danish Superliga Links":[
+        {
+            "league_name": "Danish Superliga",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/50/2019-2020/2019-2020-Danish-Superliga-Stats",
+            "table_id": "div_results2019-2020500_overall"
+        },
+        {
+            "league_name": "Danish Superliga",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/50/2020-2021/2020-2021-Danish-Superliga-Stats",
+            "table_id": "div_results2020-2021500_overall"
+        },
+        {
+            "league_name": "Danish Superliga",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/50/2021-2022/2021-2022-Danish-Superliga-Stats",
+            "table_id": "div_results2021-2022500_overall"
+        },
+        {
+            "league_name": "Danish Superliga",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/50/2022-2023/2022-2023-Danish-Superliga-Stats",
+            "table_id": "div_results2022-2023500_overall"
+        },
+        {
+            "league_name": "Danish Superliga",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/50/2023-2024/2023-2024-Danish-Superliga-Stats",
+            "table_id": "div_results2023-2024500_overall"
+        }
+    ],
+    "Greece Super League Links":[
+        {
+            "league_name": "Greece Super League",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/27/2019-2020/2019-2020-Super-League-Greece-Stats",
+            "table_id": "div_results2019-2020270_overall"
+        },
+        {
+            "league_name": "Greece Super League",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/27/2020-2021/2020-2021-Super-League-Greece-Stats",
+            "table_id": "div_results2020-2021270_overall"
+        },
+        {
+            "league_name": "Greece Super League",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/27/2021-2022/2021-2022-Super-League-Greece-Stats",
+            "table_id": "div_results2021-2022270_overall"
+        },
+        {
+            "league_name": "Greece Super League",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/27/2022-2023/2022-2023-Super-League-Greece-Stats",
+            "table_id": "div_results2022-2023270_overall"
+        },
+        {
+            "league_name": "Greece Super League",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/27/2023-2024/2023-2024-Super-League-Greece-Stats",
+            "table_id": "div_results2023-2024270_overall"
+        }
+    ],
+    "K League 1 Links":[
+        {
+            "league_name": "K League 1",
+            "season": "2019",
+            "url": "https://fbref.com/en/comps/55/2019/2019-K-League-1-Stats",
+            "table_id": "div_results2019550_overall"
+        },
+        {
+            "league_name": "K League 1",
+            "season": "2020",
+            "url": "https://fbref.com/en/comps/55/2020/2020-K-League-1-Stats",
+            "table_id": "div_results2020550_overall"
+        },
+        {
+            "league_name": "K League 1",
+            "season": "2021",
+            "url": "https://fbref.com/en/comps/55/2021/2021-K-League-1-Stats",
+            "table_id": "div_results2021550_overall"
+        },
+        {
+            "league_name": "K League 1",
+            "season": "2022",
+            "url": "https://fbref.com/en/comps/55/2022/2022-K-League-1-Stats",
+            "table_id": "div_results2022550_overall"
+        },
+        {
+            "league_name": "K League 1",
+            "season": "2023",
+            "url": "https://fbref.com/en/comps/55/2023/2023-K-League-1-Stats",
+            "table_id": "div_results2023550_overall"
+        }
+    ],
+    "Romanian Liga I Links":[
+        {
+            "league_name": "Romanian Liga I",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/47/2019-2020/2019-2020-Liga-I-Stats",
+            "table_id": "div_results2019-2020470_overall"
+        },
+        {
+            "league_name": "Romanian Liga I",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/47/2020-2021/2020-2021-Liga-I-Stats",
+            "table_id": "div_results2020-2021470_overall"
+        },
+        {
+            "league_name": "Romanian Liga I",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/47/2021-2022/2021-2022-Liga-I-Stats",
+            "table_id": "div_results2021-2022470_overall"
+        },
+        {
+            "league_name": "Romanian Liga I",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/47/2022-2023/2022-2023-Liga-I-Stats",
+            "table_id": "div_results2022-2023470_overall"
+        },
+        {
+            "league_name": "Romanian Liga I",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/47/2023-2024/2023-2024-Liga-I-Stats",
+            "table_id": "div_results2023-2024470_overall"
+        }
+    ],
+    "Swiss Super League Links":[
+        {
+            "league_name": "Swiss Super League",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/57/2019-2020/2019-2020-Swiss-Super-League-Stats",
+            "table_id": "div_results2019-2020571_overall"
+        },
+        {
+            "league_name": "Swiss Super League",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/57/2020-2021/2020-2021-Swiss-Super-League-Stats",
+            "table_id": "div_results2020-2021571_overall"
+        },
+        {
+            "league_name": "Swiss Super League",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/57/2021-2022/2021-2022-Swiss-Super-League-Stats",
+            "table_id": "div_results2021-2022571_overall"
+        },
+        {
+            "league_name": "Swiss Super League",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/57/2022-2023/2022-2023-Swiss-Super-League-Stats",
+            "table_id": "div_results2022-2023571_overall"
+        },
+        {
+            "league_name": "Swiss Super League",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/57/2023-2024/2023-2024-Swiss-Super-League-Stats",
+            "table_id": "div_results2023-2024570_overall"
+        }
+    ],
+    "Eliteserien Links":[
+        {
+            "league_name": "Eliteserien",
+            "season": "2019",
+            "url": "https://fbref.com/en/comps/28/2019/2019-Eliteserien-Stats",
+            "table_id": "div_results2019281_overall"
+        },
+        {
+            "league_name": "Eliteserien",
+            "season": "2020",
+            "url": "https://fbref.com/en/comps/28/2020/2020-Eliteserien-Stats",
+            "table_id": "div_results2020281_overall"
+        },
+        {
+            "league_name": "Eliteserien",
+            "season": "2021",
+            "url": "https://fbref.com/en/comps/28/2021/2021-Eliteserien-Stats",
+            "table_id": "div_results2021281_overall"
+        },
+        {
+            "league_name": "Eliteserien",
+            "season": "2022",
+            "url": "https://fbref.com/en/comps/28/2022/2022-Eliteserien-Stats",
+            "table_id": "div_results2022281_overall"
+        },
+        {
+            "league_name": "Eliteserien",
+            "season": "2023",
+            "url": "https://fbref.com/en/comps/28/2023/2023-Eliteserien-Stats",
+            "table_id": "div_results2023281_overall"
+        }
+    ],
+    "Czech First League Links":[
+        {
+            "league_name": "Czech First League",
+            "season": "2019-20",
+            "url": "https://fbref.com/en/comps/66/2019-2020/2019-2020-Czech-First-League-Stats",
+            "table_id": "div_results2019-2020660_overall"
+        },
+        {
+            "league_name": "Czech First League",
+            "season": "2020-21",
+            "url": "https://fbref.com/en/comps/66/2020-2021/2020-2021-Czech-First-League-Stats",
+            "table_id": "div_results2020-2021661_overall"
+        },
+        {
+            "league_name": "Czech First League",
+            "season": "2021-22",
+            "url": "https://fbref.com/en/comps/66/2021-2022/2021-2022-Czech-First-League-Stats",
+            "table_id": "div_results2021-2022660_overall"
+        },
+        {
+            "league_name": "Czech First League",
+            "season": "2022-23",
+            "url": "https://fbref.com/en/comps/66/2022-2023/2022-2023-Czech-First-League-Stats",
+            "table_id": "div_results2022-2023660_overall"
+        },
+        {
+            "league_name": "Czech First League",
+            "season": "2023-24",
+            "url": "https://fbref.com/en/comps/66/2023-2024/2023-2024-Czech-First-League-Stats",
+            "table_id": "div_results2023-2024660_overall"
+        }
+    ],
+    "Veikkausliiga Links":[
+        {
+            "league_name": "Veikkausliiga",
+            "season": "2019",
+            "url": "https://fbref.com/en/comps/43/2019/2019-Veikkausliiga-Stats",
+            "table_id": "div_results2019430_overall"
+        },
+        {
+            "league_name": "Veikkausliiga",
+            "season": "2020",
+            "url": "https://fbref.com/en/comps/43/2020/2020-Veikkausliiga-Stats",
+            "table_id": "div_results2020431_overall"
+        },
+        {
+            "league_name": "Veikkausliiga",
+            "season": "2021",
+            "url": "https://fbref.com/en/comps/43/2021/2021-Veikkausliiga-Stats",
+            "table_id": "div_results2021430_overall"
+        },
+        {
+            "league_name": "Veikkausliiga",
+            "season": "2022",
+            "url": "https://fbref.com/en/comps/43/2022/2022-Veikkausliiga-Stats",
+            "table_id": "div_results2022430_overall"
+        },
+        {
+            "league_name": "Veikkausliiga",
+            "season": "2023",
+            "url": "https://fbref.com/en/comps/43/2023/2023-Veikkausliiga-Stats",
+            "table_id": "div_results2023430_overall"
+        }
+    ]
+}
+
