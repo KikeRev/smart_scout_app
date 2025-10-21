@@ -184,9 +184,9 @@ Viability Score = Success Index v2.1 × Feasibility Multiplier
 - **Seasons**: 
   - Top 5 European Leagues: 2014-15 to 2024-25 (11 seasons)
   - Secondary Leagues (25): 2019-20 to 2024-25 (6 seasons)
-- **Unique Players**: 46,435 (improved with disambiguation + secondary leagues)
+- **Unique Players**: 47,055 (improved with disambiguation + secondary leagues)
 - **Seasonal Records**: 132,509 for evolution tracking
-- **Active Players**: 38,796 with FIFA-style ratings (2024-25 season)
+- **Active Players**: 39,373 with FIFA-style ratings (2024-25 season)
 - **Leagues**: Top 5 European + 25 secondary leagues
 
 ### Dual Data Structure

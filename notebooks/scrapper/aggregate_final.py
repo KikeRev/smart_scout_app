@@ -1,6 +1,84 @@
 import pandas as pd
 import numpy as np
 
+def fix_age_inconsistencies(df):
+    """
+    Fix age inconsistencies across seasons for all players.
+    Logic: age should increase by 1 year per season (allowing ±1 tolerance for birth dates).
+    If a player's age in a later season is inconsistent with previous season, correct it.
+    """
+    print("\n=== Fixing age inconsistencies across all leagues ===")
+    
+    # Extract season year for sorting
+    def extract_season_year(season):
+        try:
+            return int(str(season).split('-')[0])
+        except:
+            try:
+                return int(season)
+            except:
+                return None
+    
+    df['season_year'] = df['Season'].apply(extract_season_year)
+    df = df.sort_values(['player', 'Team', 'season_year'])
+    
+    corrections = []
+    
+    # Group by player and team (same player might play for different teams)
+    for (player_name, team), group in df.groupby(['player', 'Team']):
+        group = group.sort_values('season_year')
+        
+        if len(group) < 2:
+            continue
+        
+        # Check consecutive seasons
+        for i in range(len(group) - 1):
+            row_prev = group.iloc[i]
+            row_curr = group.iloc[i + 1]
+            
+            # Skip if ages are missing
+            if pd.isna(row_prev['age']) or pd.isna(row_curr['age']):
+                continue
+            
+            season_diff = row_curr['season_year'] - row_prev['season_year']
+            age_prev = float(row_prev['age'])
+            age_curr = float(row_curr['age'])
+            expected_age_curr = age_prev + season_diff
+            
+            # Age should increase by season_diff (allowing ±1 for birth dates within season)
+            if abs(age_curr - expected_age_curr) > 1:
+                corrections.append({
+                    'player': player_name,
+                    'team': team,
+                    'season_prev': row_prev['Season'],
+                    'age_prev': age_prev,
+                    'season_curr': row_curr['Season'],
+                    'age_curr_wrong': age_curr,
+                    'age_curr_corrected': expected_age_curr,
+                    'index': row_curr.name
+                })
+    
+    if corrections:
+        print(f"Found {len(corrections)} age inconsistencies to fix")
+        
+        # Apply corrections
+        for corr in corrections:
+            df.loc[corr['index'], 'age'] = corr['age_curr_corrected']
+        
+        # Show sample corrections
+        print("\nSample corrections:")
+        df_corr = pd.DataFrame(corrections)
+        print(df_corr.head(20).to_string(index=False))
+        
+        print(f"\n✅ Corrected {len(corrections)} age values")
+    else:
+        print("✅ No age inconsistencies found")
+    
+    # Drop temporary column
+    df.drop('season_year', axis=1, inplace=True)
+    
+    return df
+
 def normalize_position(pos):
     """
     Normalize position to one of the 4 main positions: GK, DF, MF, FW
@@ -73,6 +151,9 @@ def main():
     df_final = pd.concat([df1, df2], axis=0)
     print(f"Concatenated data: {df_final.shape}")
     
+    # Fix age inconsistencies BEFORE calculating birth_year
+    df_final = fix_age_inconsistencies(df_final)
+    
     # Calculate birth_year for player disambiguation
     print("\n=== Player disambiguation ===")
     df_final['birth_year'] = df_final.apply(calculate_birth_year, axis=1)
@@ -109,7 +190,7 @@ def main():
     print("Cleaned minutes columns")
     df_final = df_final.sort_values(["player_uid", "position_normalized", "Season"], ascending=[False, False, False])
     # Save result
-    output_path = "data/all_players_plus_historic_data_non_aggregated_v3.csv"
+    output_path = "data/all_players_plus_historic_data_non_aggregated_v3_5.csv"
     df_final.to_csv(output_path, index=False)
     print(f"Saved to: {output_path}")
     
@@ -163,7 +244,7 @@ def main():
     print(f"Final columns: {len(df_final_agg.columns)}")
     
     # Save result
-    output_path = "data/all_players_plus_historic_data_aggregated_v3.csv"
+    output_path = "data/all_players_plus_historic_data_aggregated_v3_5.csv"
     df_final_agg.to_csv(output_path, index=False)
     print(f"Saved to: {output_path}")
     
@@ -185,6 +266,19 @@ def main():
     print(df_final[df_final.player == "Rodri"][['player', 'player_uid', 'birth_year', 'position', 'position_normalized', 'Team', 'Season', 'age']].head(20))
     print("\nAggregated data:")
     print(df_final_agg[df_final_agg.player == "Rodri"][['player', 'player_uid', 'birth_year', 'position_normalized', 'Team', 'Season', 'age', 'player_status']].head(10))
+    
+    print("\n=== Sample data: Marlon Freitas (should be unified now) ===")
+    marlon_nonagg = df_final[df_final.player == "Marlon Freitas"][['player', 'player_uid', 'birth_year', 'Team', 'Season', 'age']]
+    if len(marlon_nonagg) > 0:
+        print("Non-aggregated data:")
+        print(marlon_nonagg)
+        print(f"Unique Marlon Freitas UIDs: {marlon_nonagg['player_uid'].nunique()}")
+    
+    marlon_agg = df_final_agg[df_final_agg.player == "Marlon Freitas"][['player', 'player_uid', 'birth_year', 'Team', 'Season', 'age', 'player_status']]
+    if len(marlon_agg) > 0:
+        print("\nAggregated data:")
+        print(marlon_agg)
+        print(f"Unique Marlon Freitas in aggregated: {len(marlon_agg)}")
     
     return df_final_agg
 
