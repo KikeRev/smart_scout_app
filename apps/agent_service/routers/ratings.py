@@ -102,13 +102,13 @@ class TeamRatingResponse(BaseModel):
 # ============================================================================
 
 @router.get("/player/{player_id}", response_model=PlayerRatingResponse)
-async def get_player_rating(player_id: int, season: Optional[str] = "2024-25"):
+async def get_player_rating(player_id: int, season: Optional[str] = "2024"):
     """
     Get FIFA-style rating for a specific player.
     
     Args:
         player_id: Player ID in database
-        season: Season (default: 2024-25)
+        season: Season (default: 2024)
     
     Returns:
         Complete player rating with all attributes
@@ -169,7 +169,7 @@ async def get_player_rating(player_id: int, season: Optional[str] = "2024-25"):
 
 
 @router.get("/player/{player_id}/radar", response_model=RadarChartData)
-async def get_player_radar(player_id: int, season: Optional[str] = "2024-25"):
+async def get_player_radar(player_id: int, season: Optional[str] = "2024"):
     """
     Get radar chart data for a player.
     
@@ -260,7 +260,7 @@ async def get_top_players(
     league: Optional[str] = Query(None, description="Filter by league"),
     nationality: Optional[str] = Query(None, description="Filter by nationality"),
     position: Optional[str] = Query(None, description="Filter by position (GK, DF, MF, FW)"),
-    season: Optional[str] = Query("2024-25", description="Season"),
+    season: Optional[str] = Query("2024", description="Season"),
     min_minutes: Optional[int] = Query(500, description="Minimum minutes played")
 ):
     """
@@ -346,7 +346,7 @@ async def get_top_players(
 @router.get("/team/{team_name}", response_model=TeamRatingResponse)
 async def get_team_rating(
     team_name: str,
-    season: Optional[str] = Query("2024-25", description="Season")
+    season: Optional[str] = Query("2024", description="Season")
 ):
     """
     Get team rating calculated on-the-fly from player ratings.
@@ -358,7 +358,7 @@ async def get_team_rating(
     
     Args:
         team_name: Team/club name (e.g., "Liverpool", "Real Madrid")
-        season: Season (default: 2024-25)
+        season: Season (default: 2024)
     
     Returns:
         Team rating with player breakdown by category
@@ -565,7 +565,7 @@ async def get_team_rating(
 
 
 @router.get("/leagues", response_model=List[str])
-async def get_available_leagues(season: Optional[str] = "2024-25"):
+async def get_available_leagues(season: Optional[str] = "2024"):
     """
     Get list of available leagues for filtering.
     """
@@ -587,7 +587,7 @@ async def get_available_leagues(season: Optional[str] = "2024-25"):
 
 
 @router.get("/nationalities", response_model=List[str])
-async def get_available_nationalities(season: Optional[str] = "2024-25"):
+async def get_available_nationalities(season: Optional[str] = "2024"):
     """
     Get list of available nationalities for filtering.
     """
@@ -640,6 +640,7 @@ async def get_players_comparison_radar(player1_id: int, player2_id: int):
         from apps.agent_service.viz_tools import radar_rating_comparison_chart
         
         # Get player names
+        engine = sa.create_engine(DATABASE_URL)
         with engine.connect() as conn:
             query = text("SELECT full_name FROM players WHERE id IN (:id1, :id2)")
             result = conn.execute(query, {"id1": player1_id, "id2": player2_id})

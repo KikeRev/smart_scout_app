@@ -317,7 +317,7 @@ def comparison_dashboard(request):
     ratings_map = {}
     radar_rating_url = None
     try:
-        seasons_try = ["2024-25", "2023-24", "2022-23", "2021-22", "2020-21", "2019-20", "2018-19", "2017-18", "2016-17", "2015-16", "2014-15", "2013-14", "2012-13"]
+        seasons_try = ["2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015", "2014", "2013", "2012"]
         
         for p in players_data:
             pid = p.get('id') or p.get('player_id') or p.get('pk')

@@ -303,7 +303,7 @@ def search_players(query: str, limit: int = 5, db: Session = Depends(get_session
     return [dict(r._mapping) for r in rows]
 
 @router.get("/all")
-def get_all_players(limit: int = 20000, db: Session = Depends(get_session)):
+def get_all_players(limit: int = 47000, db: Session = Depends(get_session)):
     """Gets all players for dynamic filtering"""
     rows = (
         db.query(Player)

@@ -117,7 +117,7 @@ def get_player_details(player_ids: List[int]) -> List[Dict[str, Any]]:
     """
     try:
         # Use the /players/all endpoint that already works and filter locally
-        response = requests.get(f"{API_BASE_URL}/players/all", timeout=30)
+        response = requests.get(f"{API_BASE_URL}/players/all", timeout=90)
         response.raise_for_status()
         
         all_players = response.json().get('players', [])
@@ -141,7 +141,7 @@ def get_all_players() -> Dict[str, Any]:
         List of all players with their data
     """
     try:
-        response = requests.get(f"{API_BASE_URL}/players/all")
+        response = requests.get(f"{API_BASE_URL}/players/all", timeout=90)
         response.raise_for_status()
         
         return response.json()
@@ -167,7 +167,7 @@ def get_filter_options() -> Dict[str, List[str]]:
     """
     try:
         # Use the FastAPI endpoint that gets all unique options
-        response = requests.get('http://api:8001/players/filter-options', timeout=30)
+        response = requests.get('http://api:8001/players/filter-options', timeout=120)
         if response.status_code == 200:
             return response.json()
         else:

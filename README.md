@@ -33,7 +33,7 @@
 
 - 🤖 **AI-Powered Recommendations**: Natural language queries with intelligent player analysis
 - ⭐ **FIFA-Style Ratings**: Instant 0-100 player evaluation across 6 core attributes
-- 📊 **Historical Data**: 11 seasons (2014-2025) covering 23,716 unique players
+- 📊 **Historical Data**: 11 seasons (2014-2025) covering 46,000+ unique players
 - 🎯 **Success Index v2.1**: Advanced scoring system predicting signing probability
 - 🔍 **Advanced Search**: Manual filtering with visual comparisons (radar/pizza charts)
 - 📰 **News Integration**: Real-time football news with AI summaries
@@ -184,14 +184,15 @@ Viability Score = Success Index v2.1 × Feasibility Multiplier
 - **Seasons**: 
   - Top 5 European Leagues: 2014-15 to 2024-25 (11 seasons)
   - Secondary Leagues (25): 2019-20 to 2024-25 (6 seasons)
-- **Unique Players**: 47,055 (improved with disambiguation + secondary leagues)
-- **Seasonal Records**: 132,509 for evolution tracking
-- **Active Players**: 39,373 with FIFA-style ratings (2024-25 season)
+- **Unique Players**: 45,120 (improved with disambiguation + secondary leagues)
+- **Seasonal Records**: 131,854 for evolution tracking
+- **Active Players**: 37,664 with FIFA-style ratings (player with minutes > 0)
 - **Leagues**: Top 5 European + 25 secondary leagues
 
 ### Dual Data Structure
 1. **`players` table**: Aggregated profiles for similarity search
 2. **`player_history` table**: Seasonal records for evolution tracking
+3. **`player_ratings` table**: Ratings similar to FIFA Game based on real metrics
 
 ### Player Disambiguation (v1.6)
 - **`player_uid`**: name + birth_year for unique identification
@@ -242,23 +243,80 @@ make up
 
 ## Common Commands
 
+### 🚀 Service Management
 ```bash
-# Daily news refresh
-make ingest-news
+# Start services (uses existing images, fast)
+make up
 
-# Restart after code changes
-make restart
+# Build images and start services (complete setup)
+make build
+
+# Start core services only (api, web, db, redis)
+make up-core
+
+# Start only database + Redis
+make up-db
 
 # Stop services (keep data)
 make stop
 
-# Full reset (⚠️ deletes database)
-make down-all
+# Restart services (recreate containers)
+make restart
+
+# Fast restart (no recreate, just stop + start)
+make restart-fast
+```
+
+### 📊 Data Management
+```bash
+# Full bootstrap (players + history + ratings + news)
 make ingest-full
 
-# View logs
-docker-compose logs -f api
-docker-compose logs -f web
+# Players only (players + history + ratings, no news)
+make ingest-players
+
+# News only (scrape & embed new football news)
+make ingest-news
+```
+
+### 🔍 Debugging & Monitoring
+```bash
+# View container status
+make ps
+
+# View logs (all services)
+make logs
+
+# View specific service logs
+make logs-api
+make logs-web
+make logs-db
+
+# Enter container shells
+make shell-api
+make shell-web
+make shell-db
+```
+
+### 🧹 Cleanup
+```bash
+# Remove containers (keep volumes)
+make down
+
+# Full reset (⚠️ deletes database)
+make down-all
+
+# Clean orphaned Docker resources
+make prune
+
+# Complete cleanup + rebuild
+make clean
+```
+
+### 📋 Help
+```bash
+# Show all available commands
+make help
 ```
 
 ---
@@ -459,7 +517,7 @@ blended_stat = w × player_stat + (1 - w) × league_avg
 
 ### Get Player Rating
 ```http
-GET /api/ratings/player/{player_id}?season=2024-25
+GET /api/ratings/player/{player_id}?season=2024
 ```
 
 **Response:**
@@ -470,7 +528,7 @@ GET /api/ratings/player/{player_id}?season=2024-25
   "position": "MF",
   "club": "Real Madrid",
   "league": "La Liga",
-  "season": "2024-25",
+  "season": "2024",
   "overall_rating": 85,
   "league_base_rating": 90.0,
   "performance_rating": 78.5,
@@ -486,14 +544,14 @@ GET /api/ratings/player/{player_id}?season=2024-25
 
 ### Get Team Rating
 ```http
-GET /api/ratings/team/{team_name}?season=2024-25
+GET /api/ratings/team/{team_name}?season=2024
 ```
 
 **Response:**
 ```json
 {
   "team_name": "Real Madrid",
-  "season": "2024-25",
+  "season": "2024",
   "overall_rating": 83.1,
   "num_players": 30,
   "team_att": 74,
@@ -1427,12 +1485,12 @@ python notebooks/scrapper/aggregate_final.py
 
 # 3. Ingest aggregated data to players table
 python -m apps.ingestion.seed_and_ingest \
-  --players-csv data/all_players_plus_historic_data_aggregated_v2.csv \
+  --players-csv data/all_players_plus_historic_data_aggregated_v3.csv \
   --replace --verbose --refresh-embs
 
 # 4. Ingest historical data to player_history table
 python -m apps.ingestion.seed_and_ingest \
-  --history-csv data/all_players_plus_historic_data_non_aggregated_v2.csv \
+  --history-csv data/all_players_plus_historic_data_non_aggregated_v3.csv \
   --replace-history --verbose
 
 # 5. Calculate FIFA-style ratings for all players
@@ -1850,16 +1908,16 @@ docker-compose exec api python -m pytest tests/unit/test_validation.py::TestPlay
 ### ✨ New Features
 - **Extended Historical Coverage**: Complete player data from 2014-2025 (11 seasons)
 - **Dual Database Structure**: 
-  - `players` table: 22,797 aggregated players for similarity search
-  - `player_history` table: 51,759 seasonal records for evolution tracking
+  - `players` table: 46,000+ aggregated players for similarity search
+  - `player_history` table: 131,000+ seasonal records for evolution tracking
 - **Enhanced Data Pipeline**: Robust scraping and aggregation system for historical data
 - **Improved seed_and_ingest.py**: New CLI flags for historical data management
 - **Future-Ready Evolution Charts**: Database structure prepared for player dashboard historical visualizations
 
 ### 🔧 Improvements
 - **Data Quality**: 10 years of historical data from Top 5 European leagues
-- **Player Coverage**: 22,797 unique players (16,827 active + 5,970 historical)
-- **Seasonal Records**: 51,759 individual season records for detailed analysis
+- **Player Coverage**: 46,000+ unique players (active + historical)
+- **Seasonal Records**: 131,000+ individual season records for detailed analysis
 - **Robust Scraping**: Enhanced error handling and data persistence
 - **Column Alignment**: Automatic handling of different column sets across seasons
 

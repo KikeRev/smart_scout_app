@@ -47,7 +47,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 hf_logging.set_verbosity_error()
 
-DIM = 42  # Feature vector dimension (adjust according to model) 
+DIM = 43  # Feature vector dimension (adjust according to model) 
 
 # outside functions, so it loads once
 _SUMMARIZER = pipeline(
@@ -656,7 +656,7 @@ def ingest_news(engine: sa.Engine, verbose: bool = False):
 #  ==  Embedding / Standard‑Scaler pipeline for players  ====================
 # ---------------------------------------------------------------------------
 
-PLAYER_DIM = 43                 # 42 stats + minutes_90s (🗒️ adjust if you change)
+PLAYER_DIM = 43                # 43 stats + minutes_90s (🗒️ adjust if you change)
 IVF_LISTS  = 140                # number of lists for ivfflat
 
 FEATURE_COLS = [
