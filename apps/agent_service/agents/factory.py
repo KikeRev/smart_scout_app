@@ -81,7 +81,11 @@ SYSTEM = SystemMessage(
 
         - If the user asks for VISUALIZATIONS (radar/pizza, comparative):
           1) Call `player_stats` first to ensure data availability.
-          2) Call `radar_chart` / `pizza_chart` or their comparative versions accordingly and return the image/URL.
+          2) If `player_stats` returns a retired/inactive player or wrong player:
+             a) Try using the `team` parameter to disambiguate (e.g., "Rodri" + "Manchester City")
+             b) If still unclear, use `player_lookup` first to see all matches and choose the correct one
+             c) Always prioritize active players from current season (2024) over retired ones
+          3) Call `radar_chart` / `pizza_chart` or their comparative versions accordingly and return the image/URL.
 
         - If any required parameter is missing, ask a short clarification or run the minimal tool to obtain it (e.g., `player_lookup`).
 
@@ -108,7 +112,8 @@ SYSTEM = SystemMessage(
 
         **FOR VISUALIZATIONS:**
         - First use `player_stats` to get statistical data.
-        - Validate that data is complete before generating charts.
+        - Validate that data is complete and the player is correct before generating charts.
+        - If you get a retired/inactive player when expecting an active one, use the `team` parameter to disambiguate.
         - Use `radar_chart`, `pizza_chart` or their comparative versions as requested.
 
         **FOR INTERACTIVE DASHBOARDS:**

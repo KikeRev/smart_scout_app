@@ -986,12 +986,16 @@ def build_scouting_report(
 
 
 # --------------------------- 5) Statistics visualization ---------------- #
-def stats_table(player_name: str) -> str:
+def stats_table(player_name: str, team: Optional[str] = None) -> str:
     """
     Fetches player statistics (player_stats) and returns them formatted
     as a Markdown table for display in the chat.
+    
+    Args:
+        player_name: The name of the player to search for
+        team: Optional team name to disambiguate when multiple players have the same name
     """
-    data = player_stats.invoke({"player_name": player_name})
+    data = player_stats.invoke({"player_name": player_name, "team": team})
     tabla_html = stats_to_html_table(data["stats"])
     return {
         "text": f"Here's the table for {player_name}:",
@@ -1000,13 +1004,19 @@ def stats_table(player_name: str) -> str:
         ]
     }
 
-def compare_stats_table(player1_name: str, player2_name: str) -> str:
+def compare_stats_table(player1_name: str, player2_name: str, team1: Optional[str] = None, team2: Optional[str] = None) -> str:
     """
     Fetches player statistics (player_stats) and returns them formatted
     as a Markdown table for display in the chat.
+    
+    Args:
+        player1_name: The name of the first player to search for
+        player2_name: The name of the second player to search for
+        team1: Optional team name to disambiguate the first player
+        team2: Optional team name to disambiguate the second player
     """
-    player1 = player_stats.invoke({"player_name": player1_name})
-    player2 = player_stats.invoke({"player_name": player2_name})
+    player1 = player_stats.invoke({"player_name": player1_name, "team": team1})
+    player2 = player_stats.invoke({"player_name": player2_name, "team": team2})
 
     tabla_html = compare_stats_to_html_table(player1["stats"], player2["stats"])
     return {
@@ -1094,7 +1104,7 @@ pizza_comparison_chart_tool = StructuredTool.from_function(
     name="pizza_comparison_chart",
     description=(
         "Pizza comparison chart of 9 role-based metrics (green=attack, blue=possession, orange=defense)."
-        """Requires: player1_name, player2_name at minimum, as the role can be inferred from the stats"""
+        "If multiple players have the same name, use 'team1' and 'team2' parameters to disambiguate."
         ),
     return_direct=True          #  <<–– Important: allows returning the chart directly to the chat 
 )
@@ -1113,21 +1123,21 @@ radar_comparison_chart_tool = StructuredTool.from_function(
     name="radar_comparison_chart",
     description=(
     "Radar of 6 generic metrics for two players (age, minutes/game, games_90s, goals, assists, G+A)."
-    "Requires: player1_name, player2_name at minimum, as the role and the rest can be inferred from the stats."),
+    "If multiple players have the same name, use 'team1' and 'team2' parameters to disambiguate."),
     return_direct=True          #  <<–– Important: allows returning the chart directly to the chat
 )
 
 stats_table_tool = StructuredTool.from_function(
     func=stats_table,
     name="stats_table",
-    description="Generates an HTML table of a player's statistics",
+    description="Generates an HTML table of a player's statistics. If multiple players have the same name, use the 'team' parameter to disambiguate.",
     return_direct=True          #  <<–– Important: allows returning the table directly to the chat
 )
 
 compare_stats_table_tool = StructuredTool.from_function(
     func=compare_stats_table,
     name="compare_stats_table",
-    description="Generates an HTML table with two players' statistics and highlights the best value in each row",
+    description="Generates an HTML table with two players' statistics and highlights the best value in each row. If multiple players have the same name, use the 'team1' and 'team2' parameters to disambiguate.",
     return_direct=True          #  <<–– Important: allows returning the table directly to the chat
 )
 

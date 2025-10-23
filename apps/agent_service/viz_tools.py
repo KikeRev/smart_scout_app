@@ -184,7 +184,7 @@ def radar_chart(
         Metadata for figure title and optional badge.
     """
     if stats is None:
-        fetched     = player_stats.invoke({"player_name": player_name})
+        fetched     = player_stats.invoke({"player_name": player_name, "team": team})
         stats       = fetched["stats"]
         team        = team or fetched["stats"]["club"]
         position    = position or fetched["stats"]["position"]
@@ -254,19 +254,22 @@ def radar_chart(
 def radar_comparison_chart(
     player1_name: str,
     player2_name: str,
+    *,
+    team1: Optional[str] = None,
+    team2: Optional[str] = None,
 ) -> str:
-    """Create a radar chart for a single player.
+    """Create a radar chart comparing two players.
 
     Parameters
     ----------
-    stats : dict
-        A DataFrame row converted to dict (`row.to_dict()`).
-    player_name, club, position (role), nationality : str
-        Metadata for figure title and optional badge.
+    player1_name, player2_name : str
+        Names of the players to compare.
+    team1, team2 : str, optional
+        Team names to disambiguate when multiple players have the same name.
     """
     
-    fetched1     = player_stats.invoke({"player_name": player1_name})
-    fetched2     = player_stats.invoke({"player_name": player2_name})
+    fetched1     = player_stats.invoke({"player_name": player1_name, "team": team1})
+    fetched2     = player_stats.invoke({"player_name": player2_name, "team": team2})
     stats1       = fetched1["stats"]
     stats2       = fetched2["stats"]
     team1        = fetched1["stats"]["club"]
@@ -468,7 +471,8 @@ def pizza_comparison_chart(
     player2_name: str,
     *,
     role: str | None = None,
-    
+    team1: Optional[str] = None,
+    team2: Optional[str] = None,
 ) -> str:
     """Create a category-colored comparison pizza plot for two players.
 
@@ -484,8 +488,8 @@ def pizza_comparison_chart(
     str
         Path to the temporary PNG with the comparison chart.
     """
-    fetched1 = player_stats.invoke({"player_name": player1_name})
-    fetched2 = player_stats.invoke({"player_name": player2_name})
+    fetched1 = player_stats.invoke({"player_name": player1_name, "team": team1})
+    fetched2 = player_stats.invoke({"player_name": player2_name, "team": team2})
     stats    = fetched1["stats"]
     stats2   = fetched2["stats"]
     role     = stats["position"]
@@ -655,7 +659,7 @@ def radar_rating_chart(
     range_labels = radar.draw_range_labels(ax=axs['radar'], fontsize=25,
                                         fontproperties=robotto_thin.prop)
     param_labels = radar.draw_param_labels(ax=axs['radar'], fontsize=25,
-                                        fontproperties=robotto_thin.prop)
+                                        fontproperties=robotto_bold.prop)
     
     # Add title
     title1_text = axs['title'].text(0.01, 0.65, player_name, fontsize=25,
@@ -711,28 +715,33 @@ def radar_rating_comparison_chart(
     
     if rating_data1 is None or rating_data2 is None:
         raise ValueError("Rating data must be provided for both players")
-    
-    # FIFA rating parameters
-    params = ['ATT', 'PLY', 'DEF', 'CTR', 'PHY', 'GKP']
-    
+
     # Extract values for both players
     vals1 = [
-        rating_data1.get('att', 0),
-        rating_data1.get('ply', 0),
-        rating_data1.get('def', 0),
-        rating_data1.get('ctr', 0),
-        rating_data1.get('phy', 0),
-        rating_data1.get('gkp', 0)
+        rating_data1.get('att', 50),
+        rating_data1.get('ply', 50),
+        rating_data1.get("def_rating", rating_data1.get("def", rating_data1.get("DEF", 50))),
+        rating_data1.get('ctr', 50),
+        rating_data1.get('phy', 50),
+        rating_data1.get('gkp', 50)
     ]
     
     vals2 = [
-        rating_data2.get('att', 0),
-        rating_data2.get('ply', 0),
-        rating_data2.get('def', 0),
-        rating_data2.get('ctr', 0),
-        rating_data2.get('phy', 0),
-        rating_data2.get('gkp', 0)
+        rating_data2.get('att', 50),
+        rating_data2.get('ply', 50),
+        rating_data2.get("def_rating", rating_data2.get("def", rating_data2.get("DEF", 50))),
+        rating_data2.get('ctr', 50),
+        rating_data2.get('phy', 50),
+        rating_data2.get('gkp', 50)
     ]
+
+    # FIFA rating parameters based in position
+    if position1 == "GK":
+        params = ['ATT', 'PLY', 'DEF', 'CTR', 'PHY', 'GKP']
+    else:
+        params = ['ATT', 'PLY', 'DEF', 'CTR', 'PHY']
+        vals1 = vals1[:-1]
+        vals2 = vals2[:-1]
     
     vals_arr1 = np.array(vals1, dtype=float)
     vals_arr2 = np.array(vals2, dtype=float)
@@ -779,15 +788,6 @@ def radar_rating_comparison_chart(
                                     fontproperties=robotto_thin.prop,
                                     ha='right', va='center', color='#d80499')
 
-    # Legend at upper right, bold
-    legend_elements = [
-        plt.Line2D([0], [0], color='#01c49d', lw=6, alpha=0.85, label=player1_name),
-        plt.Line2D([0], [0], color='#d80499', lw=6, alpha=0.85, label=player2_name),
-    ]
-    lgd = fig.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(0.98, 0.98),
-                     ncol=1, fontsize=14, frameon=False)
-    for txt in lgd.get_texts():
-        txt.set_fontproperties(robotto_bold.prop)
 
     # Endnote credits
     endnote_text = axs['endnote'].text(0.99, 1.4, 'Inspired By: StatsBomb / Rami Moghadam', fontsize=15,
