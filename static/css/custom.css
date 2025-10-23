@@ -2585,9 +2585,7 @@ textarea.chat-input {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0b3d0b 0%, #1a5a1a 100%);
   border-radius: 50%;
-  border: 2px solid #ffffff;
   font-size: 4rem;
   font-weight: 700;
   color: #ffffff;
@@ -2620,6 +2618,8 @@ textarea.chat-input {
   border-bottom: 2px solid rgba(255, 255, 255, 0.2);
   padding-bottom: 0.3rem;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 700;
 }
 
@@ -2637,7 +2637,7 @@ textarea.chat-input {
 
 .fut-player-card .player-card-bottom .player-info .player-features .player-features-col {
   border-right: 2px solid rgba(255, 255, 255, 0.2);
-  padding: 0 2.3rem;
+  padding: 0 1.3rem;
 }
 
 .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span {
@@ -2645,16 +2645,23 @@ textarea.chat-input {
   font-size: 1.2rem;
   text-transform: uppercase;
   margin-bottom: 0.3rem;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-value {
   margin-right: 0.3rem;
   font-weight: 700;
   min-width: 2rem;
+  flex-shrink: 0;
 }
 
 .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-title {
   font-weight: 300;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fut-player-card .player-card-bottom .player-info .player-features .player-features-col:last-child {
@@ -2745,6 +2752,9 @@ textarea.chat-input {
   text-shadow: 2px 2px #111;
   text-align: center;
   margin-bottom: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fut-team-card .team-stats-grid {
@@ -2771,6 +2781,9 @@ textarea.chat-input {
   text-transform: uppercase;
   text-shadow: 1px 1px #111;
   flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fut-team-card .team-stat-value {
