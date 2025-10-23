@@ -58,7 +58,7 @@
           {% csrf_token %}
 
           <div class="chat-input-container">
-            <textarea name="text"
+                <textarea name="text" 
                     class="form-control chat-input"
                     rows="1"
                     style="min-height:3.75rem; width:80%; max-width:80%; resize:vertical;"
@@ -66,7 +66,13 @@
             
             <button type="submit" class="btn btn-submit btn-send"
                     role="button" aria-label="Send message to agent">
-              <span class="send-icon" aria-hidden="true">➤</span>
+              <span class="send-icon" aria-hidden="true">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 2L11 13"/>
+                  <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
+                </svg>
+              </span>
+              <span class="spinner" style="display: none;"></span>
             </button>
           </div>
 
@@ -165,6 +171,13 @@
       thinking.style.display = 'flex';
       thinkingText.textContent = 'Thinking...';
       
+      // Disable form elements and show spinner
+      const sendButton = form.querySelector('.btn-send');
+      const textarea = form.querySelector('textarea[name="text"]');
+      
+      sendButton.disabled = true;
+      textarea.disabled = true;
+      
       // Clear textarea
       form.querySelector('textarea').value = '';
       // reset height back to one line
@@ -228,6 +241,13 @@
         // Hide spinner
         thinking.style.display = 'none';
         thinkingText.textContent = '';
+        
+        // Re-enable form elements
+        const sendButton = form.querySelector('.btn-send');
+        const textarea = form.querySelector('textarea[name="text"]');
+        
+        sendButton.disabled = false;
+        textarea.disabled = false;
       }
     });
   })();

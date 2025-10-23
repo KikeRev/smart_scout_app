@@ -293,7 +293,7 @@ def players_batch(
     return [player_to_dict(p) for p in rows]
 
 @router.get("/search")
-def search_players(query: str, limit: int = 5, db: Session = Depends(get_session)):
+def search_players(query: str, limit: int = 200, db: Session = Depends(get_session)):
     rows = (
         db.query(Player.id, Player.full_name, Player.club, Player.position)
           .filter(Player.full_name.ilike(f"%{query}%"))

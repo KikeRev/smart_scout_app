@@ -125,7 +125,7 @@ def _context(base_id: int, cand_id: int, cand_ids: list[int], metrics: list[str]
         
         # Get available seasons for ratings
         seasons_response = requests.get("http://api:8001/api/ratings/leagues")
-        available_seasons = ["2024-25", "2023-24", "2022-23", "2021-22", "2020-21"]  # Fallback seasons
+        available_seasons = ["2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015", "2014"]  # Fallback seasons
         
         # Get ratings for base player - try multiple seasons
         base_rating = None

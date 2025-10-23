@@ -1675,58 +1675,7 @@ select[multiple] { min-height: 150px; }
   outline: none;
 }
 
-/* Integrated send button */
-.btn-send {
-  position: static !important;        /* managed by grid */
-  transform: none !important;
-  width: 2.25rem !important;   /* smaller to match textarea */
-  height: 2.25rem !important;
-  padding: 0 !important;
-  font-size: 1.2rem !important;
-  font-weight: 700 !important;
-  border-radius: 50% !important;
-  transition: all 0.3s ease !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: #0b3d0b !important;
-  color: white !important;
-  border: none !important;
-  cursor: pointer !important;
-  min-width: 2.25rem !important;
-  min-height: 2.25rem !important;
-  max-width: 2.25rem !important;
-  max-height: 2.25rem !important;
-  line-height: 1 !important;
-  text-align: center !important;
-  z-index: 1 !important;
-}
-
-.btn-send:hover {
-  transform: none !important; /* avoid global .btn hover scale */
-  box-shadow: 0 4px 12px rgba(11, 61, 11, 0.4) !important;
-  background: #0d4d0d !important;
-}
-
-/* Prevent global .btn:hover scale on send button inside chat input */
-.chat-input-container .btn:hover {
-  transform: none !important;
-}
-
-.btn-send:active {
-  transform: translateY(-50%) scale(0.95) !important;
-}
-
-/* Specific styles for the send icon */
-.btn-send .send-icon {
-  font-size: 20px !important;
-  color: white !important;
-  display: block !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  line-height: 1 !important;
-  font-weight: bold !important;
-}
+/* Integrated send button - REMOVED DUPLICATE */
 
 /* Download button - separated from the send button */
 .btn-download {
@@ -1755,6 +1704,132 @@ select[multiple] { min-height: 150px; }
 .btn-download:active {
   background: #0a3509;
 }
+
+/* Send button - updated with SVG avioncito - HIGH SPECIFICITY */
+button.btn.btn-submit.btn-send {
+  position: static !important;
+  transform: none !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  padding: 0 !important;
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  border-radius: 50% !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  color: #0b3d0b !important;
+  border: none !important;
+  border-color: transparent !important;
+  cursor: pointer !important;
+  min-width: 2.25rem !important;
+  min-height: 2.25rem !important;
+  max-width: 2.25rem !important;
+  max-height: 2.25rem !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  z-index: 1 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+button.btn.btn-submit.btn-send:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: #0b3d0b !important;
+}
+
+button.btn.btn-submit.btn-send:active {
+  transform: scale(0.95) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+button.btn.btn-submit.btn-send:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: #ccc !important;
+  transform: none !important;
+}
+
+/* Send icon styles */
+button.btn.btn-submit.btn-send .send-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+button.btn.btn-submit.btn-send .send-icon svg {
+  width: 32px !important;
+  height: 32px !important;
+  transition: all 0.3s ease;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke: currentColor !important;
+  fill: none !important;
+  color: #0b3d0b !important;
+}
+
+button.btn.btn-submit.btn-send:hover .send-icon svg {
+  transform: translateX(3px) rotate(5deg);
+  stroke-width: 2.2;
+}
+
+button.btn.btn-submit.btn-send:disabled .send-icon {
+  display: none !important;
+}
+
+/* Spinner styles */
+button.btn.btn-submit.btn-send .spinner {
+  display: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid #c3e6cb !important;
+  border-top-color: #0b3d0b !important;
+  border-radius: 50% !important;
+  animation: spin .6s linear infinite !important;
+}
+
+button.btn.btn-submit.btn-send:disabled .spinner {
+  display: inline-block !important;
+}
+
+/* Prevent global .btn:hover scale on send button inside chat input */
+.chat-input-container .btn:hover {
+  transform: none !important;
+}
+
+/* Disable ::before pseudo-element for send button */
+button.btn.btn-submit.btn-send::before {
+  display: none !important;
+}
+
+/* Fix textarea cursor */
+textarea.chat-input {
+  cursor: text !important;
+}
+
+textarea.chat-input:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  background-color: #f8f9fa;
+}
+
 
 /* Chat messages - Simple and clean, no avatars */
 .chat-row {
@@ -2793,3 +2868,4 @@ textarea.chat-input {
     font-size: 0.6rem;
   }
 }
+
