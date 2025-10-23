@@ -1834,7 +1834,7 @@ textarea.chat-input:disabled {
 /* Chat messages - Simple and clean, no avatars */
 .chat-row {
   display: flex;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   width: 100%;
   align-items: flex-end;
 }
@@ -2361,7 +2361,7 @@ textarea.chat-input {
 /* -- WhatsApp style messages -- */
 .chat-row {
     display: flex;
-    margin: 0.5rem 1rem;
+    margin: 3rem 1rem;
     clear: both;
 }
 
@@ -2880,4 +2880,5 @@ textarea.chat-input {
     font-size: 0.6rem;
   }
 }
+
 

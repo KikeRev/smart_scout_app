@@ -45,7 +45,7 @@
 /* ======== Caja de entrada ======== */
 .chat-form{
   flex:0 0 auto;
-  padding:1rem 30%;
+  padding:2rem 30%;
 }
 
 .input-wrapper{
@@ -130,6 +130,8 @@ button.btn.btn-submit.btn-send {
   box-shadow: none !important;
   backdrop-filter: none !important;
   overflow: visible !important;
+  margin-right: 0.5rem;
+  margin-left: 0.5rem;
 }
 
 button.btn.btn-submit.btn-send:hover {
@@ -215,6 +217,8 @@ textarea.chat-input {
   resize: none;           /* sin resize handles */
   font-size: 1rem;        /* texto legible */
   cursor: text !important; /* cursor de texto, no pointer */
+  padding: 1rem 0.75rem;  /* más padding vertical para alineación */
+  line-height: 1.4;       /* mejor espaciado de línea */
 }
 
 textarea.chat-input:disabled {
@@ -222,12 +226,25 @@ textarea.chat-input:disabled {
   opacity: 0.6;
 }
 
+/* Chat messages spacing */
+.chat-row {
+  margin-bottom: 1.5rem !important;
+}
+
+
 
 /* ======== Responsivo ======== */
 @media (max-width: 991px){   /* tablets / móviles */
   .chat-log,
   .chat-form{
     padding:1rem 5%;
+  }
+  
+  .sidebar-toggle-btn {
+    top: 90px;
+    left: 20px;
+    padding: 8px 10px;
+    font-size: 1rem;
   }
 }
 
