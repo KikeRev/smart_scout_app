@@ -128,29 +128,54 @@ def normalize_stat_percentile(value, values_list, inverse=False):
     return max(0, min(100, percentile))
 
 
-def calculate_rating(player_name):
+def calculate_rating(player_name, player_uid=None):
     """
     Calcula el rating completo de un jugador.
+    
+    Args:
+        player_name: Nombre del jugador
+        player_uid: UID del jugador (opcional, para mayor precisión)
+    
+    Returns:
+        dict: Diccionario con todos los ratings calculados o None si no se encuentra
     """
     engine = sa.create_engine(DATABASE_URL)
     
     # 1. Obtener datos del jugador
-    query_player = f"""
-    SELECT 
-        full_name, position, club, league, age,
-        minutes, minutes_90s,
-        goals, assists, 
-        expected_goals, expected_assists,
-        progressive_carries, progressive_passes, progressive_passes_received,
-        passes_completed, passes, passes_pct,
-        tackles, tackles_won, interceptions, blocks, clearances,
-        challenges, challenges_lost, errors,
-        -- Stats de portero
-        gk_goals_against, gk_psxg
-    FROM players 
-    WHERE full_name ILIKE '%{player_name}%'
-    LIMIT 1;
-    """
+    if player_uid:
+        query_player = f"""
+        SELECT 
+            id, full_name, player_uid, position, club, league, age,
+            minutes, minutes_90s,
+            goals, assists, 
+            expected_goals, expected_assists,
+            progressive_carries, progressive_passes, progressive_passes_received,
+            passes_completed, passes, passes_pct,
+            tackles, tackles_won, interceptions, blocks, clearances,
+            challenges, challenges_lost, errors,
+            -- Stats de portero
+            gk_goals_against, gk_psxg
+        FROM players 
+        WHERE player_uid = '{player_uid}'
+        LIMIT 1;
+        """
+    else:
+        query_player = f"""
+        SELECT 
+            id, full_name, player_uid, position, club, league, age,
+            minutes, minutes_90s,
+            goals, assists, 
+            expected_goals, expected_assists,
+            progressive_carries, progressive_passes, progressive_passes_received,
+            passes_completed, passes, passes_pct,
+            tackles, tackles_won, interceptions, blocks, clearances,
+            challenges, challenges_lost, errors,
+            -- Stats de portero
+            gk_goals_against, gk_psxg
+        FROM players 
+        WHERE full_name ILIKE '%{player_name}%'
+        LIMIT 1;
+        """
     
     with engine.connect() as conn:
         result = conn.execute(text(query_player))
@@ -158,7 +183,7 @@ def calculate_rating(player_name):
         
         if not player:
             print(f"❌ No se encontró a '{player_name}'")
-            return
+            return None
         
         print(f"\n{'='*80}")
         print(f"✅ Jugador encontrado: {player.full_name}")
@@ -388,6 +413,27 @@ def calculate_rating(player_name):
     print(f"   OVR = ({league_base_rating} × {league_weight:.3f}) + ({performance_rating:.1f} × {perf_weight:.3f})")
     print(f"   OVR = {league_base_rating * league_weight:.1f} + {performance_rating * perf_weight:.1f} = {overall_rating:.1f}")
     print(f"\n{'='*80}\n")
+    
+    # Devolver diccionario con todos los datos calculados
+    return {
+        'player_id': player.id,
+        'player_uid': player.player_uid,
+        'player_name': player.full_name,
+        'overall_rating': round(overall_rating),
+        'league_base_rating': league_base_rating,
+        'performance_rating': round(performance_rating, 1),
+        'att': round(ATT, 1),
+        'ply': round(PLY, 1),
+        'def_rating': round(DEF, 1),
+        'ctr': round(CTR, 1),
+        'phy': round(PHY, 1),
+        'gkp': round(GKP, 1),
+        'season': '2024',  # TODO: obtener de la base de datos
+        'position': position,
+        'minutes_played': player.minutes,
+        'league': player.league,
+        'club': player.club
+    }
 
 
 # ============================================================================
@@ -396,13 +442,21 @@ def calculate_rating(player_name):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Uso: python scripts/calculate_player_rating.py \"Nombre del Jugador\"")
+        print("Uso: python scripts/calculate_player_rating.py \"Nombre del Jugador\" [player_uid]")
         print("\nEjemplos:")
         print("  python scripts/calculate_player_rating.py \"Toni Kroos\"")
         print("  python scripts/calculate_player_rating.py \"Kylian Mbappe\"")
+        print("  python scripts/calculate_player_rating.py \"Toni Kroos\" \"Toni_Kroos_1990\"")
         sys.exit(1)
     
     player_name = sys.argv[1]
-    calculate_rating(player_name)
+    player_uid = sys.argv[2] if len(sys.argv) > 2 else None
+    result = calculate_rating(player_name, player_uid)
+    
+    if result:
+        print(f"\n✅ Rating calculado exitosamente para {result['player_name']} ({result['player_uid']})")
+        print(f"   Overall Rating: {result['overall_rating']}")
+    else:
+        print(f"\n❌ No se pudo calcular el rating para {player_name}")
 
 

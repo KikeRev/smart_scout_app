@@ -611,14 +611,14 @@ def saved_searches_api(request):
 
 
 @login_required
-def player_history_api(request, player_name: str):
+def player_history_api(request, player_name: str, player_uid: str = None):
     """Return per-season historical stats for a player, as stored in player_history.
     Response: [{season, team, league, team_logo, minutes, ...metrics...}] sorted by season asc.
     """
     try:
         # Minimal set of columns used in charts; extendable
         desired_columns = [
-            'player','season','team','league','team_logo','minutes','minutes_90s','games','games_starts',
+            'player','player_uid','season','team','league','team_logo','minutes','minutes_90s','games','games_starts',
             'goals','assists','expected_goals','expected_assists',
             'progressive_carries','progressive_passes','progressive_passes_received',
             'goals_per90','assists_per90','goals_assists_per90','expected_goals_per90','expected_assists_per90',
@@ -639,21 +639,33 @@ def player_history_api(request, player_name: str):
             # Keep order from desired_columns, filter by existence
             columns = [c for c in desired_columns if c in existing_cols]
             # Ensure mandatory keys are present
-            for mandatory in ['player','season','team','league','team_logo']:
+            for mandatory in ['player','player_uid','season','team','league','team_logo']:
                 if mandatory not in columns and mandatory in existing_cols:
                     columns.insert(0, mandatory)
             col_select = ', '.join(columns)
 
-            # Try exact lower match first; if empty, fallback to unaccent/ILIKE if extension exists
-            cur.execute(
-                f"""
-                SELECT {col_select}
-                FROM player_history
-                WHERE lower(player) = lower(%s)
-                ORDER BY season ASC
-                """,
-                [player_name],
-            )
+            # Use player_uid if available, otherwise fallback to player name
+            if player_uid and 'player_uid' in columns:
+                cur.execute(
+                    f"""
+                    SELECT {col_select}
+                    FROM player_history
+                    WHERE player_uid = %s
+                    ORDER BY season ASC
+                    """,
+                    [player_uid],
+                )
+            else:
+                # Try exact lower match first; if empty, fallback to unaccent/ILIKE if extension exists
+                cur.execute(
+                    f"""
+                    SELECT {col_select}
+                    FROM player_history
+                    WHERE lower(player) = lower(%s)
+                    ORDER BY season ASC
+                    """,
+                    [player_name],
+                )
             rows = cur.fetchall()
             # Build mapping using cursor description
             cols = [c[0] for c in cur.description]
@@ -702,20 +714,21 @@ def player_history_by_id_api(request, player_id: int):
     """Same as player_history_api but by joining players.id to history.player name."""
     try:
         with connection.cursor() as cur:
-            cur.execute("SELECT full_name FROM players WHERE id = %s", [player_id])
+            cur.execute("SELECT full_name, player_uid FROM players WHERE id = %s", [player_id])
             row = cur.fetchone()
             if not row:
                 return JsonResponse({"history": []})
             name = row[0]
-        # Reuse name-based endpoint logic
-        return player_history_api(request, name)
+            player_uid = row[1]
+        # Reuse name-based endpoint logic with player_uid
+        return player_history_api(request, name, player_uid)
     except Exception as e:
         logger.exception("player_history_by_id_api error: %s", e)
         return JsonResponse({"error": str(e)}, status=400)
 
 
-def _fetch_history_rows(player_name: str) -> list[dict]:
-    """Return per-season rows from player_history for a given player name."""
+def _fetch_history_rows(player_name: str, player_uid: str = None) -> list[dict]:
+    """Return per-season rows from player_history for a given player name or player_uid."""
     with connection.cursor() as cur:
         # Discover existing columns
         cur.execute(
@@ -727,7 +740,7 @@ def _fetch_history_rows(player_name: str) -> list[dict]:
         )
         existing_cols = {row[0] for row in cur.fetchall()}
         desired = [
-            'player','season','team','league','team_logo','minutes','minutes_90s','games','games_starts',
+            'player','player_uid','season','team','league','team_logo','minutes','minutes_90s','games','games_starts',
             'goals','assists','expected_goals','expected_assists',
             'progressive_carries','progressive_passes','progressive_passes_received',
             'goals_per90','assists_per90','goals_assists_per90','expected_goals_per90','expected_assists_per90',
@@ -736,20 +749,32 @@ def _fetch_history_rows(player_name: str) -> list[dict]:
             'gk_goals_against','gk_pens_allowed','gk_psxg','gk_psnpxg_per_shot_on_target_against'
         ]
         cols = [c for c in desired if c in existing_cols]
-        for mandatory in ['player','season','team']:
+        for mandatory in ['player','player_uid','season','team']:
             if mandatory not in cols and mandatory in existing_cols:
                 cols.insert(0, mandatory)
         col_select = ', '.join(cols)
 
-        cur.execute(
-            f"""
-            SELECT {col_select}
-            FROM player_history
-            WHERE lower(player) = lower(%s)
-            ORDER BY season ASC
-            """,
-            [player_name],
-        )
+        # Use player_uid if available, otherwise fallback to player name
+        if player_uid and 'player_uid' in existing_cols:
+            cur.execute(
+                f"""
+                SELECT {col_select}
+                FROM player_history
+                WHERE player_uid = %s
+                ORDER BY season ASC
+                """,
+                [player_uid],
+            )
+        else:
+            cur.execute(
+                f"""
+                SELECT {col_select}
+                FROM player_history
+                WHERE lower(player) = lower(%s)
+                ORDER BY season ASC
+                """,
+                [player_name],
+            )
         rows = cur.fetchall()
         names = [c[0] for c in cur.description]
         return [dict(zip(names, r)) for r in rows]
@@ -767,15 +792,15 @@ def history_chart_api(request):
         if not player_id or not metric:
             return JsonResponse({'error': 'missing id or metric'}, status=400)
 
-        # Resolve player name
+        # Resolve player name and uid
         with connection.cursor() as cur:
-            cur.execute("SELECT full_name FROM players WHERE id = %s", [player_id])
+            cur.execute("SELECT full_name, player_uid FROM players WHERE id = %s", [player_id])
             row = cur.fetchone()
             if not row:
                 return JsonResponse({'error': 'player not found'}, status=404)
-            name = row[0]
+            name, player_uid = row[0], row[1]
 
-        history = _fetch_history_rows(name)
+        history = _fetch_history_rows(name, player_uid)
         if not history:
             return JsonResponse({'error': 'no history'}, status=404)
 
@@ -858,13 +883,13 @@ def history_chart_api(request):
 def generate_history_chart_file(player_id: int, metric: str, show_context: bool = True) -> Path:
     """Internal helper to generate history chart file and return its Path."""
     with connection.cursor() as cur:
-        cur.execute("SELECT full_name FROM players WHERE id = %s", [player_id])
+        cur.execute("SELECT full_name, player_uid FROM players WHERE id = %s", [player_id])
         row = cur.fetchone()
         if not row:
             raise ValueError('player not found')
-        name = row[0]
+        name, player_uid = row[0], row[1]
 
-    history = _fetch_history_rows(name)
+    history = _fetch_history_rows(name, player_uid)
     if not history:
         raise ValueError('no history')
 
@@ -928,19 +953,22 @@ def history_chart_comparison_api(request):
         if not player_id1 or not player_id2 or not metric:
             return JsonResponse({'error': 'missing id1, id2 or metric'}, status=400)
 
-        # Resolve player names
+        # Resolve player names and uids
         with connection.cursor() as cur:
-            cur.execute("SELECT id, full_name FROM players WHERE id IN (%s, %s)", [player_id1, player_id2])
+            cur.execute("SELECT id, full_name, player_uid FROM players WHERE id IN (%s, %s)", [player_id1, player_id2])
             rows = cur.fetchall()
             if len(rows) < 2:
                 return JsonResponse({'error': 'one or both players not found'}, status=404)
             names_map = {row[0]: row[1] for row in rows}
+            uids_map = {row[0]: row[2] for row in rows}
         
         name1 = names_map[player_id1]
         name2 = names_map[player_id2]
+        uid1 = uids_map[player_id1]
+        uid2 = uids_map[player_id2]
 
-        history1 = _fetch_history_rows(name1)
-        history2 = _fetch_history_rows(name2)
+        history1 = _fetch_history_rows(name1, uid1)
+        history2 = _fetch_history_rows(name2, uid2)
         
         if not history1 or not history2:
             return JsonResponse({'error': 'no history for one or both players'}, status=404)
@@ -997,13 +1025,14 @@ def history_chart_comparison_api(request):
 def generate_history_chart_comparison_file(player_id1: int, player_id2: int, metric: str) -> Path:
     """Internal helper to generate comparison chart file and return its Path."""
     with connection.cursor() as cur:
-        cur.execute("SELECT id, full_name FROM players WHERE id IN (%s, %s)", [player_id1, player_id2])
+        cur.execute("SELECT id, full_name, player_uid FROM players WHERE id IN (%s, %s)", [player_id1, player_id2])
         rows = cur.fetchall()
         if len(rows) < 2:
             raise ValueError('one or both players not found')
         names_map = {row[0]: row[1] for row in rows}
-    history1 = _fetch_history_rows(names_map[player_id1])
-    history2 = _fetch_history_rows(names_map[player_id2])
+        uids_map = {row[0]: row[2] for row in rows}
+    history1 = _fetch_history_rows(names_map[player_id1], uids_map[player_id1])
+    history2 = _fetch_history_rows(names_map[player_id2], uids_map[player_id2])
     if not history1 or not history2:
         raise ValueError('no history for one or both players')
 
@@ -1052,21 +1081,23 @@ def history_chart_multi_api(request):
         # Resolve names
         with connection.cursor() as cur:
             cur.execute(
-                f"SELECT id, full_name FROM players WHERE id = ANY(%s)", [id_list]
+                f"SELECT id, full_name, player_uid FROM players WHERE id = ANY(%s)", [id_list]
             )
             rows = cur.fetchall()
             if len(rows) < len(id_list):
                 # proceed with available
                 pass
             id_to_name = {r[0]: r[1] for r in rows}
+            id_to_uid = {r[0]: r[2] for r in rows}
 
         # Gather histories
         histories = []
         for pid in id_list:
             name = id_to_name.get(pid)
+            player_uid = id_to_uid.get(pid)
             if not name:
                 continue
-            hist = _fetch_history_rows(name)
+            hist = _fetch_history_rows(name, player_uid)
             if hist:
                 seasons = [r['season'] for r in hist]
                 y = [np.nan if (v:=(r.get(metric))) in (None, '') else float(v) for r in hist]

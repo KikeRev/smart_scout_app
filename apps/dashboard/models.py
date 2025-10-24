@@ -13,6 +13,7 @@ class Player(models.Model):
     league = models.CharField(max_length=64, null=True, blank=True)
     season = models.CharField(max_length=10, null=True, blank=True)
     minutes = models.IntegerField(null=True, blank=True)
+    player_uid = models.CharField(max_length=255, null=True, blank=True, unique=True)
 
     class Meta:
         db_table = "players"
@@ -25,6 +26,7 @@ class Player(models.Model):
 class PlayerRating(models.Model):
     """FIFA-style player ratings - unmanaged, references existing table"""
     player = models.ForeignKey(Player, on_delete=models.CASCADE, db_column='player_id')
+    player_uid = models.CharField(max_length=255, null=True, blank=True)
     
     # Overall rating
     overall_rating = models.IntegerField()

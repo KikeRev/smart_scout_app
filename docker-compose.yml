@@ -63,16 +63,19 @@ services:
           python -m apps.ingestion.seed_and_ingest \
             --players-csv data/all_players_plus_historic_data_aggregated_v3.csv \
             --history-csv data/all_players_plus_historic_data_non_aggregated_v3.csv \
-            --replace --replace-history --refresh-embs \
-            --calculate-ratings --replace-ratings \
+            --ratings-csv data/player_ratings.csv \
+            --replace --replace-history --replace-ratings --refresh-embs \
             --verbose
         else
           echo "▶ Full bootstrap (players + history + ratings + news)"
+          echo "Step 1: Generate ratings CSV..."
+          python scripts/calculate_ratings_to_csv.py --verbose
+          echo "Step 2: Load all data..."
           python -m apps.ingestion.seed_and_ingest \
             --players-csv data/all_players_plus_historic_data_aggregated_v3.csv \
             --history-csv data/all_players_plus_historic_data_non_aggregated_v3.csv \
-            --replace --replace-history --refresh-embs \
-            --calculate-ratings --replace-ratings \
+            --ratings-csv data/player_ratings.csv \
+            --replace --replace-history --replace-ratings --refresh-embs \
             --ingest-news --verbose
         fi
       '

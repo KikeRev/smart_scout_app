@@ -2,8 +2,8 @@
 COMPOSE = docker compose
 PROJECT = smart_scouting_app
 
-SERVICES := api db redis web jupyter
-CORE_SERVICES := api web db redis
+SERVICES := api db redis web jupyter ingestion
+CORE_SERVICES := api web db redis jupyter
 
 .PHONY: up build stop down down-all restart restart-fast prune clean \
         ps logs logs-api logs-web logs-db shell-api shell-web shell-db \
@@ -65,10 +65,10 @@ shell-db:
 
 ## Manual ingestion targets 
 ingest-full: up-db   ## Full bootstrap: players + history + ratings + news
-	$(COMPOSE) run --rm --build -t -e INGEST_MODE="" ingestion
+	$(COMPOSE) run --rm -t -e INGEST_MODE="" ingestion
 
 ingest-players: up-db   ## Players-only: players + history + ratings (no news)
-	$(COMPOSE) run --rm --build -t -e INGEST_MODE="players" ingestion
+	$(COMPOSE) run --rm -t -e INGEST_MODE="players" ingestion
 
 ingest-news: up-db   ## News-only: scrape & embed NEW football news
 	$(COMPOSE) run --rm -t -e INGEST_MODE="news" ingestion

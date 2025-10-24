@@ -587,17 +587,27 @@ GET /api/ratings/comparison/{player1_id}/{player2_id}/radar
 
 ## 📈 Data Updates
 
-### Recalculate All Ratings
+### Recalculate All Ratings (v1.6 Optimized)
 ```bash
-# Full recalculation with new logic
-docker compose run --rm api python scripts/calculate_all_ratings.py --replace --verbose
+# Generate ratings CSV (optimized, <1 minute)
+python scripts/calculate_ratings_to_csv.py
 
-# Or during ingestion
+# Ingest ratings from CSV
 python -m apps.ingestion.seed_and_ingest \
-  --players-csv data/all_players_plus_historic_data_aggregated_v2.csv \
-  --calculate-ratings \
-  --replace-ratings
+  --ratings-csv data/player_ratings.csv \
+  --replace-ratings \
+  --verbose
+
+# Or use makefile for full ingestion
+make ingest-full
 ```
+
+### Rating Calculation Improvements (v1.6)
+- **Performance**: Reduced from 18-19 minutes to <1 minute
+- **CSV-based approach**: Generate ratings to CSV, then ingest via `df.to_sql()`
+- **Minute-based penalties**: Individual attribute penalties based on playing time
+- **Robust data validation**: Safe type casting for all statistical columns
+- **Complete coverage**: All players included (including 0 minutes)
 
 ### Audit Team Ratings
 ```bash
@@ -1382,7 +1392,8 @@ smart_scout_app/
 │   └── scrapper/            # Data scraping scripts
 │       └── aggregate_final.py
 ├── scripts/                  # Utility scripts
-│   ├── calculate_all_ratings.py
+│   ├── calculate_ratings_to_csv.py  # Optimized rating calculation (v1.6)
+│   ├── calculate_all_ratings.py     # Legacy rating calculation
 │   └── audit_team_ratings.py
 ├── tests/                    # Test suite
 │   ├── unit/                # Unit tests
@@ -1461,7 +1472,8 @@ Smart Scout App v1.6 includes comprehensive LLM observability through Langfuse i
 | `make up` | Build + start all services (api, web, db, redis, jupyter) |
 | `make build` | Build Docker images only |
 | `make up-db` | Start only PostgreSQL + Redis |
-| `make ingest-full` | Full bootstrap (players + embeddings + news) |
+| `make ingest-full` | Full bootstrap (players + history + ratings + news) |
+| `make ingest-players` | Players + history + ratings (no news) |
 | `make ingest-news` | Fetch only new news articles |
 | `make stop` | Stop containers, keep data |
 | `make down` | Remove containers, keep volumes |
@@ -1493,9 +1505,10 @@ python -m apps.ingestion.seed_and_ingest \
   --history-csv data/all_players_plus_historic_data_non_aggregated_v3.csv \
   --replace-history --verbose
 
-# 5. Calculate FIFA-style ratings for all players
+# 5. Generate and ingest FIFA-style ratings (v1.6 optimized)
+python scripts/calculate_ratings_to_csv.py
 python -m apps.ingestion.seed_and_ingest \
-  --calculate-ratings --replace-ratings --verbose
+  --ratings-csv data/player_ratings.csv --replace-ratings --verbose
 ```
 
 ### CLI Flags Reference
@@ -1504,15 +1517,17 @@ python -m apps.ingestion.seed_and_ingest \
 |------|---------|
 | `--players-csv PATH` | CSV with raw player stats |
 | `--history-csv PATH` | CSV with seasonal records |
+| `--ratings-csv PATH` | CSV with pre-calculated ratings (v1.6) |
 | `--replace` | Truncate `players` and `player_news` before inserting |
 | `--replace-history` | Truncate `player_history` before inserting |
+| `--replace-ratings` | Truncate `player_ratings` before inserting |
 | `--refresh-embs` | Recompute every `feature_vector` with StandardScaler + pgvector |
 | `--ingest-news` | Fetch, summarize, embed and upsert RSS news |
-| `--calculate-ratings` | Calculate FIFA-style ratings for all players |
-| `--replace-ratings` | Truncate `player_ratings` before inserting |
 | `--skip-players` | Skip player ingestion (news-only run) |
 | `--echo-sql` | Verbose SQL for debugging |
 | `--verbose` | Detailed logging |
+
+**Note**: `--calculate-ratings` flag has been replaced with `--ratings-csv` for better performance and reliability.
 
 ---
 
@@ -1843,8 +1858,28 @@ docker-compose exec api python -m pytest tests/unit/test_validation.py::TestPlay
 - **Language Experience**: Consistent language detection and response formatting
 - **Production Monitoring**: Comprehensive LLM usage tracking for cost optimization
 
+### ⚡ Rating System Performance Optimization (v1.6)
+- **95% Performance Improvement**: Reduced calculation time from 18-19 minutes to <1 minute
+- **CSV-based Architecture**: Generate ratings to CSV file, then ingest via `df.to_sql()` for reliability
+- **Single Query Optimization**: Load all player data in one database query instead of individual lookups
+- **In-memory Processing**: Pre-calculate league averages and percentiles for each (league, position) combination
+- **Robust Data Validation**: Safe type casting with fallbacks for all statistical columns
+- **Complete Player Coverage**: Include all players regardless of minutes played (0+ minutes)
+- **Minute-based Attribute Penalties**: Realistic rating adjustments based on playing time:
+  - ≥1500 min: 100% (no penalty)
+  - 1200-1499 min: 95% penalty
+  - 900-1199 min: 90% penalty
+  - 600-899 min: 85% penalty
+  - 300-599 min: 80% penalty
+  - 100-299 min: 75% penalty
+  - <100 min: 70% penalty
+- **GKP Attribute Correction**: Non-goalkeepers now correctly receive 0 GKP instead of inflated values
+
 ### 📊 Technical Details
-- **Rating Calculator**: `apps/rating_system/calculator.py` with league-aware PHY/GKP
+- **Rating Calculator**: `scripts/calculate_ratings_to_csv.py` with optimized CSV-based approach
+- **Performance**: Reduced calculation time from 18-19 minutes to <1 minute
+- **Minute-based Penalties**: Individual attribute penalties (ATT, PLY, DEF, CTR, PHY, GKP) based on playing time
+- **Data Validation**: Robust type casting for all statistical columns with safe fallbacks
 - **API Endpoints**: 
   - `/api/ratings/player/{id}` - Get player ratings
   - `/api/ratings/team/{name}` - Get team ratings
@@ -1864,6 +1899,10 @@ docker-compose exec api python -m pytest tests/unit/test_validation.py::TestPlay
 - ✅ Intelligent search results (no target team players in recommendations)
 - ✅ Seamless multilingual experience with dynamic language detection
 - ✅ Production-ready cost monitoring and optimization insights
+- ✅ **Optimized performance**: 95% faster rating calculation (<1 minute vs 18-19 minutes)
+- ✅ **Realistic ratings**: Minute-based penalties prevent inflated ratings for low-minute players
+- ✅ **Complete coverage**: All players included regardless of playing time
+- ✅ **Robust data handling**: Safe type validation prevents calculation errors
 
 ---
 

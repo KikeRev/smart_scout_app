@@ -90,39 +90,11 @@ def calculate_all_ratings(
         
         for player in iterator:
             try:
-                # Prepare player stats
-                player_stats = {
-                    'goals_per90': player.goals_per90 or 0.0,
-                    'assists_per90': player.assists_per90 or 0.0,
-                    'expected_goals_per90': player.expected_goals_per90 or 0.0,
-                    'expected_assists_per90': player.expected_assists_per90 or 0.0,
-                    'progressive_carries': player.progressive_carries or 0,
-                    'progressive_passes': player.progressive_passes or 0,
-                    'progressive_passes_received': player.progressive_passes_received or 0,
-                    'passes_completed': player.passes_completed or 0,
-                    'passes_pct': player.passes_pct or 0.0,
-                    'passes_progressive_distance': player.passes_progressive_distance or 0,
-                    'tackles': player.tackles or 0,
-                    'interceptions': player.interceptions or 0,
-                    'clearances': player.clearances or 0,
-                    'blocks': player.blocks or 0,
-                    # GK stats
-                    'gk_goals_against': player.gk_goals_against or 0,
-                    'gk_psxg': player.gk_psxg or 0.0,
-                    'gk_psnpxg_per_shot': player.gk_psnpxg_per_shot_on_target_against or 0.0,
-                    'minutes_90s': player.minutes_90s or 0.0,
-                }
-                
-                # Calculate rating
-                rating_data = calculate_player_rating(
-                    engine=engine,
-                    player_id=player.id,
+                # Calculate rating using the updated function
+                from scripts.calculate_player_rating import calculate_rating
+                rating_data = calculate_rating(
                     player_name=player.full_name,
-                    league=player.league or 'default',
-                    position=player.position or '',
-                    minutes=player.minutes or 0,
-                    season=player.season or 'unknown',
-                    player_stats=player_stats
+                    player_uid=player.player_uid
                 )
                 
                 if rating_data is None:
@@ -134,6 +106,7 @@ def calculate_all_ratings(
                 # Create PlayerRating object
                 rating = PlayerRating(
                     player_id=rating_data['player_id'],
+                    player_uid=rating_data['player_uid'],
                     overall_rating=rating_data['overall_rating'],
                     league_base_rating=rating_data['league_base_rating'],
                     performance_rating=rating_data['performance_rating'],
@@ -153,9 +126,24 @@ def calculate_all_ratings(
                 
                 # Commit in batches
                 if len(ratings_to_insert) >= batch_size:
-                    session.bulk_save_objects(ratings_to_insert)
-                    session.commit()
-                    ratings_to_insert = []
+                    try:
+                        session.bulk_save_objects(ratings_to_insert)
+                        session.commit()
+                        ratings_to_insert = []
+                    except Exception as e:
+                        session.rollback()
+                        if verbose:
+                            print(f"⚠️  Batch error, inserting individually: {e}")
+                        # Insert individually to handle duplicates
+                        for rating in ratings_to_insert:
+                            try:
+                                session.merge(rating)  # Use merge for upsert behavior
+                                session.commit()
+                            except Exception as individual_error:
+                                session.rollback()
+                                if verbose:
+                                    print(f"❌ Error with individual rating: {individual_error}")
+                        ratings_to_insert = []
                     
             except Exception as e:
                 errors += 1
@@ -165,8 +153,22 @@ def calculate_all_ratings(
         
         # Final commit
         if ratings_to_insert:
-            session.bulk_save_objects(ratings_to_insert)
-            session.commit()
+            try:
+                session.bulk_save_objects(ratings_to_insert)
+                session.commit()
+            except Exception as e:
+                session.rollback()
+                if verbose:
+                    print(f"⚠️  Final batch error, inserting individually: {e}")
+                # Insert individually to handle duplicates
+                for rating in ratings_to_insert:
+                    try:
+                        session.merge(rating)  # Use merge for upsert behavior
+                        session.commit()
+                    except Exception as individual_error:
+                        session.rollback()
+                        if verbose:
+                            print(f"❌ Error with final individual rating: {individual_error}")
         
         print(f"\n✅ Calculation completed:")
         print(f"   - Processed: {processed}")

@@ -94,6 +94,7 @@ class PlayerHistory(Base):
     # Primary key
     id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
     player = sa.Column(sa.String(255), nullable=False, index=True)
+    player_uid = sa.Column(sa.String(255), nullable=True, index=True)
     season = sa.Column(sa.String(10), nullable=False, index=True)
     
     # Team and league info
@@ -158,6 +159,7 @@ class Player(Base):
 
     id = sa.Column(sa.Integer, primary_key=True)
     full_name = sa.Column(sa.Text, nullable=False, index=True)
+    player_uid = sa.Column(sa.String(255), nullable=True, unique=True, index=True)
     age = sa.Column(sa.Integer)
     nationality = sa.Column(sa.String(64))
     position = sa.Column(sa.String(32))
@@ -234,6 +236,7 @@ class PlayerRating(Base):
     
     id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
     player_id = sa.Column(sa.Integer, sa.ForeignKey('players.id', ondelete='CASCADE'), nullable=False, index=True)
+    player_uid = sa.Column(sa.String(255), nullable=True, index=True)
     
     # Overall rating
     overall_rating = sa.Column(sa.Integer, nullable=False)  # Final OVR (0-100)
@@ -310,6 +313,7 @@ def create_tables(engine):
 
 CSV_COLUMN_MAP = {
     "player": "full_name",
+    "player_uid": "player_uid",
     "age": "age",
     "nationality": "nationality",
     "position": "position",
@@ -452,7 +456,7 @@ def load_players(engine: sa.Engine, csv_path: Path,  if_exists: str = "append"):
     float_cols = list(
         set(df.columns)
         - set(int_cols)
-        - {"full_name", "nationality", "position", "club", "team_logo", "league", "player_status", "season"}
+        - {"full_name", "nationality", "position", "club", "team_logo", "league", "player_status", "season", "player_uid"}
     )
     for col in float_cols:
         df[col] = df[col].apply(_to_float)
@@ -460,11 +464,11 @@ def load_players(engine: sa.Engine, csv_path: Path,  if_exists: str = "append"):
     if if_exists == "replace":
         with engine.begin() as conn:
             conn.execute(sa.text("""
-                TRUNCATE TABLE player_news, players
+                TRUNCATE TABLE players, player_news
                 RESTART IDENTITY CASCADE
             """))
     print(f"🔎 Upserting {len(df)} players")
-    df.to_sql("players", con=engine, if_exists="append", index=False, method="multi")
+    df.to_sql("players", con=engine, if_exists="append", index=False, method="multi", chunksize=1000)
     print(f"✅ Players upserted: {len(df)}")
 
 
@@ -990,6 +994,7 @@ def load_player_history(engine: sa.Engine, csv_path: Path, if_exists: str = "app
     # Column mapping for player_history table
     column_mapping = {
         'player': 'player',
+        'player_uid': 'player_uid',
         'Season': 'season',
         'Team': 'team',
         'League': 'league',
@@ -1052,41 +1057,106 @@ def load_player_history(engine: sa.Engine, csv_path: Path, if_exists: str = "app
     print(f"✅ Player history loaded: {len(df_prepared)} records")
 
 
-def calculate_ratings_wrapper(engine: sa.Engine, season: str = None, replace: bool = False, verbose: bool = False):
+def load_ratings_from_csv(engine: sa.Engine, csv_path: Path, if_exists: str = "replace", verbose: bool = False):
     """
-    Wrapper to calculate ratings from seed_and_ingest.
-    Dynamically imports to avoid circular dependencies.
+    Load player ratings from CSV file.
     """
+    if not csv_path.exists():
+        print(f"❌ Ratings CSV not found: {csv_path}")
+        return False
+    
     try:
-        # Dynamic import to avoid circular dependencies
-        sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-        from scripts.calculate_all_ratings import calculate_all_ratings
+        print(f"\n📊 Loading player ratings from {csv_path}...")
         
-        print("\n🎯 Calculating player ratings...")
-        calculate_all_ratings(
-            engine=engine,
-            season=season,
-            replace=replace,
-            batch_size=100,
-            verbose=verbose
-        )
+        # Read CSV
+        df = pd.read_csv(csv_path)
+        print(f"📊 Loaded {len(df)} ratings from CSV")
+        
+        if verbose:
+            print(f"📋 Sample of ratings:")
+            print(df[['player_name', 'player_uid', 'overall_rating', 'position', 'league']].head(5).to_string(index=False))
+        
+        # Map column names to match database schema
+        column_mapping = {
+            'player_id': 'player_id',
+            'player_uid': 'player_uid', 
+            'overall_rating': 'overall_rating',
+            'league_base_rating': 'league_base_rating',
+            'performance_rating': 'performance_rating',
+            'att': 'att',
+            'ply': 'ply',
+            'def_rating': 'def_rating',
+            'ctr': 'ctr',
+            'phy': 'phy',
+            'gkp': 'gkp',
+            'season': 'season',
+            'position': 'position',
+            'minutes_played': 'minutes_played'
+        }
+        
+        # Rename columns
+        df = df.rename(columns=column_mapping)
+        
+        # Select only the columns we need
+        db_columns = list(column_mapping.values())
+        df_db = df[db_columns].copy()
+        
+        # Clean table if replace (manual TRUNCATE for better performance)
+        if if_exists == "replace":
+            with engine.begin() as conn:
+                conn.execute(sa.text("TRUNCATE TABLE player_ratings RESTART IDENTITY CASCADE"))
+            print("🗑️  player_ratings table cleaned")
+        
+        # Disable constraints for faster bulk insert
+        with engine.begin() as conn:
+            conn.execute(sa.text("ALTER TABLE player_ratings DISABLE TRIGGER ALL"))
+            print("⚡ Constraints disabled for bulk insert")
+        
+        try:
+            # Import to database (always append after manual TRUNCATE)
+            df_db.to_sql(
+                'player_ratings',
+                engine,
+                if_exists="append",
+                index=False,
+                method='multi',
+                chunksize=1000
+            )
+        finally:
+            # Re-enable constraints
+            with engine.begin() as conn:
+                conn.execute(sa.text("ALTER TABLE player_ratings ENABLE TRIGGER ALL"))
+            print("🔒 Constraints re-enabled")
+        
+        print(f"✅ Player ratings loaded: {len(df_db)} records")
+        
+        # Verify import
+        with engine.connect() as conn:
+            result = conn.execute(sa.text("SELECT COUNT(*) FROM player_ratings"))
+            count = result.fetchone()[0]
+            print(f"📊 Total ratings in database: {count}")
+        
+        return True
+        
     except Exception as e:
-        print(f"❌ Error calculating ratings: {e}")
+        print(f"❌ Error loading ratings from CSV: {e}")
         if verbose:
             import traceback
             traceback.print_exc()
+        return False
 
 
 def main():
     parser = argparse.ArgumentParser(description="Seed players & ingest news")
     parser.add_argument("--players-csv", type=Path, help="Path to players CSV", required=False)
     parser.add_argument("--history-csv", type=Path, help="Path to historical players CSV (non-aggregated)", required=False)
+    parser.add_argument("--ratings-csv", type=Path, help="Path to player ratings CSV", required=False)
     parser.add_argument("--replace", action="store_true", help="TRUNCATE players before importing CSV")
     parser.add_argument("--replace-history", action="store_true", help="TRUNCATE player_history before importing CSV")
+    parser.add_argument("--replace-ratings", action="store_true", help="TRUNCATE player_ratings before importing CSV")
     parser.add_argument("--ingest-news", action="store_true", help="Fetch & embed latest news")
-    parser.add_argument("--calculate-ratings", action="store_true", help="Calculate FIFA-style ratings for all players")
+    parser.add_argument("--calculate-ratings", action="store_true", help="Calculate FIFA-style ratings for all players (DEPRECATED: use --ratings-csv instead)")
     parser.add_argument("--ratings-season", type=str, help="Season for ratings calculation (default: all)")
-    parser.add_argument("--replace-ratings", action="store_true", help="Replace existing ratings")
     parser.add_argument("--echo-sql", action="store_true")
     parser.add_argument("--skip-players", action="store_true")
     parser.add_argument("--verbose", action="store_true")
@@ -1112,7 +1182,18 @@ def main():
         ingest_news(engine, verbose=args.verbose)
         link_player_news(engine)
 
-    if args.calculate_ratings:
+    # Load ratings from CSV (new approach)
+    if args.ratings_csv:
+        load_ratings_from_csv(
+            engine=engine,
+            csv_path=args.ratings_csv,
+            if_exists="replace" if args.replace_ratings else "append",
+            verbose=args.verbose
+        )
+    
+    # Legacy: Calculate ratings (deprecated)
+    elif args.calculate_ratings:
+        print("⚠️  --calculate-ratings is deprecated. Use --ratings-csv instead.")
         calculate_ratings_wrapper(
             engine=engine,
             season=args.ratings_season,
