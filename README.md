@@ -186,7 +186,7 @@ Viability Score = Success Index v2.1 × Feasibility Multiplier
   - Secondary Leagues (25): 2019-20 to 2024-25 (6 seasons)
 - **Unique Players**: 45,120 (improved with disambiguation + secondary leagues)
 - **Seasonal Records**: 131,854 for evolution tracking
-- **Active Players**: 37,664 with FIFA-style ratings (player with minutes > 0)
+- **Active Players**: 45119 with FIFA-style ratings 
 - **Leagues**: Top 5 European + 25 secondary leagues
 
 ### Dual Data Structure
@@ -1857,6 +1857,7 @@ docker-compose exec api python -m pytest tests/unit/test_validation.py::TestPlay
 - **Search Intelligence**: Automatic exclusion of target team players in similarity searches
 - **Language Experience**: Consistent language detection and response formatting
 - **Production Monitoring**: Comprehensive LLM usage tracking for cost optimization
+- **Historical Charts**: Fixed choppy/interrupted historical charts by ensuring `player_uid` is always used for accurate player disambiguation
 
 ### ⚡ Rating System Performance Optimization (v1.6)
 - **95% Performance Improvement**: Reduced calculation time from 18-19 minutes to <1 minute
