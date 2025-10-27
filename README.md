@@ -1,4 +1,4 @@
-<h1 align="center">SMART SCOUT APP v1.6</h1>
+<h1 align="center">SMART SCOUT APP v1.6.1</h1>
 
 <p align="center">
   <img src="./static/img/app_logo_6.png" alt="Logo">
@@ -21,13 +21,14 @@
 - [User Guide](#-user-guide)
 - [Developer Guide](#-developer-guide)
 - [Testing](#-testing)
+- [Version Releases](#-version-releases)
 - [Release Notes](#-release-notes)
 
 ---
 
 # 🌟 Overview
 
-**Smart Scout App v1.6** is an advanced football scouting platform that helps teams discover, evaluate, and compare players using AI-powered analysis, FIFA-style ratings, and comprehensive statistical insights.
+**Smart Scout App v1.6.1** is an advanced football scouting platform that helps teams discover, evaluate, and compare players using AI-powered analysis, FIFA-style ratings, and comprehensive statistical insights.
 
 ## What Makes Smart Scout Unique?
 
@@ -259,6 +260,9 @@ make up-db
 
 # Stop services (keep data)
 make stop
+
+# Stop core services only (api, web, db, redis)
+make stop-core
 
 # Restart services (recreate containers)
 make restart
@@ -1796,6 +1800,48 @@ docker-compose exec api python -m pytest tests/unit/test_validation.py::TestPlay
 
 ---
 
+# 🚀 Version Releases
+
+## 📦 Current Release: v1.6.1 (October 2025)
+
+### 🔧 Infrastructure & Developer Experience Improvements
+
+**Frontend Refactoring:**
+- ✅ **CSS Consolidation**: All styles unified in `static/css/custom.css` for better maintainability
+- ✅ **Template Centralization**: HTML templates moved to `templates/chats/` directory
+- ✅ **JavaScript Organization**: Chat functionality centralized in `static/js/chat.js`
+- ✅ **Responsive Design**: Improved chat layout with centered containers and consistent backgrounds
+- ✅ **Clean Architecture**: Removed duplicate/obsolete files for cleaner codebase
+
+**Agent Context Management:**
+- ✅ **Nuclear Prompt Optimization**: Drastically simplified system prompt for better tool routing
+- ✅ **Thread-Local User Context**: Robust user ID management preventing context mixing
+- ✅ **Unique Dashboard URLs**: Each dashboard now generates unique URLs preventing overwrites
+- ✅ **Session-Based Storage**: Dashboard data stored in Django sessions with automatic cleanup
+- ✅ **Context Persistence**: Fixed agent context management across conversational turns
+
+**Development Workflow:**
+- ✅ **Makefile Enhancement**: Added `make stop-core` command for core services management
+- ✅ **Cost Optimization**: 95% reduction in LLM costs through prompt optimization
+- ✅ **Git Workflow**: Improved branch management and deployment process
+- ✅ **Code Quality**: All comments and documentation in English for consistency
+
+### 🎯 Benefits Achieved
+- **⚡ Performance**: Faster agent routing and response times
+- **💰 Cost Efficiency**: Significant reduction in LLM token usage
+- **🔧 Maintainability**: Cleaner, more organized codebase structure
+- **🛡️ Reliability**: Robust context management preventing user data mixing
+- **📱 User Experience**: Improved chat interface and responsive design
+
+### 🔍 Technical Highlights
+- **Agent Prompt**: From 150+ lines to minimal nuclear prompt
+- **CSS Lines**: Organized ~3000 lines into structured sections
+- **Dashboard System**: Unique ID-based URLs with session cleanup
+- **Context Management**: Thread-local storage + Redis persistence
+- **File Structure**: Centralized templates and static assets
+
+---
+
 # 📋 Release Notes
 
 ## 🚀 Version 1.6 - FIFA-Style Ratings & Player Disambiguation (October 2025)
@@ -2039,7 +2085,7 @@ This project is proprietary. All rights reserved.
 ---
 
 <p align="center">
-  <strong>Smart Scout App v1.6</strong><br/>
+  <strong>Smart Scout App v1.6.1</strong><br/>
   Empowering football teams with intelligent player scouting technology
 </p>
 

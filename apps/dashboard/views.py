@@ -185,10 +185,10 @@ def _context(base_id: int, cand_id: int, cand_ids: list[int], metrics: list[str]
 @csrf_exempt
 def inline_view(request):
     """
-    • POST  → generates HX-Redirect   (no changes)
+    • POST  → generates HX-Redirect with unique dashboard ID
     • GET   → renders the dashboard
     """
-    # ---------- POST BLOCK (as you had it) ----------
+    # ---------- POST BLOCK (with unique dashboard ID) ----------
     if request.method == "POST":
         try:
             data      = json.loads(request.body.decode())
@@ -197,8 +197,37 @@ def inline_view(request):
         except (json.JSONDecodeError, KeyError, ValueError):
             return HttpResponseBadRequest("IDs missing")
 
+        # Generate unique dashboard ID to prevent URL collisions
+        import uuid
+        import time
+        dashboard_id = f"{int(time.time())}_{uuid.uuid4().hex[:8]}"
+        
+        # Clean up old dashboards (keep only last 10) to prevent session bloat
+        current_time = time.time()
+        dashboard_keys = [k for k in request.session.keys() if k.startswith("dashboard_")]
+        if len(dashboard_keys) >= 10:
+            # Remove dashboards older than 1 hour or keep only the 5 most recent
+            dashboard_items = []
+            for key in dashboard_keys:
+                data = request.session.get(key, {})
+                created_at = data.get("created_at", 0)
+                dashboard_items.append((key, created_at))
+            
+            # Sort by creation time and remove old ones
+            dashboard_items.sort(key=lambda x: x[1], reverse=True)
+            for key, created_at in dashboard_items[5:]:  # Keep only 5 most recent
+                if current_time - created_at > 3600:  # Or remove if older than 1 hour
+                    del request.session[key]
+        
+        # Store dashboard data in session for unique access
+        request.session[f"dashboard_{dashboard_id}"] = {
+            "base_id": base_id,
+            "candidate_ids": cand_ids,
+            "created_at": current_time
+        }
+        
         qs  = urllib.parse.urlencode(
-                {"base_id": base_id, "candidate_ids": cand_ids}, doseq=True
+                {"base_id": base_id, "candidate_ids": cand_ids, "dashboard_id": dashboard_id}, doseq=True
               )
         url = f"{reverse('dashboard:dashboard_inline')}?{qs}"
 
@@ -206,22 +235,41 @@ def inline_view(request):
         response["HX-Redirect"] = url
         return response
 
-    # ---------- GET BLOCK (minimal adjustments) -------------
+    # ---------- GET BLOCK (with dashboard ID support) -------------
     if request.method == "GET":
-        try:
-            base_id   = int(request.GET["base_id"])
+        dashboard_id = request.GET.get("dashboard_id")
+        
+        # Try to get data from session first (if dashboard_id provided)
+        if dashboard_id:
+            session_key = f"dashboard_{dashboard_id}"
+            dashboard_data = request.session.get(session_key)
+            if dashboard_data:
+                base_id = dashboard_data["base_id"]
+                cand_ids = dashboard_data["candidate_ids"]
+            else:
+                # Fallback to URL parameters if session data not found
+                try:
+                    base_id = int(request.GET["base_id"])
+                    raw = request.GET.getlist("candidate_ids")
+                    cand_ids = [int(v) for v in raw if v and v.isdigit()]
+                except (KeyError, ValueError):
+                    return HttpResponseBadRequest("Dashboard not found and IDs missing")
+        else:
+            # Original behavior for backwards compatibility
+            try:
+                base_id = int(request.GET["base_id"])
 
-            # ① when it comes from the agent
-            raw = request.GET.getlist("candidate_ids")
-            cand_ids = [int(v) for v in raw if v and v.isdigit()]
+                # ① when it comes from the agent
+                raw = request.GET.getlist("candidate_ids")
+                cand_ids = [int(v) for v in raw if v and v.isdigit()]
 
-            if not cand_ids:
-                cand_sel = request.GET.get("cand_id")
-                if cand_sel and cand_sel.isdigit():
-                    cand_ids = [int(cand_sel)]
+                if not cand_ids:
+                    cand_sel = request.GET.get("cand_id")
+                    if cand_sel and cand_sel.isdigit():
+                        cand_ids = [int(cand_sel)]
 
-        except (KeyError, ValueError):
-            return HttpResponseBadRequest("IDs missing")
+            except (KeyError, ValueError):
+                return HttpResponseBadRequest("IDs missing")
 
         if not cand_ids:                                   # empty list → 400
             return HttpResponseBadRequest("No candidate_ids given")
