@@ -1821,7 +1821,7 @@ docker-compose exec api python -m pytest tests/unit/test_validation.py::TestPlay
 
 **Development Workflow:**
 - ✅ **Makefile Enhancement**: Added `make stop-core` command for core services management
-- ✅ **Cost Optimization**: 95% reduction in LLM costs through prompt optimization
+- ✅ **Cost Optimization**: ~80% reduction in LLM token usage through prompt optimization
 - ✅ **Git Workflow**: Improved branch management and deployment process
 - ✅ **Code Quality**: All comments and documentation in English for consistency
 
