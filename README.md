@@ -55,13 +55,13 @@ Ask questions in English or Spanish with intelligent language detection:
 
 **Smart Language Detection**: The agent automatically detects your language and responds accordingly, switching seamlessly between English and Spanish within the same conversation.
 
-### TAO Transparency (v1.5+)
-Real-time visibility into agent's thinking process with dynamic language support:
-- 🧠 **Think/Reasoning**: Agent analyzes your request
-- ⚡ **Action**: Executes specialized tools
-- 👁️ **Observe**: Validates results and responds
+### Agent Transparency (v1.6.1+)
+Real-time visibility into agent's execution process with optimized routing:
+- 📥 **Request**: Agent receives your natural language query
+- 🎯 **Route**: Nuclear prompt logic determines optimal tool
+- ⚡ **Execute**: Direct tool execution with minimal overhead
 - Live streaming of tool execution with visual indicators
-- **Dynamic Language Headers**: TAO structure adapts to your language (English/Spanish)
+- **Dynamic Language Headers**: Response adapts to your language (English/Spanish)
 
 ### Agent Capabilities
 - **18 Specialized Tools**: Player search, similarity analysis, statistics, visualizations, reports
@@ -1060,7 +1060,7 @@ flowchart TB
 
 ---
 
-## 🧐 AI Agent Workflow (TAO Framework)
+## 🧐 AI Agent Workflow (Nuclear Prompt System)
 
 ```mermaid
 flowchart TB
@@ -1269,14 +1269,13 @@ Navigate to [https://localhost:8000/chat/](https://localhost:8000/chat/)
 | "Generate a PDF report for left-backs similar to Alphonso Davies" | Download link to scouting report |
 | "Compare the top 3 similar players to Pedri for Real Madrid" | Comparison radar + team fit analysis |
 
-### TAO Transparency
-Watch real-time agent actions:
-- 🧠 **Thinking**: Agent analyzes your request
-- 🔍 **Searching**: Querying database for players
-- ⚽ **Analyzing**: Calculating similarities and ratings
-- 📊 **Creating**: Generating charts and dashboards
-- 📄 **Generating**: Building PDF reports
-- ✅ **Complete**: Final response ready
+### Agent Transparency
+Watch real-time agent execution:
+- 📥 **Request**: Agent receives your query
+- 🎯 **Routing**: Nuclear prompt determines optimal tool
+- 🔍 **Executing**: Direct tool execution (search, analyze, create)
+- 📊 **Processing**: Generating visualizations and reports
+- ✅ **Complete**: Final response delivered
 
 ### Language Support
 The agent responds in the same language you use. Write prompts in English or Spanish.
@@ -1884,7 +1883,7 @@ docker-compose exec api python -m pytest tests/unit/test_validation.py::TestPlay
 
 - **Enhanced Language Detection**:
   - Dynamic language detection from current user message (not conversation history)
-  - TAO framework headers adapt to user language:
+  - Response headers adapt to user language:
     - English: "🧠 Reasoning", "📊 Results", "✅ Conclusion"
     - Spanish: "🧠 Razonamiento", "📊 Resultados", "✅ Conclusión"
   - Seamless language switching within conversations
