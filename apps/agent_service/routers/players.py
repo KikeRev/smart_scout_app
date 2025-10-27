@@ -107,6 +107,7 @@ def similar_players(
     return [
         {
             "id": p.id,
+            "player_uid": p.player_uid,
             "full_name": p.full_name,
             "club": p.club,
             "dist": float(dist)     
@@ -250,6 +251,7 @@ def similar_players_with_team_fit(
 
         results.append({
             "id": p.id,
+            "player_uid": p.player_uid,
             "full_name": p.full_name,
             "club": p.club,
             "league": p.league,
@@ -293,17 +295,17 @@ def players_batch(
     return [player_to_dict(p) for p in rows]
 
 @router.get("/search")
-def search_players(query: str, limit: int = 5, db: Session = Depends(get_session)):
+def search_players(query: str, limit: int = 200, db: Session = Depends(get_session)):
     rows = (
-        db.query(Player.id, Player.full_name, Player.club, Player.position)
-          .filter(Player.full_name.ilike(f"%{query}%"))
+        db.query(Player.id, Player.player_uid, Player.full_name, Player.club, Player.position)
+          .filter(Player.player_uid.ilike(f"%{query}%") | Player.full_name.ilike(f"%{query}%"))
           .limit(limit)
           .all()
     )
     return [dict(r._mapping) for r in rows]
 
 @router.get("/all")
-def get_all_players(limit: int = 20000, db: Session = Depends(get_session)):
+def get_all_players(limit: int = 47000, db: Session = Depends(get_session)):
     """Gets all players for dynamic filtering"""
     rows = (
         db.query(Player)

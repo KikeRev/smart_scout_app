@@ -1623,6 +1623,127 @@ select[multiple] { min-height: 150px; }
   transform: translateY(0);
 }
 
+/* Send button - updated with SVG avioncito - HIGH SPECIFICITY */
+button.btn.btn-submit.btn-send {
+  position: static !important;
+  transform: none !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  padding: 0 !important;
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  border-radius: 50% !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  color: #0b3d0b !important;
+  border: none !important;
+  border-color: transparent !important;
+  cursor: pointer !important;
+  min-width: 2.25rem !important;
+  min-height: 2.25rem !important;
+  max-width: 2.25rem !important;
+  max-height: 2.25rem !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  z-index: 1 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+button.btn.btn-submit.btn-send:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: #0b3d0b !important;
+}
+
+button.btn.btn-submit.btn-send:active {
+  transform: scale(0.95) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+button.btn.btn-submit.btn-send:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: #ccc !important;
+  transform: none !important;
+}
+
+/* Send icon styles */
+button.btn.btn-submit.btn-send .send-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+button.btn.btn-submit.btn-send .send-icon svg {
+  width: 32px !important;
+  height: 32px !important;
+  transition: all 0.3s ease;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke: currentColor !important;
+  fill: none !important;
+  color: #0b3d0b !important;
+}
+
+button.btn.btn-submit.btn-send:hover .send-icon svg {
+  transform: translateX(3px) rotate(5deg);
+  stroke-width: 2.2;
+}
+
+button.btn.btn-submit.btn-send:disabled .send-icon {
+  display: none !important;
+}
+
+/* Spinner styles */
+button.btn.btn-submit.btn-send .spinner {
+  display: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid #c3e6cb !important;
+  border-top-color: #0b3d0b !important;
+  border-radius: 50% !important;
+  animation: spin .6s linear infinite !important;
+}
+
+button.btn.btn-submit.btn-send:disabled .spinner {
+  display: inline-block !important;
+}
+
+/* Disable ::before pseudo-element for send button */
+button.btn.btn-submit.btn-send::before {
+  display: none !important;
+}
+
+/* Fix textarea cursor */
+textarea.chat-input {
+  cursor: text !important;
+}
+
+textarea.chat-input:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  background-color: #f8f9fa;
+}
+
+
 /* Styles for the chat bubbles */
 .chat-row {
   display: flex;
@@ -2383,6 +2504,7 @@ textarea.chat-input {
   animation:spin .6s linear infinite
 }
 @keyframes spin{to{transform:rotate(360deg)}}
+
 
 
 

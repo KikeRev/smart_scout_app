@@ -20,62 +20,68 @@
 </head>
 <body class="bg-light">
 
-<header class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-  <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="{% url 'dashboard:home' %}">Smart Scout App Home</a>
+<header class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm fixed-top">
+  <div class="container-fluid px-3">
+    <!-- Logo and title on the left -->
+    <div class="d-flex align-items-center">
+      <a href="https://github.com/KikeRev/smart_scout_app" 
+         target="_blank" 
+         rel="noopener noreferrer"
+         title="View source code on GitHub"
+         class="header-logo-link me-2">
+        <img src="{% static 'img/app_logo_6.png' %}" alt="Smart Scout" class="header-logo">
+      </a>
+      <a class="navbar-brand fw-bold" href="{% url 'dashboard:home' %}">
+        <span class="header-title">HOME</span>
+      </a>
+    </div>
 
-    <div class="collapse navbar-collapse">
+    <!-- Toggler for mobile -->
+    <button class="navbar-toggler" type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#mainNavbar"
+            aria-controls="mainNavbar"
+            aria-expanded="false"
+            aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNavbar">
       <ul class="navbar-nav ms-auto align-items-center">
         {% if user.is_authenticated %}
-
-          {# Collapsible button on mobile #}
-          <button class="navbar-toggler" type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#mainNavbar"
-                  aria-controls="mainNavbar"
-                  aria-expanded="false"
-                  aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-
-          {# Collapsible menu #}
-          <div class="collapse navbar-collapse" id="mainNavbar">
-            {# Only one <ul>; with ms-auto we push everything to the right #}
-            <ul class="navbar-nav ms-auto align-items-lg-center">
-
-                {# — Then the My Account dropdown — #}
-                <li class="nav-item dropdown">
+          {# My Account dropdown #}
+          <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle" href="#" id="accountDropdown"
                     role="button" data-bs-toggle="dropdown"
                     aria-expanded="false">
-                    My Account
+                    MY ACCOUNT
                   </a>
                   <ul class="dropdown-menu dropdown-menu-end"
                       aria-labelledby="accountDropdown">
                     <li>
                       <a class="dropdown-item" href="{% url 'users:profile' %}">
-                        My Profile
+                        MY PROFILE
                       </a>
                     </li>
-                      <li>
+                    <li>
                       <a class="dropdown-item" href="{% url 'chats:new' %}">
-                        New Report
+                        NEW REPORT
                       </a>
                     </li>
                     <li>
                       <a class="dropdown-item" href="{% url 'chats:list' %}">
-                        My Reports
+                        MY REPORTS
                       </a>
                     </li>
                     <li>
                       <a class="dropdown-item" href="{% url 'dashboard:player_search' %}">
-                        🔍 Search Players
+                        SEARCH PLAYERS
                       </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
                       <a class="dropdown-item" href="{% url 'users:logout' %}">
-                        Logout
+                        LOGOUT
                       </a>
                     </li>
                   </ul>
@@ -94,19 +100,20 @@
   </div>
 </header>
 
-{# Logo section - will be added individually to each template #}
+{# Special full-width content for pages that need edge-to-edge layout (e.g., home) #}
+{% block fullwidth_content %}{% endblock %}
 
+{# Special full-screen content for pages that need to take the whole viewport (e.g., chat) #}
+{% block fullscreen_content %}{% endblock %}
+
+{# Default main container; can be overridden/emptied by pages like chat #}
+{% block main_container %}
 <main class="container py-4">
   {% block content %}{% endblock %}
 </main>
+{% endblock %}
 
-{# Special full-width content for home page #}
-{% block fullwidth_content %}{% endblock %}
-
-{# Special full-screen content for chat page #}
-{% block fullscreen_content %}{% endblock %}
-
-<footer class="site-footer text-light text-center py-4 mt-5">
+<footer class="site-footer text-light text-center py-4">
     <div class="container">
       <small class="text-light d-block mb-2">
       &copy; {% now "Y" %} SmartScout App • by Enrique Revuelta
@@ -125,6 +132,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{% static 'js/accessibility.js' %}"></script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>
 

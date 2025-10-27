@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 
-{# Use fullwidth_content to bypass container but keep navbar #}
-{% block fullwidth_content %}
+{# Use fullscreen_content to bypass container but keep navbar #}
+{% block fullscreen_content %}
 <div class="fullscreen-chat-wrapper">
   <div class="chat-layout">
     <!-- Sidebar with chat list -->
@@ -39,10 +39,6 @@
     <div class="chat-main">
       <div class="chat-container">
         <div id="chat-log" class="chat-log">
-          <!-- Always visible logo -->
-          <div class="chat-logo-section">
-            <img src="{% static 'img/app_logo_6.png' %}" alt="Smart Scout logo" class="chat-logo">
-          </div>
           
           {% if messages %}
               {% for m in messages %}
@@ -52,8 +48,7 @@
               <!-- Welcome message only for new chats -->
               <div class="chat-welcome-message">
                 <div class="typewriter-wrapper text-center">
-                  <span class="typewriter-text">Welcome, how can I help you? 🤖</span>
-                  <span class="typewriter-cursor">|</span>
+                  <span class="typewriter-text">Welcome, how can I help you?</span>
                 </div>
               </div>
           {% endif %}
@@ -63,15 +58,21 @@
           {% csrf_token %}
 
           <div class="chat-input-container">
-            <textarea name="text"
+                <textarea name="text" 
                     class="form-control chat-input"
-                    rows="4"
-                    style="min-height:6rem; width:100%; max-width:100%; resize:vertical;"
+                    rows="1"
+                    style="min-height:3.75rem; width:80%; max-width:80%;"
                     placeholder="Write your question…" required></textarea>
             
             <button type="submit" class="btn btn-submit btn-send"
                     role="button" aria-label="Send message to agent">
-              <span class="send-icon" aria-hidden="true">➤</span>
+              <span class="send-icon" aria-hidden="true">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 2L11 13"/>
+                  <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
+                </svg>
+              </span>
+              <span class="spinner" style="display: none;"></span>
             </button>
           </div>
 
@@ -122,6 +123,19 @@
   // On initial load
   window.addEventListener('load', scrollChatToBottom);
 
+  // Auto-grow textarea
+  (function() {
+    const ta = document.querySelector('#chat-form textarea[name="text"]');
+    if (!ta) return;
+    const autoResize = () => {
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, window.innerHeight * 0.4) + 'px';
+    };
+    ta.addEventListener('input', autoResize);
+    // initialize
+    autoResize();
+  })();
+
   // After HTMX swaps the new message into #chat-log
   document.body.addEventListener('htmx:afterSwap', (e) => {
     if (e.target && e.target.id === 'chat-log') {
@@ -157,8 +171,18 @@
       thinking.style.display = 'flex';
       thinkingText.textContent = 'Thinking...';
       
+      // Disable form elements and show spinner
+      const sendButton = form.querySelector('.btn-send');
+      const textarea = form.querySelector('textarea[name="text"]');
+      
+      sendButton.disabled = true;
+      textarea.disabled = true;
+      
       // Clear textarea
       form.querySelector('textarea').value = '';
+      // reset height back to one line
+      const ta = form.querySelector('textarea');
+      if (ta) { ta.style.height = 'auto'; ta.style.height = '1.75rem'; }
       
       try {
         // Send via fetch to get SSE stream
@@ -217,10 +241,19 @@
         // Hide spinner
         thinking.style.display = 'none';
         thinkingText.textContent = '';
+        
+        // Re-enable form elements
+        const sendButton = form.querySelector('.btn-send');
+        const textarea = form.querySelector('textarea[name="text"]');
+        
+        sendButton.disabled = false;
+        textarea.disabled = false;
       }
     });
   })();
+
 </script>
 {% endblock %}
 
-
+{# Ensure default main container is not rendered for this page #}
+{% block main_container %}{% endblock %}

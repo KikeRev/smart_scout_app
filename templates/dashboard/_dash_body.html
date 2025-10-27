@@ -11,7 +11,7 @@
         <small class="text-muted" id="metric-count">0 / 3</small>
       </div>
       <div class="card-body" style="max-height: 80vh; overflow-y: auto;">
-        <small class="text-muted d-block mb-2">Usage</small>
+        <small class="text-muted d-block mb-2">Play Time</small>
         <div class="form-check">
           <input class="form-check-input metric-checkbox" type="checkbox" value="minutes" id="metric-minutes">
           <label class="form-check-label" for="metric-minutes" data-bs-toggle="tooltip" title="Total minutes played in the season">Minutes</label>
@@ -155,19 +155,161 @@
 
       <!-- Column 2: Center charts (~25-30%) -->
       <div class="col-12 col-xl-3">
-        <!-- Radar comparison -->
+        <!-- FIFA Cards with VS -->
         <div class="card shadow-sm mb-2 card-fill" style="min-height:42vh;max-height:46vh;">
-          <div class="card-header text-center">Radar Comparison</div>
-          <div class="card-body text-center p-2">
-            <img src="{{ radar_cmp }}" alt="Radar comparison" class="chart-img" loading="lazy" decoding="async" style="max-width:90%;max-height:calc(100% - 2rem);">
+          <div class="card-header text-center">Player Comparison</div>
+          <div class="card-body p-2">
+            <div class="row g-2 h-100">
+              <!-- Player 1 FIFA Card (45%) -->
+              <div class="col-5" style="margin-top: 5rem;">
+                <div class="d-flex justify-content-center">
+                  <div class="fut-player-card">
+                    <div class="player-card-top">
+                      <div class="player-left-info">
+                        <div class="player-position">{{ base_player.position|default:"N/A" }}</div>
+                        <div class="player-nation">{{ base_player.nationality|default:"N/A"|slice:":3"|upper }}</div>
+                        <div class="player-club">
+                          {% if base_player.team_logo %}
+                          <img src="{{ base_player.team_logo }}" alt="{{ base_player.club }} logo" 
+                               style="width: 60px; height: 60px; object-fit: contain;"
+                               onerror="this.style.display='none';">
+                          {% endif %}
+                        </div>
+                      </div>
+                      <div class="player-right-info">
+                        <div class="ovr-title">OVR</div>
+                        <div class="overall-display" id="base-player-ovr">{{ base_rating.overall_rating|default:"--" }}</div>
+                      </div>
+                    </div>
+                    <div class="player-card-bottom">
+                      <div class="player-info">
+                        <div class="player-name">
+                          <span style="font-size: 1rem;">{{ base_player.full_name|default:"N/A"|upper }}</span>
+                        </div>
+                        <div class="player-features">
+                          <div class="player-features-col">
+                            <span>
+                              <div class="player-feature-value" id="base-player-att">{{ base_rating.att|default:"--" }}</div>
+                              <div class="player-feature-title">ATT</div>
+                            </span>
+                            <span>
+                              <div class="player-feature-value" id="base-player-ply">{{ base_rating.ply|default:"--" }}</div>
+                              <div class="player-feature-title">PLY</div>
+                            </span>
+                            <span>
+                              <div class="player-feature-value" id="base-player-def">{{ base_rating.def_rating|default:"--" }}</div>
+                              <div class="player-feature-title">DEF</div>
+                            </span>
+                          </div>
+                          <div class="player-features-col">
+                            <span>
+                              <div class="player-feature-value" id="base-player-ctr">{{ base_rating.ctr|default:"--" }}</div>
+                              <div class="player-feature-title">CTR</div>
+                            </span>
+                            <span>
+                              <div class="player-feature-value" id="base-player-phy">{{ base_rating.phy|default:"--" }}</div>
+                              <div class="player-feature-title">PHY</div>
+                            </span>
+                            <span>
+                              <div class="player-feature-value" id="base-player-gkp">{{ base_rating.gkp|default:"--" }}</div>
+                              <div class="player-feature-title">GKP</div>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- VS Center (10%) -->
+              <div class="col-2 d-flex align-items-center justify-content-center">
+                <div class="vs-display">
+                  <h3 class="text-center mb-0" style="color: #28a745; font-weight: 700; text-shadow: 2px 2px #000;">VS</h3>
+                </div>
+              </div>
+              
+              <!-- Player 2 FIFA Card (45%) -->
+              <div class="col-5" style="margin-top: 5rem;">
+                <div class="d-flex justify-content-center">
+                  <div class="fut-player-card">
+                    <div class="player-card-top">
+                      <div class="player-left-info">
+                        <div class="player-position">{{ cand_player.position|default:"N/A" }}</div>
+                        <div class="player-nation">{{ cand_player.nationality|default:"N/A"|slice:":3"|upper }}</div>
+                        <div class="player-club">
+                          {% if cand_player.team_logo %}
+                          <img src="{{ cand_player.team_logo }}" alt="{{ cand_player.club }} logo" 
+                               style="width: 60px; height: 60px; object-fit: contain;"
+                               onerror="this.style.display='none';">
+                          {% endif %}
+                        </div>
+                      </div>
+                      <div class="player-right-info">
+                        <div class="ovr-title">OVR</div>
+                        <div class="overall-display" id="cand-player-ovr">{{ cand_rating.overall_rating|default:"--" }}</div>
+                      </div>
+                    </div>
+                    <div class="player-card-bottom">
+                      <div class="player-info">
+                        <div class="player-name">
+                          <span style="font-size: 1rem;">{{ cand_player.full_name|default:"N/A"|upper }}</span>
+                        </div>
+                        <div class="player-features">
+                          <div class="player-features-col">
+                            <span>
+                              <div class="player-feature-value" id="cand-player-att">{{ cand_rating.att|default:"--" }}</div>
+                              <div class="player-feature-title">ATT</div>
+                            </span>
+                            <span>
+                              <div class="player-feature-value" id="cand-player-ply">{{ cand_rating.ply|default:"--" }}</div>
+                              <div class="player-feature-title">PLY</div>
+                            </span>
+                            <span>
+                              <div class="player-feature-value" id="cand-player-def">{{ cand_rating.def_rating|default:"--" }}</div>
+                              <div class="player-feature-title">DEF</div>
+                            </span>
+                          </div>
+                          <div class="player-features-col">
+                            <span>
+                              <div class="player-feature-value" id="cand-player-ctr">{{ cand_rating.ctr|default:"--" }}</div>
+                              <div class="player-feature-title">CTR</div>
+                            </span>
+                            <span>
+                              <div class="player-feature-value" id="cand-player-phy">{{ cand_rating.phy|default:"--" }}</div>
+                              <div class="player-feature-title">PHY</div>
+                            </span>
+                            <span>
+                              <div class="player-feature-value" id="cand-player-gkp">{{ cand_rating.gkp|default:"--" }}</div>
+                              <div class="player-feature-title">GKP</div>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Pizza comparison -->
+        <!-- Radar with Toggle -->
         <div class="card shadow-sm card-fill" style="min-height:42vh;max-height:46vh;">
-          <div class="card-header text-center">Pizza Comparison</div>
+          <div class="card-header text-center">Radar Comparison</div>
           <div class="card-body text-center p-2">
-            <img src="{{ pizza_cmp }}" alt="Pizza comparison" class="chart-img" loading="lazy" decoding="async" style="max-width:90%;max-height:calc(100% - 2rem);">
+            <!-- Radar Toggle -->
+            <div class="radar-toggle-container mb-3">
+              <button class="radar-toggle-btn active" id="stats-toggle" onclick="toggleRadar('stats')">
+                Stats
+              </button>
+              <button class="radar-toggle-btn" id="ratings-toggle" onclick="toggleRadar('ratings')">
+                Ratings Stats
+              </button>
+            </div>
+            
+            <!-- Radar Chart -->
+            <img id="radar-chart" src="{{ radar_cmp }}" alt="Radar comparison" class="chart-img" loading="lazy" decoding="async" style="max-width:90%;max-height:calc(100% - 4rem);">
           </div>
         </div>
       </div>
@@ -209,7 +351,7 @@
   
   (function() {
     // If no metrics selected, preselect defaults to ensure charts render
-    var preselected = ['minutes', 'goals', 'assists'];
+    var preselected = ['games', 'goals', 'assists'];
     var anyChecked = document.querySelector('.metric-checkbox:checked') !== null;
     if (!anyChecked) {
       preselected.forEach(function(val){
@@ -279,4 +421,29 @@
     updateChartsVisibility();
     renderCharts();
   })();
+
+  // Radar Toggle Function - same logic as player_profile.html
+  function toggleRadar(type) {
+    const statsBtn = document.getElementById('stats-toggle');
+    const ratingsBtn = document.getElementById('ratings-toggle');
+    const radarImg = document.getElementById('radar-chart');
+    
+    // Update button states
+    if (type === 'stats') {
+      statsBtn.classList.add('active');
+      ratingsBtn.classList.remove('active');
+      // Show stats radar (original)
+      radarImg.src = '{{ radar_cmp }}';
+    } else if (type === 'ratings') {
+      ratingsBtn.classList.add('active');
+      statsBtn.classList.remove('active');
+      // Show ratings radar - use same logic as player_profile
+      {% if radar_rating_url %}
+      radarImg.src = '{{ radar_rating_url }}';
+      {% else %}
+      radarImg.src = '{{ radar_cmp }}'; // Fallback to stats radar
+      {% endif %}
+    }
+  }
+
 </script>

@@ -29,6 +29,11 @@ services:
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
       REDIS_URL: redis://redis:6379/0
       DASHBOARD_HOST: http://web:8000
+      # Langfuse Configuration
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://cloud.langfuse.com}
+      LANGFUSE_ENABLED: ${LANGFUSE_ENABLED:-true}
       
     ports:
       - "8001:8001"
@@ -43,8 +48,9 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: scouting-ingestion
-    # ① = full bootstrap (players + embeddings + news)  
-    # ② = news‑only mode (no touch on players)
+    # Mode 1 = full bootstrap (players + embeddings + ratings + news)  
+    # Mode 2 = players-only mode (players + history + ratings)
+    # Mode 3 = news-only mode (no touch on players)
     command: >
       sh -lc '
         set -eu
@@ -52,12 +58,24 @@ services:
         if [ "$${INGEST_MODE:-}" = "news" ]; then
           echo "▶ News-only ingestion"
           python -m apps.ingestion.seed_and_ingest --ingest-news --skip-players --verbose
-        else
-          echo "▶ Full bootstrap (players + news)"
+        elif [ "$${INGEST_MODE:-}" = "players" ]; then
+          echo "▶ Players-only ingestion (players + history + ratings)"
           python -m apps.ingestion.seed_and_ingest \
-            --players-csv data/all_players_cleaned.csv \
-            --history-csv data/historical_players_raw.csv \
-            --replace --replace-history --refresh-embs \
+            --players-csv data/all_players_plus_historic_data_aggregated_v3.csv \
+            --history-csv data/all_players_plus_historic_data_non_aggregated_v3.csv \
+            --ratings-csv data/player_ratings.csv \
+            --replace --replace-history --replace-ratings --refresh-embs \
+            --verbose
+        else
+          echo "▶ Full bootstrap (players + history + ratings + news)"
+          echo "Step 1: Generate ratings CSV..."
+          python scripts/calculate_ratings_to_csv.py --verbose
+          echo "Step 2: Load all data..."
+          python -m apps.ingestion.seed_and_ingest \
+            --players-csv data/all_players_plus_historic_data_aggregated_v3.csv \
+            --history-csv data/all_players_plus_historic_data_non_aggregated_v3.csv \
+            --ratings-csv data/player_ratings.csv \
+            --replace --replace-history --replace-ratings --refresh-embs \
             --ingest-news --verbose
         fi
       '
@@ -140,6 +158,11 @@ services:
       DATABASE_URL: postgresql+psycopg2://scout:scout@db:5432/scouting
       REDIS_URL: redis://redis:6379/0
       DASHBOARD_HOST: http://localhost:8000
+      # Langfuse Configuration
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://cloud.langfuse.com}
+      LANGFUSE_ENABLED: ${LANGFUSE_ENABLED:-true}
     command: >
         sh -c "python manage.py migrate &&
          python manage.py createsuperuser --no-input ||

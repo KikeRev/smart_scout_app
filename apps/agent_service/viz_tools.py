@@ -72,8 +72,8 @@ TEXT_CLR = "#000000"
 # Metric definitions
 # ────────────────────────────────────────────────────────────────────────────
 RADAR_METRICS: List[Tuple[str, str, Any | None]] = [
-    ("Min/Games", None, 100),          # minutes ÷ 90s
-    ("Games_90s", "minutes_90s", 50),
+    #("Min/Games", None, 100),          # minutes ÷ 90s
+    #("Games_90s", "minutes_90s", 50),
     ("Goals", "goals", 50),
     ("Asist", "assists", 20),
     ("G+A", None, 50),
@@ -184,7 +184,7 @@ def radar_chart(
         Metadata for figure title and optional badge.
     """
     if stats is None:
-        fetched     = player_stats.invoke({"player_name": player_name})
+        fetched     = player_stats.invoke({"player_name": player_name, "team": team})
         stats       = fetched["stats"]
         team        = team or fetched["stats"]["club"]
         position    = position or fetched["stats"]["position"]
@@ -225,7 +225,7 @@ def radar_chart(
     radar.setup_axis(ax=axs['radar'])
     rings_inner = radar.draw_circles(ax=axs['radar'], facecolor='#f0f0f0', edgecolor='#d0d0d0')
     radar_output = radar.draw_radar(vals_arr, ax=axs['radar'],
-                                    kwargs_radar={'facecolor': '#aa65b2', 'alpha': 0.8},
+                                    kwargs_radar={'facecolor': '#28a745', 'alpha': 0.8},
                                     kwargs_rings={'facecolor': '#e0e0e0', 'alpha': 0.4})
     radar_poly, rings_outer, vertices = radar_output
     range_labels = radar.draw_range_labels(ax=axs['radar'], fontsize=25,
@@ -254,19 +254,22 @@ def radar_chart(
 def radar_comparison_chart(
     player1_name: str,
     player2_name: str,
+    *,
+    team1: Optional[str] = None,
+    team2: Optional[str] = None,
 ) -> str:
-    """Create a radar chart for a single player.
+    """Create a radar chart comparing two players.
 
     Parameters
     ----------
-    stats : dict
-        A DataFrame row converted to dict (`row.to_dict()`).
-    player_name, club, position (role), nationality : str
-        Metadata for figure title and optional badge.
+    player1_name, player2_name : str
+        Names of the players to compare.
+    team1, team2 : str, optional
+        Team names to disambiguate when multiple players have the same name.
     """
     
-    fetched1     = player_stats.invoke({"player_name": player1_name})
-    fetched2     = player_stats.invoke({"player_name": player2_name})
+    fetched1     = player_stats.invoke({"player_name": player1_name, "team": team1})
+    fetched2     = player_stats.invoke({"player_name": player2_name, "team": team2})
     stats1       = fetched1["stats"]
     stats2       = fetched2["stats"]
     team1        = fetched1["stats"]["club"]
@@ -453,7 +456,7 @@ def pizza_chart(
     # add credits
     CREDIT_1 = "Data Source: fbref"
     CREDIT_2 = "Inspired by: @Worville, @FootballSlices, @somazerofc & @Soumyaj15209314"
-    CREDIT_3 = "Created by: Enrique Revuelta"
+    CREDIT_3 = "Created by: Enrique Revuelta - Smart Scout App"
 
     fig.text(
         0.99, 0.02, f"{CREDIT_3}\n{CREDIT_1}\n{CREDIT_2}", size=9,
@@ -468,7 +471,8 @@ def pizza_comparison_chart(
     player2_name: str,
     *,
     role: str | None = None,
-    
+    team1: Optional[str] = None,
+    team2: Optional[str] = None,
 ) -> str:
     """Create a category-colored comparison pizza plot for two players.
 
@@ -484,8 +488,8 @@ def pizza_comparison_chart(
     str
         Path to the temporary PNG with the comparison chart.
     """
-    fetched1 = player_stats.invoke({"player_name": player1_name})
-    fetched2 = player_stats.invoke({"player_name": player2_name})
+    fetched1 = player_stats.invoke({"player_name": player1_name, "team": team1})
+    fetched2 = player_stats.invoke({"player_name": player2_name, "team": team2})
     stats    = fetched1["stats"]
     stats2   = fetched2["stats"]
     role     = stats["position"]
@@ -589,3 +593,318 @@ def pizza_comparison_chart(
 
     return _save(fig, label=f"{player1_name} vs {player2_name}")
 
+
+def radar_rating_chart(
+    player_name: str,
+    *,
+    rating_data: Optional[Dict[str, Any]] = None,
+    team: str = "",
+    position: str | None = None,
+    nationality: str | None = None,
+) -> str:
+    """Create a radar chart for FIFA-style player ratings.
+
+    Parameters
+    ----------
+    rating_data : dict
+        A dictionary containing FIFA-style ratings with keys: ATT, PLY, DEF, CTR, PHY, GKP
+    player_name, team, position, nationality : str
+        Metadata for figure title and optional badge.
+    """
+    
+    if rating_data is None:
+        # If no rating data provided, return empty chart
+        return ""
+    
+    # Extract rating values
+    att = rating_data.get("ATT", 50)
+    ply = rating_data.get("PLY", 50)
+    def_rating = rating_data.get("DEF", 50)
+    ctr = rating_data.get("CTR", 50)
+    phy = rating_data.get("PHY", 50)
+    gkp = rating_data.get("GKP", 50)
+    
+    # Create rating values array
+    if position == "GK":
+        # For goalkeepers, use GKP instead of DEF
+        vals = [att, ply, gkp, ctr, phy]
+        params = ["ATT", "PLY", "GKP", "CTR", "PHY"]
+    else:
+        # For outfield players, use DEF
+        vals = [att, ply, def_rating, ctr, phy]
+        params = ["ATT", "PLY", "DEF", "CTR", "PHY"]
+    
+    vals_arr = np.array(vals, dtype=float)
+    low = np.zeros_like(vals_arr)
+    high = np.full_like(vals_arr, 100)  # FIFA ratings go from 0 to 100
+    
+    # Create radar chart
+    radar = Radar(params, low, high,
+                  lower_is_better=[],
+                  round_int=[True]*len(params),
+                  num_rings=5, 
+                  ring_width=1, center_circle_radius=1)
+    
+    # Create the figure using the grid function from mplsoccer
+    fig, axs = grid(figheight=14, grid_height=0.915, title_height=0.06, endnote_height=0.025,
+                    title_space=0, endnote_space=0, grid_key='radar', axis=False)
+    
+    # Plot the radar
+    radar.setup_axis(ax=axs['radar'])
+    rings_inner = radar.draw_circles(ax=axs['radar'], facecolor='#f0f0f0', edgecolor='#d0d0d0')
+    radar_output = radar.draw_radar(vals_arr, ax=axs['radar'],
+                                    kwargs_radar={'facecolor': '#28a745', 'alpha': 0.8},
+                                    kwargs_rings={'facecolor': '#e0e0e0', 'alpha': 0.4})
+    radar_poly, rings_outer, vertices = radar_output
+    range_labels = radar.draw_range_labels(ax=axs['radar'], fontsize=25,
+                                        fontproperties=robotto_thin.prop)
+    param_labels = radar.draw_param_labels(ax=axs['radar'], fontsize=25,
+                                        fontproperties=robotto_bold.prop)
+    
+    # Add title
+    title1_text = axs['title'].text(0.01, 0.65, player_name, fontsize=25,
+                                    fontproperties=robotto_bold.prop, ha='left', va='center')
+    title2_text = axs['title'].text(0.01, 0.25, nationality, fontsize=20,
+                                    fontproperties=robotto_thin.prop,
+                                    ha='left', va='center', color='#B6282F')
+    title3_text = axs['title'].text(0.99, 0.65, team, fontsize=25,
+                                    fontproperties=robotto_bold.prop, ha='right', va='center')
+    title4_text = axs['title'].text(0.99, 0.25, position, fontsize=20,
+                                    fontproperties=robotto_thin.prop,
+                                    ha='right', va='center', color='#B6282F')
+    
+    
+    
+    
+    # Add endnote
+    endnote_text = axs['endnote'].text(0.99, 1.4, 'Inspired By: StatsBomb / Rami Moghadam', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+    endnote_text2 = axs['endnote'].text(0.99, 0.7, 'Created by: Enrique Revuelta - Smart Scout App', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+    endnote_text2 = axs['endnote'].text(0.99, 0.0, 'Data Source: FBref.com', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+    
+    result = _save(fig, label=f"{player_name}_ratings")
+    if isinstance(result, dict) and result.get("attachments"):
+        return result["attachments"][0].get("url", "")
+    return result
+
+
+def radar_rating_comparison_chart(
+    player1_name: str,
+    player2_name: str,
+    *,
+    rating_data1: Optional[Dict[str, Any]] = None,
+    rating_data2: Optional[Dict[str, Any]] = None,
+    team1: str = "",
+    team2: str = "",
+    position1: str | None = None,
+    position2: str | None = None,
+    nationality1: str | None = None,
+    nationality2: str | None = None,
+) -> str:
+    """Create a radar chart comparing FIFA-style player ratings for two players.
+
+    Parameters
+    ----------
+    rating_data1, rating_data2 : dict
+        Dictionaries containing FIFA-style ratings with keys: ATT, PLY, DEF, CTR, PHY, GKP
+    player1_name, player2_name, team1, team2, position1, position2, nationality1, nationality2 : str
+        Metadata for figure title and optional badges.
+    """
+    
+    if rating_data1 is None or rating_data2 is None:
+        raise ValueError("Rating data must be provided for both players")
+
+    # Extract values for both players
+    vals1 = [
+        rating_data1.get('att', 50),
+        rating_data1.get('ply', 50),
+        rating_data1.get("def_rating", rating_data1.get("def", rating_data1.get("DEF", 50))),
+        rating_data1.get('ctr', 50),
+        rating_data1.get('phy', 50),
+        rating_data1.get('gkp', 50)
+    ]
+    
+    vals2 = [
+        rating_data2.get('att', 50),
+        rating_data2.get('ply', 50),
+        rating_data2.get("def_rating", rating_data2.get("def", rating_data2.get("DEF", 50))),
+        rating_data2.get('ctr', 50),
+        rating_data2.get('phy', 50),
+        rating_data2.get('gkp', 50)
+    ]
+
+    # FIFA rating parameters based in position
+    if position1 == "GK":
+        params = ['ATT', 'PLY', 'DEF', 'CTR', 'PHY', 'GKP']
+    else:
+        params = ['ATT', 'PLY', 'DEF', 'CTR', 'PHY']
+        vals1 = vals1[:-1]
+        vals2 = vals2[:-1]
+    
+    vals_arr1 = np.array(vals1, dtype=float)
+    vals_arr2 = np.array(vals2, dtype=float)
+    low = np.zeros_like(vals_arr1)
+    high = np.full_like(vals_arr1, 100)  # FIFA ratings go from 0 to 100
+    
+    # Create radar chart
+    radar = Radar(params, low, high,
+                  lower_is_better=[],
+                  round_int=[True]*len(params),
+                  num_rings=5, 
+                  ring_width=1, center_circle_radius=1)
+    
+    # Create the figure using the grid function from mplsoccer
+    fig, axs = grid(figheight=14, grid_height=0.915, title_height=0.06, endnote_height=0.025,
+                    title_space=0, endnote_space=0, grid_key='radar', axis=False)
+
+    # Plot the radar
+    radar.setup_axis(ax=axs['radar'])
+    rings_inner = radar.draw_circles(ax=axs['radar'], facecolor='#f0f0f0', edgecolor='#d0d0d0')
+    radar_output = radar.draw_radar_compare(vals_arr1, vals_arr2, ax=axs['radar'],
+                                            kwargs_radar={'facecolor': '#01c49d', 'alpha': 0.8},
+                                            kwargs_compare={'facecolor': '#d80499', 'alpha': 0.8})
+    radar_poly, radar_poly2, vertices1, vertices2 = radar_output
+    range_labels = radar.draw_range_labels(ax=axs['radar'], fontsize=25,
+                                        fontproperties=robotto_thin.prop)
+    param_labels = radar.draw_param_labels(ax=axs['radar'], fontsize=25,
+                                        fontproperties=robotto_bold.prop)
+
+    # Add title
+    title_text = f"FIFA-Style Player Ratings"
+    fig.text(0.5, 0.99, title_text, fontsize=20, fontweight='bold',
+             ha='center', va='top', fontproperties=robotto_bold.prop)
+
+    title1_text = axs['title'].text(0.01, 0.65, player1_name, fontsize=25, color='#01c49d',
+                                    fontproperties=robotto_bold.prop, ha='left', va='center')
+    title2_text = axs['title'].text(0.01, 0.25, rating_data1.get('club', ''), fontsize=20,
+                                    fontproperties=robotto_thin.prop,
+                                    ha='left', va='center', color='#01c49d')
+    title3_text = axs['title'].text(0.99, 0.65, player2_name, fontsize=25,
+                                    fontproperties=robotto_bold.prop,
+                                    ha='right', va='center', color='#d80499')
+    title4_text = axs['title'].text(0.99, 0.25, rating_data2.get('club', ''), fontsize=20,
+                                    fontproperties=robotto_thin.prop,
+                                    ha='right', va='center', color='#d80499')
+
+
+    # Endnote credits
+    endnote_text = axs['endnote'].text(0.99, 1.4, 'Inspired By: StatsBomb / Rami Moghadam', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+    endnote_text2 = axs['endnote'].text(0.99, 0.7, 'Created by: Enrique Revuelta - Smart Scout App', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+    endnote_text2 = axs['endnote'].text(0.99, 0.0, 'Data Source: FBref.com', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+
+    result = _save(fig, label=f"{player1_name}_vs_{player2_name}_ratings")
+    if isinstance(result, dict) and result.get("attachments"):
+        return result["attachments"][0].get("url", "")
+    return result
+
+
+def radar_rating_multi_chart(
+    players: List[Tuple[str, Dict[str, Any], Optional[str]]],
+    *,
+    title: str = "Players Ratings",
+) -> str:
+    """Create a radar chart overlaying FIFA-style ratings for up to 3 players.
+
+    Parameters
+    ----------
+    players : list of tuples
+        Each item is (player_name, rating_data_dict, position) where rating_data_dict
+        contains keys in lower-case as returned by FastAPI (att, ply, def_rating, ctr, phy, gkp).
+    title : str
+        Title for the chart.
+
+    Returns
+    -------
+    str
+        URL to the generated image (when Django TempChart is available) or path string.
+    """
+    if not players:
+        raise ValueError("At least one player is required")
+
+    # Determine params (exclude GKP for outfield; map GK to include GKP instead of DEF)
+    # We'll standardize to 5 metrics to keep chart readable across 3 players
+    # For GK entries we map DEF->GKP for that specific values array
+    base_params = ["ATT", "PLY", "DEF", "CTR", "PHY"]
+
+    # Prepare arrays for each player
+    value_arrays: List[np.ndarray] = []
+    names: List[str] = []
+    for name, data, pos in players:
+        att = data.get("att", data.get("ATT", 0))
+        ply = data.get("ply", data.get("PLY", 0))
+        def_val = data.get("def_rating", data.get("def", data.get("DEF", 0)))
+        ctr = data.get("ctr", data.get("CTR", 0))
+        phy = data.get("phy", data.get("PHY", 0))
+        gkp = data.get("gkp", data.get("GKP", None))
+
+        if (pos or "").upper() == "GK" and gkp is not None:
+            vals = [att, ply, gkp, ctr, phy]
+        else:
+            vals = [att, ply, def_val, ctr, phy]
+        value_arrays.append(np.array(vals, dtype=float))
+        names.append(name)
+
+    low = np.zeros_like(value_arrays[0])
+    high = np.full_like(value_arrays[0], 100)
+
+    radar = Radar(base_params, low, high,
+                  lower_is_better=[],
+                  round_int=[True]*len(base_params),
+                  num_rings=5,
+                  ring_width=1, center_circle_radius=1)
+
+    fig, axs = grid(figheight=14, grid_height=0.915, title_height=0.06, endnote_height=0.025,
+                    title_space=0, endnote_space=0, grid_key='radar', axis=False)
+
+    radar.setup_axis(ax=axs['radar'])
+    _ = radar.draw_circles(ax=axs['radar'], facecolor='#f0f0f0', edgecolor='#d0d0d0')
+
+    # Colors aligned with app palette and stats radar order: base green, magenta, third blue
+    palette = ['#01c49d', '#d80499', '#3b82f6']
+
+    vertices_list = []
+    for idx, vals_arr in enumerate(value_arrays):
+        color = palette[idx % len(palette)]
+        out = radar.draw_radar(vals_arr, ax=axs['radar'],
+                               kwargs_radar={'facecolor': color, 'alpha': 0.65},
+                               kwargs_rings={'facecolor': '#e0e0e0', 'alpha': 0.0})
+        _, _, vertices = out
+        vertices_list.append((vertices, color))
+
+    _ = radar.draw_range_labels(ax=axs['radar'], fontsize=25, fontproperties=robotto_thin.prop)
+    _ = radar.draw_param_labels(ax=axs['radar'], fontsize=25, fontproperties=robotto_bold.prop)
+
+    # Add vertices points
+    for vertices, color in vertices_list:
+        axs['radar'].scatter(vertices[:, 0], vertices[:, 1], c=color, edgecolors='#6d6c6d',
+                             marker='o', s=120, zorder=2)
+
+    # Title and legend (match stats radar styling)
+    fig.text(0.5, 0.99, title, fontsize=20, fontweight='bold', ha='center', va='top',
+             fontproperties=robotto_bold.prop)
+
+    # Build legend lines (upper right to match other radars)
+    legend_elements = [plt.Line2D([0], [0], color=palette[i % len(palette)], lw=6, alpha=0.85, label=names[i])
+                       for i in range(len(names))]
+    lgd = fig.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(0.98, 0.98),
+                     ncol=1, fontsize=14, frameon=False)
+    for txt in lgd.get_texts():
+        txt.set_fontproperties(robotto_bold.prop)
+
+    # Endnote credits
+    endnote_text = axs['endnote'].text(0.99, 1.4, 'Inspired By: StatsBomb / Rami Moghadam', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+    endnote_text2 = axs['endnote'].text(0.99, 0.7, 'Created by: Enrique Revuelta - Smart Scout App', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+    endnote_text2 = axs['endnote'].text(0.99, 0.0, 'Data Source: FBref.com', fontsize=15,
+                                    fontproperties=robotto_thin.prop, ha='right', va='center')
+
+    result = _save(fig, label="ratings_multi")
+    if isinstance(result, dict) and result.get("attachments"):
+        return result["attachments"][0].get("url", "")
+    return result

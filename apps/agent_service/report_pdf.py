@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os, uuid
+import requests
 from pathlib import Path
 from typing import List
 from weasyprint import HTML
@@ -173,6 +174,44 @@ def build_report_pdf(
         except Exception:
             pass
 
+    # 4.3) Get ratings and generate radar comparison
+    chosen_rating = None
+    ratings_radar_url = None
+    
+    try:
+        # Get chosen player rating
+        chosen_rating_response = requests.get(f"http://api:8001/api/ratings/player/{chosen_id}", timeout=10)
+        if chosen_rating_response.status_code == 200:
+            chosen_rating = chosen_rating_response.json()
+            print(f"DEBUG: Got chosen player rating: {chosen_rating is not None}")
+        
+        # Get base player rating
+        base_rating = None
+        base_id = ctx_dash.get("base_id")
+        if base_id:
+            base_rating_response = requests.get(f"http://api:8001/api/ratings/player/{base_id}", timeout=10)
+            if base_rating_response.status_code == 200:
+                base_rating = base_rating_response.json()
+                print(f"DEBUG: Got base player rating: {base_rating is not None}")
+        
+        # Generate ratings radar comparison if we have rating data
+        if chosen_rating and base_rating:
+            from apps.agent_service.viz_tools import radar_rating_comparison_chart
+            
+            # Get player names
+            base_name = ctx_dash.get("base_player", {}).get("full_name", "Base Player")
+            chosen_name = ctx_dash.get("cand_player", {}).get("full_name", "Chosen Player")
+            
+            ratings_radar_url = radar_rating_comparison_chart(
+                player1_name=base_name,
+                player2_name=chosen_name,
+                rating_data1=base_rating,    # Base player rating
+                rating_data2=chosen_rating   # Chosen player rating
+            )
+            print(f"DEBUG: Generated ratings radar: {ratings_radar_url is not None}")
+    except Exception as e:
+        print(f"DEBUG: Error getting ratings or generating radar: {e}")
+
     # 5) build HTML
     html_str = render_to_string(
         "reports/report.html",
@@ -189,6 +228,8 @@ def build_report_pdf(
             "radar_base_url": _abs_uri(ctx_dash.get("radar_cmp", ctx_dash.get("radar_base"))),
             "radar_comp_url": _abs_uri(ctx_dash.get("radar_cand", ctx_dash.get("radar_cmp"))),
             "pizza_url":      _abs_uri(ctx_dash["pizza_cmp"]),
+            "chosen_rating": chosen_rating,
+            "ratings_radar_url": _abs_uri(ratings_radar_url) if ratings_radar_url else None,
             "logo_url":       _abs_uri(static("img/app_logo_6.png")),
             "github_url": _abs_uri(static("img/github.png")),
             "linkedin_url": _abs_uri(static("img/linkedin.png")),

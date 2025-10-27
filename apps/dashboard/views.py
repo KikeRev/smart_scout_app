@@ -16,7 +16,8 @@ from django.http import HttpResponseBadRequest, HttpResponse, HttpResponseBadReq
 from apps.agent_service.viz_tools import (
     radar_chart,
     radar_comparison_chart,
-    pizza_comparison_chart
+    pizza_comparison_chart,
+    radar_rating_chart
 )
 from apps.agent_service.dashboard_viz_tools import dashboard_radar_single
 from apps.agent_service.utils import compare_stats_to_html_table
@@ -113,15 +114,70 @@ def _context(base_id: int, cand_id: int, cand_ids: list[int], metrics: list[str]
 
     players = list(stats_map.values())
 
+    # ── 3) Load player ratings and generate rating radar ─────────────
+    base_rating = None
+    cand_rating = None
+    radar_rating_url = None
+    
+    try:
+        # Import here to avoid circular imports
+        import requests
+        
+        # Get available seasons for ratings
+        seasons_response = requests.get("http://api:8001/api/ratings/leagues")
+        available_seasons = ["2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015", "2014"]  # Fallback seasons
+        
+        # Get ratings for base player - try multiple seasons
+        base_rating = None
+        for season in available_seasons:
+            base_rating_response = requests.get(f"http://api:8001/api/ratings/player/{base_id}?season={season}")
+            if base_rating_response.status_code == 200:
+                base_rating = base_rating_response.json()
+                print(f"Found base player rating for season: {season}")
+                break
+        
+        # Get ratings for candidate player - try multiple seasons
+        cand_rating = None
+        for season in available_seasons:
+            cand_rating_response = requests.get(f"http://api:8001/api/ratings/player/{cand_id}?season={season}")
+            if cand_rating_response.status_code == 200:
+                cand_rating = cand_rating_response.json()
+                print(f"Found candidate player rating for season: {season}")
+                break
+        
+        # Generate rating radar if both ratings exist
+        if base_rating and cand_rating:
+            from apps.agent_service.viz_tools import radar_rating_comparison_chart
+            radar_rating_result = radar_rating_comparison_chart(
+                player1_name=base_stats["full_name"],
+                player2_name=cand_stats["full_name"],
+                rating_data1=base_rating,
+                rating_data2=cand_rating
+            )
+            radar_rating_url = radar_rating_result
+            print(f"""
+            base_rating: {base_rating}
+            cand_rating: {cand_rating}
+            """)
+            
+    except Exception as e:
+        print(f"Error loading ratings: {e}")
+        # Continue without ratings
+
     return {
         "base_id": base_id,
         "cand_id": cand_id,
         "cand_ids": cand_ids,
         "players": players,
+        "base_player": base_stats,
+        "cand_player": cand_stats,
+        "base_rating": base_rating,
+        "cand_rating": cand_rating,
         "metrics": metrics,
         "radar_cmp": radar_cmp["attachments"][0]["url"],
         "pizza_cmp":  pizza_cmp["attachments"][0]["url"],
         "table_html": table_html,
+        "radar_rating_url": radar_rating_url,
     }
 
 
@@ -257,11 +313,48 @@ def comparison_dashboard(request):
     if chart_result.get('attachments') and len(chart_result['attachments']) > 0:
         chart_url = chart_result['attachments'][0]['url']
     
+    # Load FIFA-style ratings for players and build ratings radar (1-3 players)
+    ratings_map = {}
+    radar_rating_url = None
+    try:
+        seasons_try = ["2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015", "2014", "2013", "2012"]
+        
+        for p in players_data:
+            pid = p.get('id') or p.get('player_id') or p.get('pk')
+            if not pid:
+                continue
+            rating = None
+            for season in seasons_try:
+                r = requests.get(f"{API_HOST}/api/ratings/player/{pid}?season={season}", timeout=10)
+                if r.status_code == 200:
+                    rating = r.json()
+                    break
+            if rating:
+                ratings_map[pid] = rating
+
+        # Build multi radar if we have at least one rating
+        from apps.agent_service.viz_tools import radar_rating_multi_chart
+        players_for_radar = []
+        for p in players_data:
+            pid = p.get('id')
+            rating = ratings_map.get(pid)
+            if not rating:
+                continue
+            name = p.get('full_name') or p.get('name')
+            pos = p.get('position')
+            players_for_radar.append((name, rating, pos))
+        if players_for_radar:
+            radar_rating_url = radar_rating_multi_chart(players_for_radar)
+    except Exception as e:
+        logger.warning(f"comparison_dashboard ratings load error: {e}")
+
     context = {
         'players': players_data,
         'chart_url': chart_url,
         'selected_metrics': selected_metrics,
-        'player_count': len(players_data)
+        'player_count': len(players_data),
+        'ratings_map': ratings_map,
+        'radar_rating_url': radar_rating_url
     }
     
     return render(request, "dashboard/comparison.html", context)
@@ -321,6 +414,40 @@ def player_profile(request, player_id: int):
         if not player:
             return render(request, "dashboard/profile.html", {"error": "Player not found"})
 
+        # Fetch player rating data from API
+        player_rating = None
+        team_rating = None
+        radar_rating_data = None
+        
+        try:
+            # Get player rating
+            rating_response = requests.get(
+                f"{API_HOST}/api/ratings/player/{player_id}",
+                timeout=10
+            )
+            if rating_response.status_code == 200:
+                player_rating = rating_response.json()
+            
+            # Get team rating
+            if player.get("club"):
+                team_response = requests.get(
+                    f"{API_HOST}/api/ratings/team/{player['club']}",
+                    timeout=10
+                )
+                if team_response.status_code == 200:
+                    team_rating = team_response.json()
+            
+            # Get radar rating data
+            radar_response = requests.get(
+                f"{API_HOST}/api/ratings/player/{player_id}/radar",
+                timeout=10
+            )
+            if radar_response.status_code == 200:
+                radar_rating_data = radar_response.json()
+                
+        except Exception as e:
+            logger.warning(f"Could not fetch rating data: {e}")
+
         # Default metrics depending on position (compact set ~12)
         pos = player.get("position") or "MF"
         # Exclude stats already shown in the side table (age, minutes,
@@ -378,6 +505,29 @@ def player_profile(request, player_id: int):
         radar_url = None
         if radar.get("attachments"):
             radar_url = radar["attachments"][0].get("url")
+        
+        # Generate ratings radar if rating data is available
+        radar_rating_url = None
+        if player_rating and radar_rating_data:
+            rating_attributes = {
+                "ATT": player_rating.get("att", 50),
+                "PLY": player_rating.get("ply", 50),
+                "DEF": player_rating.get("def_rating", 50),
+                "CTR": player_rating.get("ctr", 50),
+                "PHY": player_rating.get("phy", 50),
+            }
+            if player_rating.get("gkp"):
+                rating_attributes["GKP"] = player_rating.get("gkp", 50)
+            
+            radar_rating = radar_rating_chart(
+                player_name=player["full_name"],
+                rating_data=rating_attributes,
+                team=player["club"],
+                position=pos,
+                nationality=player.get("nationality", ""),
+            )
+            if radar_rating:
+                radar_rating_url = radar_rating
 
         # Select KPI table metrics that don't overlap with radar
         # Radar has: Min/Games, Games_90s, Goals, Asist, G+A, %Pass, Tackles Won, Interceptions, Challenges, Progressive Passes, Progressive Passes Received
@@ -394,7 +544,11 @@ def player_profile(request, player_id: int):
             "player": player,
             "metrics": metrics,
             "radar_url": radar_url,
+            "radar_rating_url": radar_rating_url,
             "kpis": kpis,
+            "player_rating": player_rating,
+            "team_rating": team_rating,
+            "radar_rating_data": radar_rating_data,
         }
         return render(request, "dashboard/player_profile.html", ctx)
     except Exception as e:
@@ -457,14 +611,14 @@ def saved_searches_api(request):
 
 
 @login_required
-def player_history_api(request, player_name: str):
+def player_history_api(request, player_name: str, player_uid: str = None):
     """Return per-season historical stats for a player, as stored in player_history.
     Response: [{season, team, league, team_logo, minutes, ...metrics...}] sorted by season asc.
     """
     try:
         # Minimal set of columns used in charts; extendable
         desired_columns = [
-            'player','season','team','league','team_logo','minutes','minutes_90s','games','games_starts',
+            'player','player_uid','season','team','league','team_logo','minutes','minutes_90s','games','games_starts',
             'goals','assists','expected_goals','expected_assists',
             'progressive_carries','progressive_passes','progressive_passes_received',
             'goals_per90','assists_per90','goals_assists_per90','expected_goals_per90','expected_assists_per90',
@@ -485,21 +639,33 @@ def player_history_api(request, player_name: str):
             # Keep order from desired_columns, filter by existence
             columns = [c for c in desired_columns if c in existing_cols]
             # Ensure mandatory keys are present
-            for mandatory in ['player','season','team','league','team_logo']:
+            for mandatory in ['player','player_uid','season','team','league','team_logo']:
                 if mandatory not in columns and mandatory in existing_cols:
                     columns.insert(0, mandatory)
             col_select = ', '.join(columns)
 
-            # Try exact lower match first; if empty, fallback to unaccent/ILIKE if extension exists
-            cur.execute(
-                f"""
-                SELECT {col_select}
-                FROM player_history
-                WHERE lower(player) = lower(%s)
-                ORDER BY season ASC
-                """,
-                [player_name],
-            )
+            # Use player_uid if available, otherwise fallback to player name
+            if player_uid and 'player_uid' in columns:
+                cur.execute(
+                    f"""
+                    SELECT {col_select}
+                    FROM player_history
+                    WHERE player_uid = %s
+                    ORDER BY season ASC
+                    """,
+                    [player_uid],
+                )
+            else:
+                # Try exact lower match first; if empty, fallback to unaccent/ILIKE if extension exists
+                cur.execute(
+                    f"""
+                    SELECT {col_select}
+                    FROM player_history
+                    WHERE lower(player) = lower(%s)
+                    ORDER BY season ASC
+                    """,
+                    [player_name],
+                )
             rows = cur.fetchall()
             # Build mapping using cursor description
             cols = [c[0] for c in cur.description]
@@ -548,20 +714,21 @@ def player_history_by_id_api(request, player_id: int):
     """Same as player_history_api but by joining players.id to history.player name."""
     try:
         with connection.cursor() as cur:
-            cur.execute("SELECT full_name FROM players WHERE id = %s", [player_id])
+            cur.execute("SELECT full_name, player_uid FROM players WHERE id = %s", [player_id])
             row = cur.fetchone()
             if not row:
                 return JsonResponse({"history": []})
             name = row[0]
-        # Reuse name-based endpoint logic
-        return player_history_api(request, name)
+            player_uid = row[1]
+        # Reuse name-based endpoint logic with player_uid
+        return player_history_api(request, name, player_uid)
     except Exception as e:
         logger.exception("player_history_by_id_api error: %s", e)
         return JsonResponse({"error": str(e)}, status=400)
 
 
-def _fetch_history_rows(player_name: str) -> list[dict]:
-    """Return per-season rows from player_history for a given player name."""
+def _fetch_history_rows(player_name: str, player_uid: str = None) -> list[dict]:
+    """Return per-season rows from player_history for a given player name or player_uid."""
     with connection.cursor() as cur:
         # Discover existing columns
         cur.execute(
@@ -573,7 +740,7 @@ def _fetch_history_rows(player_name: str) -> list[dict]:
         )
         existing_cols = {row[0] for row in cur.fetchall()}
         desired = [
-            'player','season','team','league','team_logo','minutes','minutes_90s','games','games_starts',
+            'player','player_uid','season','team','league','team_logo','minutes','minutes_90s','games','games_starts',
             'goals','assists','expected_goals','expected_assists',
             'progressive_carries','progressive_passes','progressive_passes_received',
             'goals_per90','assists_per90','goals_assists_per90','expected_goals_per90','expected_assists_per90',
@@ -582,20 +749,32 @@ def _fetch_history_rows(player_name: str) -> list[dict]:
             'gk_goals_against','gk_pens_allowed','gk_psxg','gk_psnpxg_per_shot_on_target_against'
         ]
         cols = [c for c in desired if c in existing_cols]
-        for mandatory in ['player','season','team']:
+        for mandatory in ['player','player_uid','season','team']:
             if mandatory not in cols and mandatory in existing_cols:
                 cols.insert(0, mandatory)
         col_select = ', '.join(cols)
 
-        cur.execute(
-            f"""
-            SELECT {col_select}
-            FROM player_history
-            WHERE lower(player) = lower(%s)
-            ORDER BY season ASC
-            """,
-            [player_name],
-        )
+        # Use player_uid if available, otherwise fallback to player name
+        if player_uid and 'player_uid' in existing_cols:
+            cur.execute(
+                f"""
+                SELECT {col_select}
+                FROM player_history
+                WHERE player_uid = %s
+                ORDER BY season ASC
+                """,
+                [player_uid],
+            )
+        else:
+            cur.execute(
+                f"""
+                SELECT {col_select}
+                FROM player_history
+                WHERE lower(player) = lower(%s)
+                ORDER BY season ASC
+                """,
+                [player_name],
+            )
         rows = cur.fetchall()
         names = [c[0] for c in cur.description]
         return [dict(zip(names, r)) for r in rows]
@@ -613,15 +792,15 @@ def history_chart_api(request):
         if not player_id or not metric:
             return JsonResponse({'error': 'missing id or metric'}, status=400)
 
-        # Resolve player name
+        # Resolve player name and uid
         with connection.cursor() as cur:
-            cur.execute("SELECT full_name FROM players WHERE id = %s", [player_id])
+            cur.execute("SELECT full_name, player_uid FROM players WHERE id = %s", [player_id])
             row = cur.fetchone()
             if not row:
                 return JsonResponse({'error': 'player not found'}, status=404)
-            name = row[0]
+            name, player_uid = row[0], row[1]
 
-        history = _fetch_history_rows(name)
+        history = _fetch_history_rows(name, player_uid)
         if not history:
             return JsonResponse({'error': 'no history'}, status=404)
 
@@ -704,13 +883,13 @@ def history_chart_api(request):
 def generate_history_chart_file(player_id: int, metric: str, show_context: bool = True) -> Path:
     """Internal helper to generate history chart file and return its Path."""
     with connection.cursor() as cur:
-        cur.execute("SELECT full_name FROM players WHERE id = %s", [player_id])
+        cur.execute("SELECT full_name, player_uid FROM players WHERE id = %s", [player_id])
         row = cur.fetchone()
         if not row:
             raise ValueError('player not found')
-        name = row[0]
+        name, player_uid = row[0], row[1]
 
-    history = _fetch_history_rows(name)
+    history = _fetch_history_rows(name, player_uid)
     if not history:
         raise ValueError('no history')
 
@@ -774,19 +953,22 @@ def history_chart_comparison_api(request):
         if not player_id1 or not player_id2 or not metric:
             return JsonResponse({'error': 'missing id1, id2 or metric'}, status=400)
 
-        # Resolve player names
+        # Resolve player names and uids
         with connection.cursor() as cur:
-            cur.execute("SELECT id, full_name FROM players WHERE id IN (%s, %s)", [player_id1, player_id2])
+            cur.execute("SELECT id, full_name, player_uid FROM players WHERE id IN (%s, %s)", [player_id1, player_id2])
             rows = cur.fetchall()
             if len(rows) < 2:
                 return JsonResponse({'error': 'one or both players not found'}, status=404)
             names_map = {row[0]: row[1] for row in rows}
+            uids_map = {row[0]: row[2] for row in rows}
         
         name1 = names_map[player_id1]
         name2 = names_map[player_id2]
+        uid1 = uids_map[player_id1]
+        uid2 = uids_map[player_id2]
 
-        history1 = _fetch_history_rows(name1)
-        history2 = _fetch_history_rows(name2)
+        history1 = _fetch_history_rows(name1, uid1)
+        history2 = _fetch_history_rows(name2, uid2)
         
         if not history1 or not history2:
             return JsonResponse({'error': 'no history for one or both players'}, status=404)
@@ -810,10 +992,11 @@ def history_chart_comparison_api(request):
         indices1 = [all_seasons.index(s) for s in seasons1]
         indices2 = [all_seasons.index(s) for s in seasons2]
         
+        # unified palette with dashboards (base green, candidate magenta)
         ax.plot(indices1, y1, marker='o', linewidth=2, markersize=4, 
-                label=name1, color='#3b82f6', alpha=0.8)
+                label=name1, color='#01c49d', alpha=0.9)
         ax.plot(indices2, y2, marker='s', linewidth=2, markersize=4, 
-                label=name2, color='#ef4444', alpha=0.8)
+                label=name2, color='#d80499', alpha=0.9)
         
         ax.set_xticks(range(len(all_seasons)))
         ax.set_xticklabels(all_seasons, rotation=45, fontsize=7, ha='right')
@@ -842,13 +1025,14 @@ def history_chart_comparison_api(request):
 def generate_history_chart_comparison_file(player_id1: int, player_id2: int, metric: str) -> Path:
     """Internal helper to generate comparison chart file and return its Path."""
     with connection.cursor() as cur:
-        cur.execute("SELECT id, full_name FROM players WHERE id IN (%s, %s)", [player_id1, player_id2])
+        cur.execute("SELECT id, full_name, player_uid FROM players WHERE id IN (%s, %s)", [player_id1, player_id2])
         rows = cur.fetchall()
         if len(rows) < 2:
             raise ValueError('one or both players not found')
         names_map = {row[0]: row[1] for row in rows}
-    history1 = _fetch_history_rows(names_map[player_id1])
-    history2 = _fetch_history_rows(names_map[player_id2])
+        uids_map = {row[0]: row[2] for row in rows}
+    history1 = _fetch_history_rows(names_map[player_id1], uids_map[player_id1])
+    history2 = _fetch_history_rows(names_map[player_id2], uids_map[player_id2])
     if not history1 or not history2:
         raise ValueError('no history for one or both players')
 
@@ -897,21 +1081,23 @@ def history_chart_multi_api(request):
         # Resolve names
         with connection.cursor() as cur:
             cur.execute(
-                f"SELECT id, full_name FROM players WHERE id = ANY(%s)", [id_list]
+                f"SELECT id, full_name, player_uid FROM players WHERE id = ANY(%s)", [id_list]
             )
             rows = cur.fetchall()
             if len(rows) < len(id_list):
                 # proceed with available
                 pass
             id_to_name = {r[0]: r[1] for r in rows}
+            id_to_uid = {r[0]: r[2] for r in rows}
 
         # Gather histories
         histories = []
         for pid in id_list:
             name = id_to_name.get(pid)
+            player_uid = id_to_uid.get(pid)
             if not name:
                 continue
-            hist = _fetch_history_rows(name)
+            hist = _fetch_history_rows(name, player_uid)
             if hist:
                 seasons = [r['season'] for r in hist]
                 y = [np.nan if (v:=(r.get(metric))) in (None, '') else float(v) for r in hist]
@@ -923,7 +1109,8 @@ def history_chart_multi_api(request):
         # Build unified seasons
         all_seasons = sorted(set(s for _,_,seas,_ in histories for s in seas))
 
-        colors = ['#3b82f6', '#ef4444', '#10b981']  # blue, red, green
+        # unified palette with dashboards: green, magenta, blue
+        colors = ['#01c49d', '#d80499', '#3b82f6']
         markers = ['o', 's', 'D']
         fig, ax = plt.subplots(figsize=(8, 3))
         for idx, (pid, name, seasons, y_vals) in enumerate(histories):

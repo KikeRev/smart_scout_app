@@ -80,6 +80,8 @@ HEADERS_LIST = [
 
 # Initialize cloudscraper to handle Cloudflare
 scraper = cloudscraper.create_scraper()
+MAX_RETRIES = 2
+BASE_BACKOFF_SECONDS = 3
 
 # -----------------------------
 # Scraping Functions
@@ -89,6 +91,28 @@ def fetch_with_random_header(url: str, **kwargs) -> requests.Response:
     """Makes a GET request with a random header."""
     headers = random.choice(HEADERS_LIST)
     return scraper.get(url, headers=headers, **kwargs)
+
+def get_with_backoff(url: str, timeout: int = 30) -> requests.Response:
+    """GET with retries and exponential backoff for 429/5xx."""
+    attempt = 0
+    while True:
+        resp = fetch_with_random_header(url, timeout=timeout)
+        if resp.status_code < 400:
+            return resp
+        if resp.status_code == 429:
+            retry_after = resp.headers.get("Retry-After")
+            if retry_after and retry_after.isdigit():
+                sleep_s = int(retry_after)
+            else:
+                sleep_s = BASE_BACKOFF_SECONDS * (2 ** attempt) + random.uniform(0, 1)
+        elif 500 <= resp.status_code < 600:
+            sleep_s = BASE_BACKOFF_SECONDS * (2 ** attempt) + random.uniform(0, 1)
+        else:
+            return resp
+        attempt += 1
+        if attempt > MAX_RETRIES:
+            return resp
+        time.sleep(min(sleep_s, 15))
 
 def load_historical_links(json_file: str) -> List[Dict]:
     """Loads historical URLs from JSON file."""
@@ -106,14 +130,23 @@ def get_team_links(league_name: str, league_url: str, table_id: str) -> List[Tup
     Returns list of (team_name, team_url, league_name, season) from league page.
     """
     print(f"    Fetching league page: {league_url}")
-    resp = fetch_with_random_header(league_url, timeout=30)
+    resp = get_with_backoff(league_url, timeout=30)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    wrapper = soup.find("div", {"id": f"div_{table_id}"})
-    table = wrapper and wrapper.find("table", {"id": table_id}) 
+    # FBRef usa contenedores 'switcher_*' o 'div_*'. Permitir ambos.
+    # Primero localizar el contenedor por id exacto; si no, probar a derivar ids.
+    container = soup.find(id=table_id)
+    if not container:
+        # compat: si vino solo 'resultsXXXX', probar 'div_' y 'switcher_'
+        container = soup.find(id=f"div_{table_id}") or soup.find(id=f"switcher_{table_id}")
+    if not container:
+        raise RuntimeError(f"Container {table_id} not found. Check ID or wrapper.")
+
+    # Si el contenedor no es tabla, buscar tabla hija con id que empiece por 'results'
+    table = container if getattr(container, "name", "") == "table" else container.find("table")
     if not table or not table.tbody:
-        raise RuntimeError(f"Table {table_id} not found. Check ID or wrapper.")
+        raise RuntimeError(f"Table inside '{table_id}' not found or empty.")
 
     links = []
     for row in table.tbody.find_all("tr"):
@@ -132,7 +165,7 @@ def get_team_links(league_name: str, league_url: str, table_id: str) -> List[Tup
 def scrape_team_stats(team_name: str, team_url: str, league_name: str, season: str) -> pd.DataFrame:
     """Scrapes player statistics for a team in a specific season."""
     print(f"      Fetching team page: {team_url}")
-    resp = fetch_with_random_header(team_url, timeout=30)
+    resp = get_with_backoff(team_url, timeout=30)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
 
@@ -314,9 +347,9 @@ def main():
     print("=== HISTORICAL PLAYER DATA SCRAPING ===")
     print("Loading historical URLs...")
     
-    # Load URLs from JSON (use test file for validation)
+    # Load URLs from JSON (default to secondary leagues)
     import sys
-    json_file = sys.argv[1] if len(sys.argv) > 1 else 'historic_leagues_links.json'
+    json_file = sys.argv[1] if len(sys.argv) > 1 else 'secondary_leagues_links.json'
     
     try:
         historical_links = load_historical_links(json_file)
@@ -328,7 +361,12 @@ def main():
         print(f"Error loading URLs: {e}")
         return
     
-    all_team_data = []
+    # Setup output directory ANTES de empezar
+    import os
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    out_dir = os.path.join(base_dir, 'data', 'historical_secondary_2019_2024')
+    os.makedirs(out_dir, exist_ok=True)
+    print(f"Output directory: {out_dir}")
     
     # Process each league/season
     for i, config in enumerate(historical_links):
@@ -353,116 +391,81 @@ def main():
                 try:
                     df_team = scrape_team_stats(team_name, team_url, lg, season)
                     if not df_team.empty:
-                        all_team_data.append(df_team)
                         league_team_dfs.append(df_team)
                         print(f"    ✓ {len(df_team)} players obtained")
                     else:
                         print(f"    ✗ No data")
                 except Exception as e:
-                    print(f"    ✗ Error: {e}")
+                    print(f"    ✗ Error scraping {team_name}: {e}")
                 
                 # Pause between teams (4-10 seconds)
                 time.sleep(random.uniform(4, 10))
 
-            # Per-league/season summary and safeguard save
+            # GUARDAR INMEDIATAMENTE después de cada liga/temporada
             if league_team_dfs:
-                # Use concat with join='outer' to handle different column sets
-                df_league = pd.concat(league_team_dfs, ignore_index=True, sort=False, join='outer')
-                
-                # Save in new historical directory (use absolute path)
-                import os
-                base_dir = os.path.dirname(os.path.abspath(__file__))
-                out_dir = os.path.join(base_dir, 'data', 'historical_2014_2024')
-                out_path = os.path.join(out_dir, f"{league_name.replace(' ', '_')}_{season.replace('-', '_')}.csv")
                 try:
-                    import os
-                    os.makedirs(out_dir, exist_ok=True)
-                    df_league.to_csv(out_path, index=False)
-                    print(f"✓✓✓ SAVED: {out_path} ({len(df_league)} rows) ✓✓✓")
+                    print(f"  Saving {league_name} {season}...")
+                    df_league = pd.concat(league_team_dfs, ignore_index=True, sort=False)
                     
-                    # Verify file was saved
-                    if os.path.exists(out_path):
-                        file_size = os.path.getsize(out_path)
-                        print(f"    File verified: {file_size} bytes")
-                    else:
-                        print(f"    ✗✗✗ ERROR: File not found after save!")
-                except Exception as e:
-                    print(f"✗✗✗ ERROR saving {out_path}: {e}")
+                    # Remove duplicate columns if any
+                    df_league = df_league.loc[:, ~df_league.columns.duplicated()]
+                    
+                    # Filename seguro: Liga_Temporada.csv
+                    safe_league = league_name.replace(" ", "_").replace("/", "_").replace(".", "")
+                    safe_season = season.replace("/", "-")
+                    filename = f"{safe_league}_{safe_season}.csv"
+                    output_path = os.path.join(out_dir, filename)
+                    
+                    df_league.to_csv(output_path, index=False)
+                    print(f"  ✓✓✓ SAVED: {filename} ({len(df_league)} records, {len(df_league.columns)} columns) ✓✓✓")
+                    
+                except Exception as save_error:
+                    print(f"  ✗✗✗ ERROR saving {league_name} {season}: {save_error}")
                     import traceback
                     traceback.print_exc()
-
-                # Team counts for this league-season
-                try:
-                    team_counts = (
-                        df_league.groupby('Team').size().sort_values(ascending=False)
-                    )
-                    print(f"✓ {league_name} {season} completed: {len(df_league)} total players")
-                    print("Top 5 teams by player count:")
-                    for team, cnt in team_counts.head().items():
-                        print(f"  - {team}: {cnt}")
-                except Exception as e:
-                    print(f"Warning: could not compute team counts: {e}")
+                    # Continuar con la siguiente liga
+            else:
+                print(f"  ⚠ No data for {league_name} {season}")
             
         except Exception as e:
-            print(f"Error processing {league_name} - {season}: {e}")
-            continue
+            print(f"✗ Error processing {league_name} - {season}: {e}")
+            import traceback
+            traceback.print_exc()
+            # Continuar con la siguiente liga
         
         # Pause between leagues (4-10 seconds)
         time.sleep(random.uniform(4, 10))
     
-    # Process and aggregate data
-    print(f"\n=== PROCESSING DATA ===")
-    print(f"Total team datasets: {len(all_team_data)}")
-    
-    if all_team_data:
-        # Save raw data by season - with try/except to ensure individual files are safe
-        try:
-            print("Concatenating all team data...")
-            # Reset index for each dataframe to avoid duplicate index issues
-            for i, df in enumerate(all_team_data):
-                all_team_data[i] = df.reset_index(drop=True)
+    # OPCIONAL: Al final, concatenar todos los CSVs guardados como backup
+    print(f"\n=== CREATING FINAL CONCATENATION FROM SAVED FILES ===")
+    try:
+        csv_files = [f for f in os.listdir(out_dir) if f.endswith('.csv') and f != 'ALL_SECONDARY_RAW.csv']
+        if csv_files:
+            print(f"Found {len(csv_files)} saved league files. Concatenating...")
+            all_dfs = []
+            for csv_file in csv_files:
+                try:
+                    df = pd.read_csv(os.path.join(out_dir, csv_file))
+                    all_dfs.append(df)
+                    print(f"  Loaded: {csv_file} ({len(df)} rows)")
+                except Exception as e:
+                    print(f"  ✗ Error loading {csv_file}: {e}")
             
-            # Use join='outer' to handle different column sets across seasons
-            df_raw = pd.concat(all_team_data, ignore_index=True, sort=False, join='outer')
+            if all_dfs:
+                df_final = pd.concat(all_dfs, ignore_index=True, sort=False)
+                df_final = df_final.loc[:, ~df_final.columns.duplicated()]
+                
+                final_file = os.path.join(out_dir, 'ALL_SECONDARY_RAW.csv')
+                df_final.to_csv(final_file, index=False)
+                print(f"✓✓✓ Final concatenation saved: {final_file} ({len(df_final)} records) ✓✓✓")
+            else:
+                print("No dataframes to concatenate")
+        else:
+            print("No CSV files found to concatenate")
             
-            # Remove duplicate columns if any
-            df_raw = df_raw.loc[:, ~df_raw.columns.duplicated()]
-            
-            print(f"Final dataframe shape: {df_raw.shape}")
-            
-            # Use absolute path for output files
-            import os
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            out_dir = os.path.join(base_dir, 'data', 'historical_2014_2024')
-            
-            output_file = os.path.join(out_dir, 'ALL_HISTORICAL_RAW.csv')
-            df_raw.to_csv(output_file, index=False)
-            print(f"✓✓✓ Raw data saved: {output_file} ({len(df_raw)} records) ✓✓✓")
-            
-            # Aggregate by player
-            df_aggregated = process_historical_data(all_team_data)
-            agg_file = os.path.join(out_dir, 'ALL_HISTORICAL_AGGREGATED.csv')
-            df_aggregated.to_csv(agg_file, index=False)
-            print(f"✓✓✓ Aggregated data saved: {agg_file} ({len(df_aggregated)} unique players) ✓✓✓")
-        except Exception as e:
-            print(f"✗✗✗ ERROR during final aggregation: {e}")
-            print("Individual league/season files are still saved!")
-            import traceback
-            traceback.print_exc()
-        
-        # Statistics
-        print(f"\n=== STATISTICS ===")
-        print(f"Active players: {len(df_aggregated[df_aggregated['player_status'] == 'active'])}")
-        print(f"Inactive players: {len(df_aggregated[df_aggregated['player_status'] == 'inactive'])}")
-        print(f"Retired players: {len(df_aggregated[df_aggregated['player_status'] == 'retired'])}")
-        
-        # By league
-        print(f"\nBy league:")
-        for league in df_aggregated['League'].value_counts().head():
-            print(f"  {league}: {df_aggregated[df_aggregated['League'] == league].shape[0]} players")
-            
-    else:
-        print("No data obtained.")
+    except Exception as e:
+        print(f"✗ Error during final concatenation: {e}")
+        print("But individual league files are safe in:", out_dir)
 
 if __name__ == "__main__":
     main()

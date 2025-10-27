@@ -120,20 +120,11 @@ body, h1, h2, h3, h4, h5, h6, .btn, .card {
 /* ==========================================================================
    2) GENERAL BACKGROUND AND EFFECTS
    ========================================================================== */
-/* Background layer with grass */
+/* Soft color background - removed grass image for faster loading */
 body {
   position: relative;
   z-index: 0;
-  background-color: #f8f9fa; /* backup */
-}
-body::before {
-  content: "";
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: url("../img/grass.jpg") center center / cover no-repeat;
-  opacity: 0.15;          /* adjust transparency */
-  z-index: -1;            /* behind everything */
-  pointer-events: none;   /* doesn't interfere with clicks */
+  background: linear-gradient(135deg, #f0f4f0 0%, #e8f0e8 100%); /* Soft green gradient */
 }
 
 /* ===========================================================================
@@ -207,12 +198,20 @@ body::before {
 }
 
 /* ==========================================================================
-   3) NAVBAR
+   3) NAVBAR - Fixed header with logo
    ========================================================================== */
 .navbar.bg-primary {
   background-color: #0b3d0b !important;  /* dark green */
   border-color: #064009 !important;      /* darker border optional */
+  min-height: 95px;                      /* Taller header for 75px logo */
+  padding: 0.75rem 0;
 }
+
+/* Fixed navbar - add padding to body to compensate */
+body {
+  padding-top: 95px; /* Match navbar height */
+}
+
 .navbar .navbar-brand,
 .navbar .nav-link {
   color: #f8f9fa !important;             /* light text */
@@ -221,82 +220,42 @@ body::before {
   color: #c4e1c4 !important;             /* soft hover */
 }
 
+/* Logo in header */
+.header-logo {
+  height: 75px;
+  width: auto;
+  transition: transform 0.3s ease;
+}
+
+.header-logo-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.header-logo-link:hover .header-logo {
+  transform: scale(1.05);
+}
+
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* My Account dropdown toggle - match HOME style */
+.nav-link.dropdown-toggle {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+}
+
 
 /* ==========================================================================
-   4) LOGO WITH LIQUID GLASS EFFECT
+   4) LOGO EFFECTS (Removed - logo now only in header)
    ========================================================================== */
-.logo-container {
-  position: relative;
-  display: inline-block;
-  padding: 1rem;
-  border-radius: 20px;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.1) 0%, 
-    rgba(255, 255, 255, 0.05) 100%);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  overflow: hidden;
-}
-
-.logo-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, 
-    rgba(11, 61, 11, 0.1) 0%, 
-    rgba(40, 167, 69, 0.1) 50%, 
-    rgba(11, 61, 11, 0.1) 100%);
-  border-radius: 20px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.logo-container:hover {
-  transform: scale(1.05) translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-}
-
-.logo-container:hover::before {
-  opacity: 1;
-}
-
-.glass-logo {
-  position: relative;
-  z-index: 1;
-  transition: all 0.3s ease;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-}
-
-.logo-container:hover .glass-logo {
-  transform: scale(1.02);
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
-}
-
-/* Shine effect on logo */
-.logo-container::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(45deg, 
-    transparent 30%, 
-    rgba(255, 255, 255, 0.1) 50%, 
-    transparent 70%);
-  transform: translateX(-100%) translateY(-100%) rotate(45deg);
-  transition: transform 0.6s ease;
-  z-index: 0;
-}
-
-.logo-container:hover::after {
-  transform: translateX(100%) translateY(100%) rotate(45deg);
-}
+/* Logo effects removed for cleaner, simpler design */
 
 /* ==========================================================================
    5) TOOLTIPS WITH LIQUID GLASS EFFECT
@@ -505,6 +464,7 @@ body::before {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   border-radius: 0.375rem;
+  margin: 3px;
 }
 
 /* Close buttons */
@@ -656,7 +616,6 @@ footer.site-footer {
   color: #f8f9fa !important;
   padding-top: 1rem;
   padding-bottom: 1rem;
-  margin-top: 2rem;
 }
 footer.site-footer img {
   opacity: 0.8;
@@ -715,10 +674,49 @@ h1.display-5, h2, h4 {
 
 
 /* ==========================================================================
-   7) NEWS TICKER
+   7) NEWS TICKER - Continuous scroll
    ========================================================================== */
-#newsCarousel .carousel-item .bg-dark {
-  background-color: rgba(11, 61, 11, 0.85) !important; /* semitransparent */
+.news-ticker-wrapper {
+  width: 100%;
+  overflow: hidden;
+  background: #0b3d0b;
+  padding: 1rem 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.news-ticker {
+  width: 100%;
+  overflow: hidden;
+}
+
+.news-ticker-content {
+  display: inline-block;
+  white-space: nowrap;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 500;
+  animation: scroll-left 180s linear infinite;
+  padding-left: 100%;
+}
+
+.news-separator {
+  margin: 0 1.5rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 300;
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Pause on hover */
+.news-ticker-content:hover {
+  animation-play-state: paused;
 }
 
 
@@ -1040,11 +1038,15 @@ select[multiple] { min-height: 150px; }
 /* 3. Dropdown items: text and hover */
 .navbar-dark .dropdown-menu .dropdown-item {
   color: #fff;                              /* white text */
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.5rem;
+  text-transform: uppercase;                /* uppercase */
+  font-weight: 600;                         /* bold */
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
 }
 .navbar-dark .dropdown-menu .dropdown-item:hover,
 .navbar-dark .dropdown-menu .dropdown-item:focus {
-  background-color: rgba(255,255,255,0.1);  /* slightly lighten on hover */
+  background-color: rgba(255,255,255,0.15); /* slightly lighten on hover */
   color: #fff;
 }
 
@@ -1179,7 +1181,7 @@ select[multiple] { min-height: 150px; }
   }
   
   .search-sidebar {
-    width: 100%;
+  width: 100%;
     height: 300px;
   }
   
@@ -1242,16 +1244,15 @@ select[multiple] { min-height: 150px; }
   align-items: center;
   justify-content: center;
   padding: 2rem 2rem;
-  border-radius: 20px;
+  border-radius: 12px;
   text-decoration: none;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  height: 160px;
-  min-height: 160px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  height: 140px;
+  min-height: 140px;
 }
 
 .action-btn::before {
@@ -1268,37 +1269,28 @@ select[multiple] { min-height: 150px; }
 }
 
 .action-btn:hover {
-  transform: scale(1.05) translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
 .action-btn:hover::before {
   opacity: 1;
 }
 
-/* Green tones */
-.action-btn.btn-primary {
-  background: linear-gradient(135deg, 
-    rgba(11, 61, 11, 0.9) 0%, 
-    rgba(20, 90, 20, 0.8) 50%, 
-    rgba(11, 61, 11, 0.9) 100%);
-  border: 1px solid rgba(11, 61, 11, 0.3);
-}
-
-.action-btn.btn-success {
-  background: linear-gradient(135deg, 
-    rgba(40, 167, 69, 0.9) 0%, 
-    rgba(32, 201, 151, 0.8) 50%, 
-    rgba(40, 167, 69, 0.9) 100%);
-  border: 1px solid rgba(40, 167, 69, 0.3);
-}
-
+/* Unified green palette - ALL buttons same color */
+.action-btn.btn-primary,
+.action-btn.btn-success,
 .action-btn.btn-info {
-  background: linear-gradient(135deg, 
-    rgba(13, 202, 240, 0.9) 0%, 
-    rgba(32, 201, 151, 0.8) 50%, 
-    rgba(13, 202, 240, 0.9) 100%);
-  border: 1px solid rgba(13, 202, 240, 0.3);
+  background: #0b3d0b;
+  color: white;
+}
+
+.action-btn.btn-primary:hover,
+.action-btn.btn-success:hover,
+.action-btn.btn-info:hover {
+  background: #0d4d0d;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
 .btn-icon {
@@ -1330,12 +1322,20 @@ select[multiple] { min-height: 150px; }
 }
 
 .btn-title {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   font-weight: 700;
-  margin: 0;
+  margin: 0 0 0.5rem 0;
   color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   letter-spacing: 0.5px;
+}
+
+.btn-subtitle {
+  font-size: 0.95rem;
+  font-weight: 400;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* Efecto de brillo al hover */
@@ -1496,16 +1496,21 @@ select[multiple] { min-height: 150px; }
 
 @media (min-width: 1400px) {
   .home-page-wrapper {
-    width: 75%;
-    padding: 0 4rem;
+    width: 90%;
+    padding: 0 3rem;
+  }
+  
+  .page-wrapper-80 {
+    width: 92%;
+    max-width: 1800px;
   }
   
   .home-container {
-    padding: 4rem 0;
+    padding: 3rem 0;
   }
   
   .home-welcome {
-    font-size: 4rem;
+    font-size: 3.5rem;
   }
   
   .gallery-image {
@@ -1515,19 +1520,23 @@ select[multiple] { min-height: 150px; }
   
   .action-btn {
     padding: 2rem 2rem;
-    height: 160px;
-    min-height: 160px;
-  }
-  
-  .btn-icon {
-    width: 60px;
-    height: 60px;
-    font-size: 2.6rem;
-    margin-bottom: 0.8rem;
+    height: 150px;
+    min-height: 150px;
   }
   
   .btn-title {
     font-size: 1.8rem;
+  }
+}
+
+@media (min-width: 1800px) {
+  .page-wrapper-80 {
+    width: 95%;
+    max-width: 2000px;
+  }
+  
+  .home-container {
+    padding: 3rem 2rem;
   }
 }
 
@@ -1538,74 +1547,37 @@ select[multiple] { min-height: 150px; }
 /* Fullscreen chat wrapper - bypasses container but keeps navbar */
 .fullscreen-chat-wrapper {
   width: 100vw;
-  height: calc(100vh - 60px); /* Subtract the height of the navbar */
+  height: calc(100vh - 95px); /* Subtract the height of the navbar */
   margin-left: calc(-50vw + 50%);
-  background: url('/static/img/grass.jpg') center center / cover no-repeat;
-  background-attachment: fixed;
+  background: linear-gradient(135deg, #f0f4f0 0%, #e8f0e8 100%); /* Clean gradient like body */
   overflow: hidden;
 }
 
-/* Logo siempre visible en el chat */
-.chat-logo-section {
-  text-align: center;
-  padding: 2rem 1rem;
-  margin-bottom: 1rem;
-}
-
-.chat-logo {
-  max-height: 350px;
-  filter: drop-shadow(0 8px 16px rgba(11, 61, 11, 0.4)) 
-          drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))
-          drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  transform: perspective(1000px) rotateX(5deg) rotateY(-2deg);
-  animation: logoFloat 3s ease-in-out infinite;
-}
-
-@keyframes logoFloat {
-  0%, 100% { transform: perspective(1000px) rotateX(5deg) rotateY(-5deg) translateY(0px); }
-  50% { transform: perspective(1000px) rotateX(5deg) rotateY(-5deg) translateY(-10px); }
-}
+/* Chat logo removed for cleaner design */
 
 /* Welcome message only for new chats */
 .chat-welcome-message {
   text-align: center;
-  padding: 2rem;
+  padding: 0;                 /* remove extra vertical padding */
   background: transparent;
-  border-radius: 1rem;
-  margin: 1rem auto;
-  max-width: 800px;
+  border-radius: 0;
+  margin: 0;                  /* remove top/bottom gaps */
+  max-width: none;
   width: 100%;
 }
 
 .typewriter-wrapper {
-  color: white;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  font-size: 1.8rem;
-  font-weight: 600;
+  color: inherit;
+  text-shadow: none;
+  font-size: inherit;
+  font-weight: inherit;
   text-align: center;
   white-space: nowrap;
   overflow: visible;
 }
 
-/* Typing animation */
 .typewriter-text {
-  overflow: visible;
-  border-right: 0.15em solid #00ff00;
-  white-space: nowrap;
-  margin: 0 auto;
-  letter-spacing: 0.1em;
-  animation: typing 4s steps(50, end), blink-caret 0.75s step-end infinite;
-  display: inline-block;
-}
-
-@keyframes typing {
-  from { width: 0; }
-  to { width: 100%; }
-}
-
-@keyframes blink-caret {
-  from, to { border-color: transparent; }
-  50% { border-color: #00ff00; }
+  border-right: none !important;   /* no green cursor */
 }
 /* Wrapper principal of the chat page with width of 95% */
 .chat-page-wrapper {
@@ -1622,8 +1594,8 @@ select[multiple] { min-height: 150px; }
   width: 100%;
   max-width: 100%;
   margin: 0;
-  padding: 1rem;
-  height: 100vh;
+  padding: 0;               /* remove outer padding to kill top/bottom gaps */
+  height: 100%;             /* fill parent, not viewport */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1633,11 +1605,10 @@ select[multiple] { min-height: 150px; }
 .chat-log {
   width: 100%;
   max-width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 0;          /* remove gap above the input */
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.5);
   border-radius: 1rem;
-  backdrop-filter: blur(10px);
   flex: 1;
   overflow-y: auto;
   /* Hide scrollbar but keep functionality */
@@ -1657,87 +1628,54 @@ select[multiple] { min-height: 150px; }
   flex-direction: column;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.5);
   border-radius: 1rem;
-  backdrop-filter: blur(10px);
 }
 
 /* Container of the textarea with integrated button */
 .chat-input-container {
   position: relative;
   width: 100%;
-  display: flex;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: 1fr auto; /* textarea grows, button fits content */
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.25rem 0.25rem 0.5rem; /* inner spacing */
+  border: 2px solid #0b3d0b;            /* green border moved here */
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);  /* unified background */
+}
+
+/* Emphasize container when user focuses the textarea */
+.chat-input-container:focus-within {
+  box-shadow: 0 0 0 0.2rem rgba(11, 61, 11, 0.15);
 }
 
 /* Chat textarea */
 .chat-input {
   width: 100% !important;
   max-width: 100% !important;
-  min-height: 6rem;
-  resize: vertical;
+  min-height: 1.75rem; /* ~28px, one line */
+  height: auto;               /* allow JS to set height */
+  max-height: 40vh;           /* cap growth */
+  overflow-y: hidden;         /* hidden until cap is reached */
+  resize: none;               /* growth is automatic */
   font-size: 1rem;
-  padding: 1rem 4rem 1rem 1rem; /* Space for the button */
-  border: 2px solid #0b3d0b;
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+  box-sizing: border-box;     /* include padding in width so text wraps earlier */
+  padding: 0.5rem 3.5rem 0.5rem 0.75rem; /* leave space for 2.25rem button + gap */
+  border: none;                /* remove inner border */
+  border-radius: 0.375rem;     /* subtle rounding inside */
+  background: transparent;     /* blend with container */
 }
 
 .chat-input:focus {
-  box-shadow: 0 0 0 0.2rem rgba(11, 61, 11, 0.25);
-  border-color: #0b3d0b;
+  box-shadow: none;            /* highlight is on container */
+  border-color: transparent;
   outline: none;
 }
 
-/* Integrated send button */
-.btn-send {
-  position: absolute !important;
-  right: 0.5rem !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  width: 3rem !important;
-  height: 3rem !important;
-  padding: 0 !important;
-  font-size: 1.2rem !important;
-  font-weight: 700 !important;
-  border-radius: 50% !important;
-  transition: all 0.3s ease !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: #0b3d0b !important;
-  color: white !important;
-  border: none !important;
-  cursor: pointer !important;
-  min-width: 3rem !important;
-  min-height: 3rem !important;
-  max-width: 3rem !important;
-  max-height: 3rem !important;
-  line-height: 1 !important;
-  text-align: center !important;
-  z-index: 10 !important;
-}
-
-.btn-send:hover {
-  transform: translateY(-50%) translateY(-2px) scale(1.05) !important;
-  box-shadow: 0 4px 12px rgba(11, 61, 11, 0.4) !important;
-  background: #0d4d0d !important;
-}
-
-.btn-send:active {
-  transform: translateY(-50%) scale(0.95) !important;
-}
-
-/* Specific styles for the send icon */
-.btn-send .send-icon {
-  font-size: 20px !important;
-  color: white !important;
-  display: block !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  line-height: 1 !important;
-  font-weight: bold !important;
-}
+/* Integrated send button - REMOVED DUPLICATE */
 
 /* Download button - separated from the send button */
 .btn-download {
@@ -1760,83 +1698,177 @@ select[multiple] { min-height: 150px; }
   background: #0d4d0d;
   color: white;
   text-decoration: none;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(11, 61, 11, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .btn-download:active {
-  transform: translateY(0);
+  background: #0a3509;
 }
 
-/* Chat bubbles styles */
+/* Send button - updated with SVG avioncito - HIGH SPECIFICITY */
+button.btn.btn-submit.btn-send {
+  position: static !important;
+  transform: none !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  padding: 0 !important;
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  border-radius: 50% !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  color: #0b3d0b !important;
+  border: none !important;
+  border-color: transparent !important;
+  cursor: pointer !important;
+  min-width: 2.25rem !important;
+  min-height: 2.25rem !important;
+  max-width: 2.25rem !important;
+  max-height: 2.25rem !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  z-index: 1 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+button.btn.btn-submit.btn-send:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: #0b3d0b !important;
+}
+
+button.btn.btn-submit.btn-send:active {
+  transform: scale(0.95) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+button.btn.btn-submit.btn-send:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: #ccc !important;
+  transform: none !important;
+}
+
+/* Send icon styles */
+button.btn.btn-submit.btn-send .send-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+button.btn.btn-submit.btn-send .send-icon svg {
+  width: 32px !important;
+  height: 32px !important;
+  transition: all 0.3s ease;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke: currentColor !important;
+  fill: none !important;
+  color: #0b3d0b !important;
+}
+
+button.btn.btn-submit.btn-send:hover .send-icon svg {
+  transform: translateX(3px) rotate(5deg);
+  stroke-width: 2.2;
+}
+
+button.btn.btn-submit.btn-send:disabled .send-icon {
+  display: none !important;
+}
+
+/* Spinner styles */
+button.btn.btn-submit.btn-send .spinner {
+  display: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid #c3e6cb !important;
+  border-top-color: #0b3d0b !important;
+  border-radius: 50% !important;
+  animation: spin .6s linear infinite !important;
+}
+
+button.btn.btn-submit.btn-send:disabled .spinner {
+  display: inline-block !important;
+}
+
+/* Prevent global .btn:hover scale on send button inside chat input */
+.chat-input-container .btn:hover {
+  transform: none !important;
+}
+
+/* Disable ::before pseudo-element for send button */
+button.btn.btn-submit.btn-send::before {
+  display: none !important;
+}
+
+/* Fix textarea cursor */
+textarea.chat-input {
+  cursor: text !important;
+}
+
+textarea.chat-input:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  background-color: #f8f9fa;
+}
+
+
+/* Chat messages - Simple and clean, no avatars */
 .chat-row {
   display: flex;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   width: 100%;
-  align-items: flex-end; /* bottom-align bubble and avatar */
+  align-items: flex-end;
 }
 
+/* User messages on the LEFT */
 .chat-user {
   justify-content: flex-start;
 }
 
+/* Bot messages on the RIGHT */
 .chat-bot {
   justify-content: flex-end;
 }
 
 .bubble {
-  max-width: 70%;
-  padding: 1rem 1.5rem;
-  border-radius: 1.5rem;
+  max-width: 65%;
+  padding: 0.75rem 1rem;
   word-wrap: break-word;
   position: relative;
+  line-height: 1.4;
+  border-radius: 8px;
 }
 
-.bubble-user {
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  margin-right: .5rem; /* closer to avatar */
-}
-
+/* Same color for both - simple and clean */
+.bubble-user,
 .bubble-bot {
-  background: rgba(11, 61, 11, 0.9);
-  color: white;
-  border: 1px solid rgba(11, 61, 11, 0.3);
-  margin-left: .5rem; /* closer to avatar */
+  background: rgba(255, 255, 255, 0.7);
+  color: #000;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* -------- Chat avatars (user/bot) -------- */
+/* -------- Hide chat avatars -------- */
 .chat-avatar {
-  flex: 0 0 54px; /* bigger avatar */
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: .5rem;
-  margin-right: .5rem;
-  box-shadow: 0 2px 6px rgba(0,0,0,.15);
-  overflow: hidden;
-}
-
-.chat-avatar-user {
-  background: #d9fdd3; /* soft green */
-  color: #0b3d0b;
-  font-weight: 700;
-  border: 1px solid rgba(11,61,11,.25);
-}
-
-.chat-avatar-bot {
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,.1);
-}
-.chat-avatar-bot img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  display: none;
 }
 
 .fade-in {
@@ -1855,85 +1887,9 @@ select[multiple] { min-height: 150px; }
 }
 
 /* ==========================================================================
-   16) LOGO 3D EFFECTS
+   16) LOGO 3D EFFECTS (Removed - cleaner design)
    ========================================================================== */
-.app-logo {
-  max-height: 350px !important;
-  width: auto;
-  filter: drop-shadow(0 8px 16px rgba(11, 61, 11, 0.4)) 
-          drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))
-          drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  transition: all 0.3s ease;
-  transform: perspective(1000px) rotateX(5deg) rotateY(-2deg);
-  animation: logoFloat 3s ease-in-out infinite;
-}
-
-/* Remove extra padding of the logo section */
-section.text-center.py-3 {
-  padding: 0 !important;
-  margin: 0 !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-/* Remove any extra space below the navbar */
-.navbar + section {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-}
-
-/* Remove any background or border that causes the bar */
-header + section {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Ensure that there is no visual separation */
-.navbar {
-  margin-bottom: 0 !important;
-  border-bottom: none !important;
-}
-
-/* Hide the main container that causes the extra space only in the chat */
-.fullscreen-chat-wrapper main.container.py-4 {
-  display: none !important;
-}
-
-.app-logo:hover {
-  transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1.05);
-  filter: drop-shadow(0 12px 24px rgba(11, 61, 11, 0.6)) 
-          drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3))
-          drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
-}
-
-@keyframes logoFloat {
-  0%, 100% {
-    transform: perspective(1000px) rotateX(5deg) rotateY(-2deg) translateY(0px);
-  }
-  50% {
-    transform: perspective(1000px) rotateX(5deg) rotateY(-2deg) translateY(-5px);
-  }
-}
-
-/* Responsive logo sizing */
-@media (max-width: 768px) {
-  .app-logo {
-    max-height: 350px !important;
-    transform: perspective(1000px) rotateX(2deg) rotateY(-1deg);
-  }
-  
-  .app-logo:hover {
-    transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1.03);
-  }
-}
-
-@media (max-width: 480px) {
-  .app-logo {
-    max-height: 280px !important;
-    transform: perspective(1000px) rotateX(1deg) rotateY(-0.5deg);
-  }
-}
+/* Logo 3D effects removed for simpler, faster design */
 
 /* ==========================================================================
    17) CHAT SIDEBAR LAYOUT
@@ -1941,7 +1897,7 @@ header + section {
 .fullscreen-chat-wrapper .chat-layout {
   display: flex;
   gap: 0;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 95px);
   width: 100vw;
   margin: 0;
   padding: 0;
@@ -1949,16 +1905,15 @@ header + section {
 
 .fullscreen-chat-wrapper .chat-sidebar {
   width: 300px;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.98);
   border-radius: 0;
   padding: 1.5rem;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
   border: none;
   border-right: 1px solid rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 95px);
   overflow: hidden;
 }
 
@@ -2054,7 +2009,7 @@ header + section {
 .fullscreen-chat-wrapper .chat-main {
   flex: 1;
   min-width: 0;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 95px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -2201,9 +2156,9 @@ header + section {
 }
 
 .btn-submit {
-  margin-top: 1rem !important;
-  padding: 0.75rem 2rem !important;
-  font-size: 1.1rem !important;
+  margin-top: 0rem !important;
+  padding: 1.5rem 2rem !important;
+  font-size: 1rem !important;
   font-weight: 600 !important;
 }
 
@@ -2282,7 +2237,7 @@ header + section {
   }
   
   .chat-container {
-    padding: 4rem 0;
+    padding: 0rem 0;
   }
   
   .chat-log {
@@ -2303,10 +2258,10 @@ header + section {
 /* ==========================================================================
    15) GENERAL FULL-WIDTH LAYOUT CLASSES
    ========================================================================== */
-/* Generic class for pages with width of 80% */
+/* Generic class for pages with width of 80% - increased max-width */
 .page-wrapper-80 {
-  width: 80%;
-  max-width: 1200px;
+  width: 90%;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 0 1rem;
 }
@@ -2375,15 +2330,14 @@ form.chat-form textarea.chat-input {
   width: 100% !important;   
   max-width: none !important;  
   min-height: 6rem;
-  resize: vertical;        
+  resize: none;        
 }
 
 textarea.chat-input {
   width: 100%;
   min-width: 6rem;            
   max-width: 80%;       
-  min-height: 6rem;       
-  resize: vertical;       
+  min-height: 6rem;           
   font-size: 1rem;        
 }
 
@@ -2407,7 +2361,7 @@ textarea.chat-input {
 /* -- WhatsApp style messages -- */
 .chat-row {
     display: flex;
-    margin: 0.5rem 1rem;
+    margin: 3rem 1rem;
     clear: both;
 }
 
@@ -2432,48 +2386,7 @@ textarea.chat-input {
     animation: fadeInUp 0.25s ease-out forwards;
 }
 
-.bubble-user {
-    background-color: #d9fdd3;
-    color: #111;
-    border-bottom-left-radius: 2px;
-    margin-right: 25%;
-    text-align: left;
-}
-
-.bubble-bot {
-    background-color: #a9c2a1;
-    color: #111;
-    border-bottom-right-radius: 2px;
-    margin-left: 25%;
-    text-align: left;
-}
-
-/* -- WhatsApp bubble queue -- */
-.bubble-user::after {
-    content: "";
-    position: absolute;
-    left: -10px;
-    bottom: 0;
-    border: 10px solid transparent;
-    border-left-color: #aed4a8;
-    border-right: 0;
-    border-bottom: 0;
-    margin-bottom: -1px;
-    margin-right: -1px;
-}
-
-.bubble-bot::after {
-    content: "";
-    position: absolute;
-    right: -10px;
-    bottom: 0;
-    border: 10px solid transparent;
-    border-right-color: #a9c2a1;
-    border-left: 0;
-    border-bottom: 0;
-    margin-bottom: -1px;
-    margin-left: -1px;
-}
+/* Removed - using unified styles defined earlier in the file */
 
 /* -- Entry animation -- */
 @keyframes fadeInUp {
@@ -2486,59 +2399,30 @@ textarea.chat-input {
 /* Main container of the effect */
 .typewriter-wrapper {
   display: inline-block;
-  font-size: clamp(1.3rem, 2.8vw, 1.6rem);
-  font-weight: 600;
+  font-size: clamp(2rem, 3.5vw, 2.5rem);  /* Larger text */
+  font-weight: 700;                       /* Bolder */
   color: #0b3d0b;
-  white-space: nowrap;
-  overflow-x: hidden;
-  overflow: hidden;
+  white-space: nowrap;                    /* keep one line */
+  overflow: visible;                      /* prevent clipping around */
   max-width: 100%;
   text-align: center;
   position: relative;
+  text-transform: uppercase;              /* Ensure uppercase */
+  letter-spacing: 1px;
 }
 
-/* Animated text */
+/* Typewriter text with self-hiding caret */
 .typewriter-text {
   display: inline-block;
-  animation: typing 3s steps(45, end) forwards;
-  overflow: hidden;
-  white-space: nowrap;
+  overflow: hidden;                        /* hide text while typing */
+  white-space: nowrap;                     /* single line during typing */
+  width: 0;                                /* start hidden */
+  animation: typing var(--dur, 3s) steps(var(--chars, 32), end) forwards; /* reveal characters */
 }
 
-/* Independent cursor */
-.typewriter-cursor {
-  display: inline-block;
-  color: #0b3d0b;
-  animation: blink-caret 0.6s step-end 5 forwards;
-}
-
-/* Emoji appears at the end */
-.bot-icon {
-  display: inline-block;
-  opacity: 0;
-  margin-left: 0.5rem;
-  animation: show-bot 0.4s ease-out forwards;
-  animation-delay: 3.2s;
-}
-
-/* Writing animation */
+/* Type to a specific number of characters so full text becomes visible */
 @keyframes typing {
-  from { width: 0 }
-  to { width: 100% }
-}
-
-/* Blink of the cursor (until it disappears) */
-@keyframes blink-caret {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-  99% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-/* Smooth appearance of the emoji */
-@keyframes show-bot {
-  from { opacity: 0; transform: scale(0.8) translateY(5px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  to { width: var(--tw, 32ch) }
 }
 
 /* hidden by default */
@@ -2561,5 +2445,440 @@ textarea.chat-input {
 }
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* ==========================================================================
+   STATISTICS TABLE STYLES
+   ========================================================================== */
+
+.card-header {
+  text-align: center;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+}
+
+.table th {
+  text-align: center;
+  vertical-align: middle;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.table td {
+  text-align: center;
+  vertical-align: middle;
+  font-size: 1rem;
+}
+
+/* ==========================================================================
+   FIFA PLAYER CARDS
+   ========================================================================== */
+
+/* Import Saira Semi Condensed font for FIFA cards */
+@import url('https://fonts.googleapis.com/css?family=Saira+Semi+Condensed:300,400,700');
+
+.fut-player-card {
+  position: relative;
+  width: 285px;
+  height: 400px;
+  background: linear-gradient(135deg, #0b3d0b 0%, #1a5a1a 50%, #0b3d0b 100%);
+  border: 2px solid #28a745;
+  border-radius: 15px;
+  padding: 2.5rem 0;
+  z-index: 2;
+  transition: 200ms ease-in;
+  box-shadow: 0 8px 32px rgba(11, 61, 11, 0.3);
+  overflow: hidden;
+}
+
+.fut-player-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    rgba(40, 167, 69, 0.1) 0%, 
+    transparent 25%, 
+    transparent 75%, 
+    rgba(40, 167, 69, 0.1) 100%);
+  pointer-events: none;
+}
+
+.fut-player-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.fut-player-card .player-card-top {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #ffffff;
+  padding: 1.5rem;
+  height: 120px;
+}
+
+.fut-player-card .player-left-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.3rem;
+  flex: 1;
+  margin-top: 2rem;
+}
+
+.fut-player-card .player-position {
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-shadow: 2px 2px #111;
+  font-family: 'Saira Semi Condensed', sans-serif;
+  margin: 0;
+}
+
+.fut-player-card .player-nation {
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  background: rgba(233, 204, 116, 0.1);
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
+  font-family: 'Saira Semi Condensed', sans-serif;
+  margin: 0;
+}
+
+.fut-player-card .player-club-logo {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 0.2rem;
+}
+
+.fut-player-card .player-right-ovr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fut-player-card .ovr-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-shadow: 1px 1px #111;
+  margin-bottom: 0.5rem;
+  margin-top: 1.5rem;
+  font-family: 'Saira Semi Condensed', sans-serif;
+  text-align: center;
+}
+
+.fut-player-card .overall-display {
+  width: 130px;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 4rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 2px 2px #000;
+  font-family: 'Saira Semi Condensed', sans-serif;
+}
+
+.fut-player-card .player-card-bottom {
+  position: relative;
+}
+
+.fut-player-card .player-card-bottom .player-info {
+  display: block;
+  padding: 0.3rem 0;
+  color: #ffffff;
+  width: 90%;
+  margin: 0 auto;
+  height: auto;
+  position: relative;
+  z-index: 2;
+  font-family: 'Saira Semi Condensed', sans-serif;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-name {
+  width: 100%;
+  display: block;
+  text-align: center;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-name span {
+  display: block;
+  text-shadow: 2px 2px #111;
+  margin-top: 4rem;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-features {
+  margin: 0.5rem auto;
+  display: flex;
+  justify-content: center;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-features .player-features-col {
+  border-right: 2px solid rgba(255, 255, 255, 0.2);
+  padding: 0 1.3rem;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-features .player-features-col span {
+  display: flex;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-value {
+  margin-right: 0.3rem;
+  font-weight: 700;
+  min-width: 2rem;
+  flex-shrink: 0;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-title {
+  font-weight: 300;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-features .player-features-col:last-child {
+  border: 0;
+}
+
+/* Team Card Styles */
+.fut-team-card {
+  position: relative;
+  width: 450px;
+  height: 210px;
+  background: linear-gradient(135deg, #0b3d0b 0%, #1a5a1a 50%, #0b3d0b 100%);
+  border: 2px solid #28a745;
+  border-radius: 15px;
+  padding: 1rem;
+  z-index: 2;
+  transition: 200ms ease-in;
+  box-shadow: 0 8px 32px rgba(11, 61, 11, 0.3);
+  overflow: hidden;
+  font-family: 'Saira Semi Condensed', sans-serif;
+}
+
+.fut-team-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    rgba(233, 204, 116, 0.1) 0%, 
+    transparent 25%, 
+    transparent 75%, 
+    rgba(233, 204, 116, 0.1) 100%);
+  pointer-events: none;
+}
+
+.fut-team-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.fut-team-card .team-card-content {
+  display: flex;
+  height: 100%;
+  color: #ffffff;
+}
+
+.fut-team-card .team-overall-section {
+  width: 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border-right: 2px solid rgba(255, 255, 255, 0.2);
+  padding-right: 1rem;
+}
+
+.fut-team-card .team-overall-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+.fut-team-card .team-overall-display {
+  font-size: 3.5rem;
+  font-weight: 700;
+  text-shadow: 3px 3px #111;
+  color: #ffffff;
+}
+
+.fut-team-card .team-info-section {
+  width: 70%;
+  padding-left: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.fut-team-card .team-name-centered {
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-shadow: 2px 2px #111;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fut-team-card .team-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.fut-team-card .team-stat-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(233, 204, 116, 0.1);
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+}
+
+.fut-team-card .team-stat-label {
+  font-size: 0.8rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  text-shadow: 1px 1px #111;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fut-team-card .team-stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  text-shadow: 1px 1px #111;
+  flex-shrink: 0;
+}
+
+/* Radar Toggle Styles */
+.radar-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.6rem;
+  margin-top: 0.6rem;
+  gap: 1rem;
+}
+
+.radar-toggle-btn {
+  background: #f8f9fa;
+  border: 2px solid #dee2e6;
+  color: #6c757d;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  font-family: 'Saira Semi Condensed', sans-serif;
+}
+
+.radar-toggle-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.radar-toggle-btn.active {
+  background: linear-gradient(135deg, #0b3d0b 0%, #1a5a1a 100%);
+  border-color: #0b3d0b;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(11, 61, 11, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .fut-player-card {
+    width: 260px;
+    height: 420px;
+  }
+  
+  .fut-team-card {
+    width: 320px;
+    height: 140px;
+  }
+  
+  .fut-player-card .player-card-top {
+    height: 100px;
+    padding: 1rem;
+  }
+  
+  .fut-player-card .overall-display {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+  
+  .fut-player-card .player-position {
+    font-size: 1.2rem;
+  }
+  
+  .fut-player-card .player-nation {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .fut-team-card .team-overall-display {
+    font-size: 2.5rem;
+  }
+  
+  .fut-team-card .team-name-centered {
+    font-size: 1.1rem;
+  }
+  
+  .fut-team-card .team-stats-grid {
+    gap: 0.2rem;
+  }
+  
+  .fut-team-card .team-stat-value {
+    font-size: 0.9rem;
+  }
+  
+  .fut-team-card .team-stat-label {
+    font-size: 0.6rem;
+  }
+}
 
 

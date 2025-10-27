@@ -33,6 +33,7 @@ dependencies = [
   "langchain-community==0.3.29",
   "openai==1.107.1",
   "langchain-openai==0.3.33",
+  "langfuse>=2.50.0",  # LLM observability & cost tracking
 
   # --- Data processing & ML ---
   "pandas==2.3.2",

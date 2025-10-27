@@ -172,9 +172,9 @@
 
       <!-- Main content 80%: top team + stats; below split: radar | charts -->
       <section class="col-12 col-lg-10">
-        <!-- Top row: Team (logo) then Stats table -->
+        <!-- Top row: Team (logo) then Team rating card -->
         <div class="row g-3">
-          <div class="col-12">
+          <div class="col-12 col-md-6">
             {% if player.team_logo %}
             <div class="card shadow-sm">
               <div class="card-header text-center">Team Season 24/25</div>
@@ -187,35 +187,161 @@
             </div>
             {% endif %}
           </div>
+          <div class="col-12 col-md-6 d-flex justify-content-center">
+            {% if team_rating %}
+            <div class="fut-team-card">
+              <div class="team-card-content">
+                <!-- Left column: Overall rating (30%) -->
+                <div class="team-overall-section">
+                  <div class="team-overall-title">TEAM OVERALL</div>
+                  <div class="team-overall-display">{{ team_rating.overall_rating|floatformat:0 }}</div>
+                </div>
+                <!-- Right column: Team info and stats (70%) -->
+                <div class="team-info-section">
+                  <div class="team-name-centered">{{ team_rating.team_name }}</div>
+                  <div class="team-stats-grid">
+                    <div class="team-stat-item">
+                      <span class="team-stat-label">ATT</span>
+                      <span class="team-stat-value">{{ team_rating.team_att }}</span>
+                    </div>
+                    <div class="team-stat-item">
+                      <span class="team-stat-label">PLY</span>
+                      <span class="team-stat-value">{{ team_rating.team_ply }}</span>
+                    </div>
+                    <div class="team-stat-item">
+                      <span class="team-stat-label">DEF</span>
+                      <span class="team-stat-value">{{ team_rating.team_def }}</span>
+                    </div>
+                    <div class="team-stat-item">
+                      <span class="team-stat-label">CTR</span>
+                      <span class="team-stat-value">{{ team_rating.team_ctr }}</span>
+                    </div>
+                    <div class="team-stat-item">
+                      <span class="team-stat-label">PHY</span>
+                      <span class="team-stat-value">{{ team_rating.team_phy }}</span>
+                    </div>
+                    <div class="team-stat-item">
+                      <span class="team-stat-label">GKP</span>
+                      <span class="team-stat-value">{{ team_rating.team_gkp }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
         </div>
 
-        <!-- Split row: left Stats+Radar (50%), right stacked charts (50%) -->
+        <!-- Split row: left Stats+Player Card (50%), right stacked charts (50%) -->
         <div class="row g-3 mt-3">
           <div class="col-12 col-xl-6">
-            <!-- Stats table on top -->
-            <div class="card shadow-sm">
-              <div class="card-header">Statistics</div>
-              <div class="card-body p-0">
-                <table class="table table-sm mb-0">
-                  <tbody>
-                    {% for k, v in kpis.items %}
-                    <tr>
-                      <th class="w-50">{{ k|title }}</th>
-                      <td>{{ v }}</td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
+            <!-- Stats table and Player FIFA Card side by side -->
+            <div class="row g-2">
+              <div class="col-12 col-md-9">
+                <div class="card shadow-sm h-100">
+                  <div class="card-header">Stats</div>
+                  <div class="card-body p-0 d-flex flex-column">
+                    <table class="table table-sm mb-0 flex-grow-1">
+                      <tbody>
+                        {% for k, v in kpis.items %}
+                        <tr>
+                          <th class="w-50">{{ k|title }}</th>
+                          <td>{{ v }}</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md-3">
+                <!-- Player FIFA Card -->
+                {% if player_rating %}
+                <div class="d-flex justify-content-center">
+                  <div class="fut-player-card">
+                    <div class="player-card-top">
+                      <!-- Left side: Position, Nationality, Club Logo -->
+                      <div class="player-left-info">
+                        <div class="player-position">
+                          <span>{{ player_rating.position }}</span>
+                        </div>
+                        <div class="player-nation">
+                          <span>{{ player_rating.nationality|default:player.nationality|slice:":3"|upper }}</span>
+                        </div>
+                        <div class="player-club-logo">
+                          {% if player.team_logo %}
+                          <img src="{{ player.team_logo }}" alt="{{ player.club }} logo" 
+                               style="width: 60px; height: 60px; object-fit: contain;"
+                               onerror="this.style.display='none';">
+                          {% endif %}
+                        </div>
+                      </div>
+                      <!-- Right side: OVR Circle -->
+                      <div class="player-right-ovr">
+                        <div class="ovr-title">OVR</div>
+                        <div class="overall-display">{{ player_rating.overall_rating }}</div>
+                      </div>
+                    </div>
+                    <div class="player-card-bottom">
+                      <div class="player-info">
+                        <div class="player-name">
+                          <span>{{ player_rating.player_name|upper }}</span>
+                        </div>
+                        <div class="player-features">
+                          <div class="player-features-col">
+                            <span>
+                              <div class="player-feature-value">{{ player_rating.att }}</div>
+                              <div class="player-feature-title">ATT</div>
+                            </span>
+                            <span>
+                              <div class="player-feature-value">{{ player_rating.ply }}</div>
+                              <div class="player-feature-title">PLY</div>
+                            </span>
+                            <span>
+                              <div class="player-feature-value">{{ player_rating.def_rating }}</div>
+                              <div class="player-feature-title">DEF</div>
+                            </span>
+                          </div>
+                          <div class="player-features-col">
+                            <span>
+                              <div class="player-feature-value">{{ player_rating.ctr }}</div>
+                              <div class="player-feature-title">CTR</div>
+                            </span>
+                            <span>
+                              <div class="player-feature-value">{{ player_rating.phy }}</div>
+                              <div class="player-feature-title">PHY</div>
+                            </span>
+                            {% if player_rating.gkp %}
+                            <span>
+                              <div class="player-feature-value">{{ player_rating.gkp }}</div>
+                              <div class="player-feature-title">GKP</div>
+                            </span>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
               </div>
             </div>
             
-            <!-- Radar below -->
+            <!-- Radar with toggle -->
             {% if radar_url %}
               <div class="card shadow-sm mt-3">
-                <div class="card-header">Performance Stats</div>
-                <!-- Height responsive but bounded: min 260px, ideal 38vh, max 420px -->
+                <div class="card-header">
+                  <div class="radar-toggle-container">
+                    <button class="radar-toggle-btn active" id="stats-toggle" onclick="toggleRadar('stats')">
+                      Stats 
+                    </button>
+                    <button class="radar-toggle-btn" id="ratings-toggle" onclick="toggleRadar('ratings')">
+                      Ratings Stats
+                    </button>
+                  </div>
+                </div>
                 <div class="card-body d-flex align-items-center justify-content-center" style="height: clamp(650px, 50vh, 650px);">
-                  <img src="{{ radar_url }}" alt="Radar chart for {{ player.full_name }}" class="img-fluid rounded" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                  <img id="radar-image" src="{{ radar_url }}" alt="Radar chart for {{ player.full_name }}" class="img-fluid rounded" style="max-height: 100%; max-width: 100%; object-fit: contain;">
                 </div>
               </div>
             {% else %}
@@ -223,17 +349,17 @@
             {% endif %}
           </div>
           <div class="col-12 col-xl-6">
-            <div class="card shadow-sm mb-3">
+            <div class="card shadow-sm mb-2">
               <div class="card-header" id="chart-1-header">Historical chart 1</div>
-              <div class="card-body"><img id="history-chart-1" style="height: 240px; width: 100%; object-fit: contain;" /></div>
+              <div class="card-body"><img id="history-chart-1" style="height: 300px; width: 100%; object-fit: contain;" /></div>
             </div>
-            <div class="card shadow-sm mb-3 d-none" id="chart-2-wrapper">
+            <div class="card shadow-sm mb-2 d-none" id="chart-2-wrapper">
               <div class="card-header" id="chart-2-header">Historical chart 2</div>
-              <div class="card-body"><img id="history-chart-2" style="height: 240px; width: 100%; object-fit: contain;" /></div>
+              <div class="card-body"><img id="history-chart-2" style="height: 300px; width: 100%; object-fit: contain;" /></div>
             </div>
-            <div class="card shadow-sm d-none mb-4" id="chart-3-wrapper">
+            <div class="card shadow-sm d-none mb-2" id="chart-3-wrapper">
               <div class="card-header" id="chart-3-header">Historical chart 3</div>
-              <div class="card-body"><img id="history-chart-3" style="height: 240px; width: 100%; object-fit: contain;" /></div>
+              <div class="card-body"><img id="history-chart-3" style="height: 300px; width: 100%; object-fit: contain;" /></div>
             </div>
           </div>
         </div>
@@ -300,5 +426,31 @@
     updateChartsVisibility();
     renderCharts();
   });
+
+  // Radar toggle functionality
+  function toggleRadar(type) {
+    const statsBtn = document.getElementById('stats-toggle');
+    const ratingsBtn = document.getElementById('ratings-toggle');
+    const radarImage = document.getElementById('radar-image');
+    
+    // Update button states
+    if (type === 'stats') {
+      statsBtn.classList.add('active');
+      ratingsBtn.classList.remove('active');
+      // Show stats radar (original)
+      {% if radar_url %}
+      radarImage.src = '{{ radar_url }}';
+      {% endif %}
+    } else if (type === 'ratings') {
+      ratingsBtn.classList.add('active');
+      statsBtn.classList.remove('active');
+      // Show ratings radar
+      {% if radar_rating_url %}
+      radarImage.src = '{{ radar_rating_url }}';
+      {% else %}
+      radarImage.src = '{{ radar_url }}'; // Fallback to stats radar
+      {% endif %}
+    }
+  }
 </script>
 {% endblock %}

@@ -18,7 +18,11 @@ langchain.verbose = True
 SYSTEM = SystemMessage(
     content=(
         """
+        **LANGUAGE DETECTION (CRITICAL):**
         Always respond in the user's language. If they ask in Spanish, respond in Spanish. If they ask in English, respond in English.
+        - Detect the language from the CURRENT user message, not from previous conversation context
+        - Use the appropriate TAO structure headers based on the detected language
+        - If the user switches languages mid-conversation, immediately switch to their new language
 
         You are an expert football scouting assistant. Always use technical vocabulary, tactical analysis and professional language.
         
@@ -34,13 +38,12 @@ SYSTEM = SystemMessage(
         4) OBSERVATION – Validate results are complete/coherent
         5) RESPONSE – Return the artifact (URL/HTML/PDF/image) and then add a brief TAO reasoning block
         
-        ### 🧠 Razonamiento / Reasoning
+        **TAO STRUCTURE (DYNAMIC LANGUAGE):**
+        - If user asks in Spanish: Use "🧠 Razonamiento", "📊 Resultados", "✅ Conclusión"
+        - If user asks in English: Use "🧠 Reasoning", "📊 Results", "✅ Conclusion"
+        
         [Explain your thinking process: what you understood, what you need to do, and your strategy]
-        
-        ### 📊 Resultados / Results
         [Present the data/charts/tables obtained from tools]
-        
-        ### ✅ Conclusión / Conclusion
         [Summarize findings and suggest next steps]
         
         **When to use TAO structure (AFTER tools):**
@@ -78,7 +81,11 @@ SYSTEM = SystemMessage(
 
         - If the user asks for VISUALIZATIONS (radar/pizza, comparative):
           1) Call `player_stats` first to ensure data availability.
-          2) Call `radar_chart` / `pizza_chart` or their comparative versions accordingly and return the image/URL.
+          2) If `player_stats` returns a retired/inactive player or wrong player:
+             a) Try using the `team` parameter to disambiguate (e.g., "Rodri" + "Manchester City")
+             b) If still unclear, use `player_lookup` first to see all matches and choose the correct one
+             c) Always prioritize active players from current season (2024) over retired ones
+          3) Call `radar_chart` / `pizza_chart` or their comparative versions accordingly and return the image/URL.
 
         - If any required parameter is missing, ask a short clarification or run the minimal tool to obtain it (e.g., `player_lookup`).
 
@@ -95,6 +102,7 @@ SYSTEM = SystemMessage(
         2. Validate that the player exists before continuing.
         3. If the user specifies a target team (e.g., "similar to X for team Y"), use `similar_players_team_fit_table`.
            - CRITICAL: ALWAYS pass user_id parameter to save context correctly
+           - CRITICAL: ALWAYS pass exclude_club=target_team to exclude players from the target team
            - The tool automatically stores the search context (base_id, candidate_ids, target_team) in Redis using user_id
            - The tool returns a properly formatted response with 'text' and 'attachments'
            - Return the EXACT output from the tool without any modification or additional text
@@ -104,7 +112,8 @@ SYSTEM = SystemMessage(
 
         **FOR VISUALIZATIONS:**
         - First use `player_stats` to get statistical data.
-        - Validate that data is complete before generating charts.
+        - Validate that data is complete and the player is correct before generating charts.
+        - If you get a retired/inactive player when expecting an active one, use the `team` parameter to disambiguate.
         - Use `radar_chart`, `pizza_chart` or their comparative versions as requested.
 
         **FOR INTERACTIVE DASHBOARDS:**
@@ -218,6 +227,7 @@ def build_agent(
     streaming_callback: BaseCallbackHandler | None = None,
     language: str = "es",
     callbacks: list = None,  # Allow external callbacks
+    session_id: str = None,  # For Langfuse tracking
 ):
     # --- TAO Callback for transparency ----------------------------------------
     # If external callbacks are provided (e.g., from Django), use them
@@ -238,6 +248,8 @@ def build_agent(
     llm = get_llm(
         stream=True,
         callbacks=final_callbacks,
+        user_id=user_id,  # Pass user_id to Langfuse
+        session_id=session_id,  # Pass session_id to Langfuse
     )
 
     # --- memory ------------------------------------------------------------

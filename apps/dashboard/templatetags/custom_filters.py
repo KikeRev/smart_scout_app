@@ -25,3 +25,19 @@ def format_metric(value):
     # Replace underscores with spaces and capitalize
     formatted = value.replace('_', ' ').title()
     return formatted
+
+@register.filter(name='dict_get')
+def dict_get(d, key):
+    """Template helper: returns d[key]. Usage: {{ mydict|dict_get:var_key }}"""
+    try:
+        return d.get(key)
+    except Exception:
+        return None
+
+@register.filter(name='player_id_of')
+def player_id_of(player):
+    """Safely returns the player id from dicts with different keys (id/player_id/pk)."""
+    try:
+        return player.get('id') or player.get('player_id') or player.get('pk')
+    except Exception:
+        return None

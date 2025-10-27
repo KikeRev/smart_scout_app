@@ -47,7 +47,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 hf_logging.set_verbosity_error()
 
-DIM = 42  # Feature vector dimension (adjust according to model) 
+DIM = 43  # Feature vector dimension (adjust according to model) 
 
 # outside functions, so it loads once
 _SUMMARIZER = pipeline(
@@ -94,6 +94,7 @@ class PlayerHistory(Base):
     # Primary key
     id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
     player = sa.Column(sa.String(255), nullable=False, index=True)
+    player_uid = sa.Column(sa.String(255), nullable=True, index=True)
     season = sa.Column(sa.String(10), nullable=False, index=True)
     
     # Team and league info
@@ -158,12 +159,14 @@ class Player(Base):
 
     id = sa.Column(sa.Integer, primary_key=True)
     full_name = sa.Column(sa.Text, nullable=False, index=True)
+    player_uid = sa.Column(sa.String(255), nullable=True, unique=True, index=True)
     age = sa.Column(sa.Integer)
     nationality = sa.Column(sa.String(64))
     position = sa.Column(sa.String(32))
     club = sa.Column(sa.String(128))
     team_logo = sa.Column(sa.Text)
     league = sa.Column(sa.String(64))
+    season = sa.Column(sa.String(10), index=True)
 
     minutes = sa.Column(sa.Integer)
     minutes_90s = sa.Column(sa.Float)
@@ -217,11 +220,54 @@ class Player(Base):
     clearances = sa.Column(sa.Integer)
     errors = sa.Column(sa.Integer)
 
-    # Historical player field (only one kept in CSV)
+    # Historical player fields
     player_status = sa.Column(sa.String(20), default='active')
 
     # optional: pgvector column for aggregated numerical vector
     feature_vector = sa.Column(Vector(DIM))
+
+
+class PlayerRating(Base):
+    """
+    FIFA-style ratings calculated for each player.
+    Automatically updated whenever the players table is updated.
+    """
+    __tablename__ = "player_ratings"
+    
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
+    player_id = sa.Column(sa.Integer, sa.ForeignKey('players.id', ondelete='CASCADE'), nullable=False, index=True)
+    player_uid = sa.Column(sa.String(255), nullable=True, index=True)
+    
+    # Overall rating
+    overall_rating = sa.Column(sa.Integer, nullable=False)  # Final OVR (0-100)
+    
+    # OVR components
+    league_base_rating = sa.Column(sa.Float)  # Base rating by league
+    performance_rating = sa.Column(sa.Float)  # Performance-based rating
+    
+    # Attributes by category (0-100)
+    att = sa.Column(sa.Integer)  # Attacking
+    ply = sa.Column(sa.Integer)  # Playmaking
+    def_rating = sa.Column(sa.Integer)  # Defending (renamed to avoid reserved word conflict)
+    ctr = sa.Column(sa.Integer)  # Ball Control
+    phy = sa.Column(sa.Integer)  # Physical
+    gkp = sa.Column(sa.Integer)  # Goalkeeping (NULL for non-goalkeepers)
+    
+    # Metadata
+    season = sa.Column(sa.String(10), index=True)
+    position = sa.Column(sa.String(32))
+    minutes_played = sa.Column(sa.Integer)
+    
+    # Timestamps
+    created_at = sa.Column(sa.DateTime, server_default=sa.func.now())
+    updated_at = sa.Column(sa.DateTime, server_default=sa.func.now(), onupdate=sa.func.now())
+    
+    # Indexes and constraints
+    __table_args__ = (
+        sa.UniqueConstraint('player_id', 'season', name='uq_player_rating_season'),
+        sa.Index('idx_overall_rating', 'overall_rating'),
+        sa.Index('idx_player_season_rating', 'player_id', 'season'),
+    )
 
 
 class FootballNews(Base):
@@ -243,6 +289,9 @@ player_news = sa.Table(
     Base.metadata,
     sa.Column("player_id", sa.Integer, sa.ForeignKey("players.id", ondelete="CASCADE")),
     sa.Column("news_id",   sa.Integer, sa.ForeignKey("football_news.id", ondelete="CASCADE")),
+    sa.Column("player_club", sa.String(128), nullable=True),
+    sa.Column("player_league", sa.String(64), nullable=True),
+    sa.Column("linked_at", sa.DateTime, server_default=sa.func.now()),
     sa.PrimaryKeyConstraint("player_id", "news_id"),
 )
 
@@ -264,6 +313,7 @@ def create_tables(engine):
 
 CSV_COLUMN_MAP = {
     "player": "full_name",
+    "player_uid": "player_uid",
     "age": "age",
     "nationality": "nationality",
     "position": "position",
@@ -311,10 +361,11 @@ CSV_COLUMN_MAP = {
     "blocked_passes": "blocked_passes",
     "interceptions": "interceptions",
     "tackles_interceptions": "tackles_interceptions",
-    "clearances": "clearances",
+    "clearances": "clearances", 
     "errors": "errors",
-    # Historical field (only one expected in CSV)
+    # Historical fields
     "player_status": "player_status",
+    "Season": "season",
 }
 
 REQUIRED_COLUMNS = set(CSV_COLUMN_MAP.keys())
@@ -405,7 +456,7 @@ def load_players(engine: sa.Engine, csv_path: Path,  if_exists: str = "append"):
     float_cols = list(
         set(df.columns)
         - set(int_cols)
-        - {"full_name", "nationality", "position", "club", "team_logo", "league", "player_status"}
+        - {"full_name", "nationality", "position", "club", "team_logo", "league", "player_status", "season", "player_uid"}
     )
     for col in float_cols:
         df[col] = df[col].apply(_to_float)
@@ -413,11 +464,11 @@ def load_players(engine: sa.Engine, csv_path: Path,  if_exists: str = "append"):
     if if_exists == "replace":
         with engine.begin() as conn:
             conn.execute(sa.text("""
-                TRUNCATE TABLE player_news, players
+                TRUNCATE TABLE players, player_news
                 RESTART IDENTITY CASCADE
             """))
-
-    df.to_sql("players", con=engine, if_exists="append", index=False, method="multi")
+    print(f"🔎 Upserting {len(df)} players")
+    df.to_sql("players", con=engine, if_exists="append", index=False, method="multi", chunksize=1000)
     print(f"✅ Players upserted: {len(df)}")
 
 
@@ -609,7 +660,7 @@ def ingest_news(engine: sa.Engine, verbose: bool = False):
 #  ==  Embedding / Standard‑Scaler pipeline for players  ====================
 # ---------------------------------------------------------------------------
 
-PLAYER_DIM = 43                 # 42 stats + minutes_90s (🗒️ adjust if you change)
+PLAYER_DIM = 43                # 43 stats + minutes_90s (🗒️ adjust if you change)
 IVF_LISTS  = 140                # number of lists for ivfflat
 
 FEATURE_COLS = [
@@ -694,7 +745,7 @@ def compute_and_store_player_vectors(engine: sa.Engine, refresh: bool=False):
 # ---------------------------------------------------------------------------
 
 def _norm(text: str) -> str:
-    """lower‑case, strip diacritics & collapse spaces – for matching."""
+    """lower‑case, strip diacritics & collapse spaces – for matching."""
     if not text:
         return ""
     text = unidecode.unidecode(
@@ -702,13 +753,67 @@ def _norm(text: str) -> str:
     ).lower()
     return _WS.sub(" ", text).strip()
 
+def _get_club_variations(club: str) -> set:
+    """
+    Return normalized variations of club name for matching in titles.
+    Handles common abbreviations and alternative names.
+    """
+    if not club or club == 'Unknown':
+        return set()
+    
+    club_lower = _norm(club)
+    variations = {club_lower}
+    
+    # Map of full club names to their common variations
+    club_map = {
+        'manchester city': {'man city', 'manchester city', 'mcfc'},
+        'manchester united': {'man united', 'man utd', 'manchester united', 'mufc'},
+        'real madrid': {'real madrid', 'madrid', 'real'},
+        'atletico madrid': {'atletico madrid', 'atletico', 'atleti'},
+        'barcelona': {'barcelona', 'barca', 'barça', 'fcb'},
+        'paris saint germain': {'psg', 'paris saint germain', 'paris sg', 'paris'},
+        'bayern munich': {'bayern munich', 'bayern', 'fc bayern'},
+        'borussia dortmund': {'borussia dortmund', 'dortmund', 'bvb'},
+        'inter milan': {'inter milan', 'inter'},
+        'ac milan': {'ac milan', 'milan'},
+        'liverpool': {'liverpool', 'lfc'},
+        'chelsea': {'chelsea', 'cfc'},
+        'arsenal': {'arsenal', 'afc'},
+        'tottenham': {'tottenham', 'spurs', 'tottenham hotspur'},
+        'real betis': {'real betis', 'betis'},
+        'sevilla': {'sevilla', 'sevilla fc'},
+        'villarreal': {'villarreal', 'villarreal cf'},
+        'athletic bilbao': {'athletic bilbao', 'athletic', 'athletic club'},
+        'valencia': {'valencia', 'valencia cf'},
+        'real sociedad': {'real sociedad', 'la real', 'sociedad'},
+        'juventus': {'juventus', 'juve'},
+        'napoli': {'napoli', 'ssc napoli'},
+        'roma': {'roma', 'as roma'},
+        'lazio': {'lazio', 'ss lazio'},
+        'ajax': {'ajax', 'afc ajax'},
+        'benfica': {'benfica', 'sl benfica'},
+        'porto': {'porto', 'fc porto'},
+        'sporting': {'sporting', 'sporting cp', 'sporting lisboa'},
+    }
+    
+    # Find matching club and add variations
+    for full_name, abbrevs in club_map.items():
+        if full_name in club_lower or club_lower in full_name:
+            variations.update(abbrevs)
+            break
+    
+    return variations
+
 def ensure_link_index(engine: sa.Engine):
     with engine.begin() as conn:
         conn.exec_driver_sql(
             """
             CREATE TABLE IF NOT EXISTS player_news (
-              player_id  INTEGER NOT NULL REFERENCES players(id)  ON DELETE CASCADE,
-              news_id    INTEGER NOT NULL REFERENCES football_news(id) ON DELETE CASCADE,
+              player_id     INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+              news_id       INTEGER NOT NULL REFERENCES football_news(id) ON DELETE CASCADE,
+              player_club   VARCHAR(128),
+              player_league VARCHAR(64),
+              linked_at     TIMESTAMP DEFAULT NOW(),
               PRIMARY KEY (player_id, news_id)
             );
             """
@@ -719,32 +824,57 @@ def ensure_link_index(engine: sa.Engine):
               ON player_news(player_id);
             """
         )
+        conn.exec_driver_sql(
+            """
+            CREATE INDEX IF NOT EXISTS player_news_club_idx
+              ON player_news(player_club);
+            """
+        )
 
 def link_player_news(engine: sa.Engine, only_new: bool = True) -> None:
     """
-    Populate `player_news` by regex‑matching player names inside each article.
-    If `only_new` is True we link only news entries not yet in the bridge table.
+    Link news to players by matching ONLY in article TITLE:
+    1. Player name in title, OR
+    2. Player's club in title
+    
+    This ensures only relevant news where the player is a protagonist,
+    reduces token usage, and improves precision.
+    
+    Args:
+        engine: SQLAlchemy engine
+        only_new: If True, only process articles not yet linked
     """
     ensure_link_index(engine)
 
     with orm.Session(engine) as sess:
+        # 1️⃣ Build mapping: normalized_name → list of {id, name, club, league}
+        from collections import defaultdict
+        name_to_players = defaultdict(list)
+        
+        for pid, name, club, league in sess.query(
+            Player.id, 
+            Player.full_name, 
+            Player.club, 
+            Player.league
+        ):
+            normalized_name = _norm(name)
+            name_to_players[normalized_name].append({
+                'id': pid,
+                'full_name': name,
+                'club': club or 'Unknown',
+                'league': league or 'Unknown'
+            })
 
-        # 1️⃣ Dict {normalized_name: player_id}
-        name_to_id = {
-            _norm(name): pid
-            for pid, name in sess.query(Player.id, Player.full_name)
-        }
-
-        if not name_to_id:
-            print("⚠️  No players to link – skipping player_news linking.")
+        if not name_to_players:
+            print("⚠️  No players to link – skipping player_news linking.")
             return
 
-        # Build single regex (word boundary) e.g.  \b(mbappe|vinicius jr|...) \b
-        pattern = r"\b(" + "|".join(re.escape(n) for n in name_to_id) + r")\b"
+        # 2️⃣ Build regex pattern for player names
+        pattern = r"\b(" + "|".join(re.escape(n) for n in name_to_players) + r")\b"
         name_re = re.compile(pattern, re.I)
 
-        # 2️⃣ Rows to scan
-        q = sess.query(FootballNews.id, FootballNews.article_text)
+        # 3️⃣ Get articles to process (ONLY TITLE)
+        q = sess.query(FootballNews.id, FootballNews.title)
         if only_new:
             q = q.filter(
                 ~FootballNews.id.in_(
@@ -758,21 +888,92 @@ def link_player_news(engine: sa.Engine, only_new: bool = True) -> None:
             return
 
         inserted = 0
-        for news_id, article in tqdm(rows, desc="Linking news↔players", unit="article"):
-            matches = { _norm(m.group(0)) for m in name_re.finditer(article or "") }
-
-            for n in matches:
-                pid = name_to_id.get(n)
-                if not pid:
-                    continue
-
-                stmt = pg_insert(player_news).values(player_id=pid, news_id=news_id)
-                stmt = stmt.on_conflict_do_nothing()
-                sess.execute(stmt)
-                inserted += 1
+        player_name_matches = 0
+        club_matches = 0
+        ambiguous_links = 0
+        
+        for news_id, title in tqdm(rows, desc="Linking news↔players (title only)", unit="article"):
+            if not title:
+                continue
+                
+            title_normalized = _norm(title)
+            
+            # 🎯 STRATEGY 1: Check if player NAME is in title
+            player_matches_in_title = {_norm(m.group(0)) for m in name_re.finditer(title)}
+            
+            if player_matches_in_title:
+                # Player name found in title → link based on disambiguation
+                for normalized_name in player_matches_in_title:
+                    players = name_to_players.get(normalized_name, [])
+                    
+                    if len(players) == 1:
+                        # Single player with this name → direct link
+                        pdata = players[0]
+                        stmt = pg_insert(player_news).values(
+                            player_id=pdata['id'],
+                            news_id=news_id,
+                            player_club=pdata['club'],
+                            player_league=pdata['league']
+                        )
+                        stmt = stmt.on_conflict_do_nothing()
+                        sess.execute(stmt)
+                        inserted += 1
+                        player_name_matches += 1
+                    else:
+                        # Multiple players with same name → try club disambiguation
+                        matched = False
+                        for pdata in players:
+                            club_variations = _get_club_variations(pdata['club'])
+                            if any(var in title_normalized for var in club_variations):
+                                stmt = pg_insert(player_news).values(
+                                    player_id=pdata['id'],
+                                    news_id=news_id,
+                                    player_club=pdata['club'],
+                                    player_league=pdata['league']
+                                )
+                                stmt = stmt.on_conflict_do_nothing()
+                                sess.execute(stmt)
+                                inserted += 1
+                                player_name_matches += 1
+                                matched = True
+                        
+                        if not matched:
+                            # Ambiguous: club not mentioned, link to all
+                            for pdata in players:
+                                stmt = pg_insert(player_news).values(
+                                    player_id=pdata['id'],
+                                    news_id=news_id,
+                                    player_club=pdata['club'],
+                                    player_league=pdata['league']
+                                )
+                                stmt = stmt.on_conflict_do_nothing()
+                                sess.execute(stmt)
+                                inserted += 1
+                                ambiguous_links += 1
+            else:
+                # 🎯 STRATEGY 2: Player name NOT in title → check if CLUB is in title
+                for normalized_name, players in name_to_players.items():
+                    for pdata in players:
+                        club_variations = _get_club_variations(pdata['club'])
+                        
+                        # If player's club is mentioned in title → link
+                        if any(var in title_normalized for var in club_variations):
+                            stmt = pg_insert(player_news).values(
+                                player_id=pdata['id'],
+                                news_id=news_id,
+                                player_club=pdata['club'],
+                                player_league=pdata['league']
+                            )
+                            stmt = stmt.on_conflict_do_nothing()
+                            sess.execute(stmt)
+                            inserted += 1
+                            club_matches += 1
 
         sess.commit()
-        print(f"🔗  player_news linked: {inserted}")
+        print(f"🔗  player_news linked: {inserted} total")
+        print(f"    ├─ By player name in title: {player_name_matches}")
+        print(f"    ├─ By club in title (no player name): {club_matches}")
+        print(f"    └─ Ambiguous (name without club): {ambiguous_links}")
 
 
 # ----------------------------- CLI --------------------------------
@@ -793,6 +994,7 @@ def load_player_history(engine: sa.Engine, csv_path: Path, if_exists: str = "app
     # Column mapping for player_history table
     column_mapping = {
         'player': 'player',
+        'player_uid': 'player_uid',
         'Season': 'season',
         'Team': 'team',
         'League': 'league',
@@ -855,13 +1057,106 @@ def load_player_history(engine: sa.Engine, csv_path: Path, if_exists: str = "app
     print(f"✅ Player history loaded: {len(df_prepared)} records")
 
 
+def load_ratings_from_csv(engine: sa.Engine, csv_path: Path, if_exists: str = "replace", verbose: bool = False):
+    """
+    Load player ratings from CSV file.
+    """
+    if not csv_path.exists():
+        print(f"❌ Ratings CSV not found: {csv_path}")
+        return False
+    
+    try:
+        print(f"\n📊 Loading player ratings from {csv_path}...")
+        
+        # Read CSV
+        df = pd.read_csv(csv_path)
+        print(f"📊 Loaded {len(df)} ratings from CSV")
+        
+        if verbose:
+            print(f"📋 Sample of ratings:")
+            print(df[['player_name', 'player_uid', 'overall_rating', 'position', 'league']].head(5).to_string(index=False))
+        
+        # Map column names to match database schema
+        column_mapping = {
+            'player_id': 'player_id',
+            'player_uid': 'player_uid', 
+            'overall_rating': 'overall_rating',
+            'league_base_rating': 'league_base_rating',
+            'performance_rating': 'performance_rating',
+            'att': 'att',
+            'ply': 'ply',
+            'def_rating': 'def_rating',
+            'ctr': 'ctr',
+            'phy': 'phy',
+            'gkp': 'gkp',
+            'season': 'season',
+            'position': 'position',
+            'minutes_played': 'minutes_played'
+        }
+        
+        # Rename columns
+        df = df.rename(columns=column_mapping)
+        
+        # Select only the columns we need
+        db_columns = list(column_mapping.values())
+        df_db = df[db_columns].copy()
+        
+        # Clean table if replace (manual TRUNCATE for better performance)
+        if if_exists == "replace":
+            with engine.begin() as conn:
+                conn.execute(sa.text("TRUNCATE TABLE player_ratings RESTART IDENTITY CASCADE"))
+            print("🗑️  player_ratings table cleaned")
+        
+        # Disable constraints for faster bulk insert
+        with engine.begin() as conn:
+            conn.execute(sa.text("ALTER TABLE player_ratings DISABLE TRIGGER ALL"))
+            print("⚡ Constraints disabled for bulk insert")
+        
+        try:
+            # Import to database (always append after manual TRUNCATE)
+            df_db.to_sql(
+                'player_ratings',
+                engine,
+                if_exists="append",
+                index=False,
+                method='multi',
+                chunksize=1000
+            )
+        finally:
+            # Re-enable constraints
+            with engine.begin() as conn:
+                conn.execute(sa.text("ALTER TABLE player_ratings ENABLE TRIGGER ALL"))
+            print("🔒 Constraints re-enabled")
+        
+        print(f"✅ Player ratings loaded: {len(df_db)} records")
+        
+        # Verify import
+        with engine.connect() as conn:
+            result = conn.execute(sa.text("SELECT COUNT(*) FROM player_ratings"))
+            count = result.fetchone()[0]
+            print(f"📊 Total ratings in database: {count}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error loading ratings from CSV: {e}")
+        if verbose:
+            import traceback
+            traceback.print_exc()
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Seed players & ingest news")
     parser.add_argument("--players-csv", type=Path, help="Path to players CSV", required=False)
     parser.add_argument("--history-csv", type=Path, help="Path to historical players CSV (non-aggregated)", required=False)
+    parser.add_argument("--ratings-csv", type=Path, help="Path to player ratings CSV", required=False)
     parser.add_argument("--replace", action="store_true", help="TRUNCATE players before importing CSV")
     parser.add_argument("--replace-history", action="store_true", help="TRUNCATE player_history before importing CSV")
+    parser.add_argument("--replace-ratings", action="store_true", help="TRUNCATE player_ratings before importing CSV")
     parser.add_argument("--ingest-news", action="store_true", help="Fetch & embed latest news")
+    parser.add_argument("--calculate-ratings", action="store_true", help="Calculate FIFA-style ratings for all players (DEPRECATED: use --ratings-csv instead)")
+    parser.add_argument("--ratings-season", type=str, help="Season for ratings calculation (default: all)")
     parser.add_argument("--echo-sql", action="store_true")
     parser.add_argument("--skip-players", action="store_true")
     parser.add_argument("--verbose", action="store_true")
@@ -886,6 +1181,25 @@ def main():
     if args.ingest_news:
         ingest_news(engine, verbose=args.verbose)
         link_player_news(engine)
+
+    # Load ratings from CSV (new approach)
+    if args.ratings_csv:
+        load_ratings_from_csv(
+            engine=engine,
+            csv_path=args.ratings_csv,
+            if_exists="replace" if args.replace_ratings else "append",
+            verbose=args.verbose
+        )
+    
+    # Legacy: Calculate ratings (deprecated)
+    elif args.calculate_ratings:
+        print("⚠️  --calculate-ratings is deprecated. Use --ratings-csv instead.")
+        calculate_ratings_wrapper(
+            engine=engine,
+            season=args.ratings_season,
+            replace=args.replace_ratings,
+            verbose=args.verbose
+        )
 
     print("✅ All done")
 
