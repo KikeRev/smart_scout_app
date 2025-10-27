@@ -1,4 +1,5 @@
 import requests
+import json
 from pydantic import BaseModel, Field
 from langchain.tools import StructuredTool
 from apps.agent_service.viz_tools import radar_chart, pizza_chart, radar_comparison_chart, pizza_comparison_chart
@@ -11,6 +12,22 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from apps.agent_service.llm_provider import get_llm
 import threading
+
+from apps.agent_service.validation import (
+    validate_player_data, 
+    validate_similar_players_data, 
+    validate_news_data,
+    validate_stats_data,
+    validate_parameters,
+    sanitize_text
+)
+from apps.agent_service.conversation_state import (
+    ConversationState,
+    StateManager,
+    add_state_to_context,
+    parse_state_from_context,
+    update_state_after_action
+)
 
 # Global cache for last search context (simple in-memory storage)
 # This allows build_scouting_report to access the last search metadata
@@ -42,11 +59,14 @@ except:
     redis_client = None
     REDIS_AVAILABLE = False
 
-def _save_context_to_redis(user_id: str, context: Dict):
-    """Save context to Redis for persistence across requests"""
+def _save_context_to_redis(user_id: str, context: Dict, state: ConversationState = ConversationState.IDLE):
+    """Save context to Redis for persistence across requests with conversation state"""
+    # Add state information to context
+    context_with_state = add_state_to_context(context.copy(), state)
+    
     if REDIS_AVAILABLE:
         try:
-            redis_client.setex(f"search_context:{user_id}", 3600, json.dumps(context))  # 1 hour TTL
+            redis_client.setex(f"search_context:{user_id}", 3600, json.dumps(context_with_state))  # 1 hour TTL
         except Exception:
             pass  # Fallback to in-memory cache
 
@@ -61,14 +81,7 @@ def _get_context_from_redis(user_id: str) -> Dict:
             pass
     return {}
 
-from apps.agent_service.validation import (
-    validate_player_data, 
-    validate_similar_players_data, 
-    validate_news_data,
-    validate_stats_data,
-    validate_parameters,
-    sanitize_text
-)
+
 
 # ----------------------------------------------------------------------------
 # Helper utilities (simple language detection for guided messages)
@@ -441,7 +454,7 @@ def _similar_players_team_fit_table(
     # Save to Redis for persistence across requests
     # Use thread-local user_id if not explicitly provided
     effective_user_id = user_id or get_current_user_id()
-    _save_context_to_redis(effective_user_id, context_data)
+    _save_context_to_redis(effective_user_id, context_data, ConversationState.SEARCH_COMPLETED)
     
     
     return {
@@ -972,6 +985,13 @@ def build_scouting_report(
         viability_score=locals().get("chosen_viab", None),
     )
 
+    # Update conversation state to REPORT_AVAILABLE
+    effective_user_id = user_id or get_current_user_id()
+    current_context = _get_context_from_redis(effective_user_id) or {}
+    if current_context:
+        updated_context = update_state_after_action(current_context, "report")
+        _save_context_to_redis(effective_user_id, updated_context, ConversationState.REPORT_AVAILABLE)
+
     return build_report_pdf(
         objective=objective,
         base_id=base_id,
@@ -1188,6 +1208,13 @@ def _dashboard_inline_with_context(
     result = dashboard_inline(base_player_id, candidate_ids)
     dashboard_url = result.get("url", "")
     
+    # Update conversation state to DASHBOARD_AVAILABLE
+    effective_user_id = user_id or get_current_user_id()
+    current_context = _get_context_from_redis(effective_user_id) or {}
+    if current_context:
+        updated_context = update_state_after_action(current_context, "dashboard")
+        _save_context_to_redis(effective_user_id, updated_context, ConversationState.DASHBOARD_AVAILABLE)
+    
     # Return in the format expected by ScoutParser (text + attachments)
     return {
         "text": "I have created an interactive dashboard with comparative analysis. Click the button below to explore the data.",
@@ -1206,7 +1233,7 @@ dashboard_inline_tool = StructuredTool.from_function(
     description=(
         "Generates an interactive dashboard with the base player and candidates. "
         "If no candidate_ids/base_id are provided, uses the latest recommendation list from Redis. "
-        "CRITICAL: ALWAYS pass user_id parameter to retrieve cached context from previous searches in Redis."
+        "The user context is automatically handled by the system."
     ),
     args_schema=DashboardInlineInput,
     return_direct=True  # Return directly - already in correct format with text + attachments

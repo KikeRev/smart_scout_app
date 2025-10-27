@@ -1579,13 +1579,13 @@ select[multiple] { min-height: 150px; }
 .typewriter-text {
   border-right: none !important;   /* no green cursor */
 }
-/* Wrapper principal of the chat page with width of 95% */
+/* Wrapper principal of the chat page with width of 80% centered */
 .chat-page-wrapper {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  height: 100vh;
+  width: 80%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  height: calc(100vh - 95px);
   overflow: hidden;
 }
 
@@ -1599,6 +1599,8 @@ select[multiple] { min-height: 150px; }
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.5); /* consistent background */
+  border-radius: 1rem;
 }
 
 /* Improved chat log */
@@ -1606,9 +1608,9 @@ select[multiple] { min-height: 150px; }
   width: 100%;
   max-width: 100%;
   margin-bottom: 0;          /* remove gap above the input */
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 1rem;
+  padding: 2rem 5%;          /* base padding with percentage sides */
+  background: transparent;   /* inherit from parent container */
+  border-radius: 0;
   flex: 1;
   overflow-y: auto;
   /* Hide scrollbar but keep functionality */
@@ -1627,9 +1629,9 @@ select[multiple] { min-height: 150px; }
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 1rem;
+  padding: 2rem 10%;         /* base padding with percentage sides */
+  background: transparent;   /* inherit from parent container */
+  border-radius: 0;
 }
 
 /* Container of the textarea with integrated button */
@@ -2180,78 +2182,107 @@ textarea.chat-input:disabled {
 }
 
 /* Responsive for chat */
-@media (min-width: 768px) {
+@media (max-width: 767px) {
   .chat-page-wrapper {
     width: 95%;
-    padding: 0 2rem;
+    max-width: none;
+    padding: 1rem 0.5rem;
   }
   
   .chat-container {
-    padding: 2rem 0;
+    padding: 0;
   }
   
   .chat-log {
-    padding: 2rem;
+    padding: 1rem 2%;          /* minimal side padding on mobile */
+    min-height: 400px;
+  }
+  
+  .chat-form {
+    padding: 1rem 3%;          /* minimal side padding on mobile */
+  }
+  
+  .chat-input {
+    font-size: 1rem;
+    padding: 0.75rem 3rem 0.75rem 0.75rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .chat-page-wrapper {
+    width: 85%;
+    max-width: 1000px;
+    padding: 2rem 1rem;
+  }
+  
+  .chat-container {
+    padding: 0;
+  }
+  
+  .chat-log {
+    padding: 2rem 8%;          /* moderate padding on tablets */
     min-height: 500px;
   }
   
   .chat-form {
-    padding: 2rem;
+    padding: 2rem 12%;         /* moderate padding on tablets */
   }
   
   .chat-input {
-    font-size: 1.4rem;
-    padding: 1.25rem;
+    font-size: 1rem;
+    padding: 0.75rem 3.5rem 0.75rem 0.75rem;
   }
 }
 
 @media (min-width: 1200px) {
   .chat-page-wrapper {
-    width: 95%;
-    padding: 0 3rem;
+    width: 70%;
+    max-width: 1400px;
+    padding: 2rem 1rem;
   }
   
   .chat-container {
-    padding: 3rem 0;
+    padding: 0;
   }
   
   .chat-log {
-    padding: 3rem;
+    padding: 3rem 15%;         /* 15% side padding on desktop */
     min-height: 600px;
   }
   
   .chat-form {
-    padding: 3rem;
+    padding: 3rem 18%;         /* 18% side padding for input area */
   }
   
   .chat-input {
-    font-size: 1.4rem;
-    padding: 1.5rem;
+    font-size: 1.1rem;
+    padding: 1rem 4rem 1rem 1rem;
   }
 }
 
 @media (min-width: 1400px) {
   .chat-page-wrapper {
-    width: 95%;
-    padding: 0 4rem;
+    width: 60%;
+    max-width: 1600px;
+    padding: 2rem 1rem;
   }
   
   .chat-container {
-    padding: 0rem 0;
+    padding: 0;
   }
   
   .chat-log {
-    padding: 4rem;
+    padding: 4rem 15%;         /* 15% side padding for large screens */
     min-height: 700px;
   }
   
   .chat-form {
-    padding: 4rem;
+    padding: 4rem 22%;         /* 22% side padding for input on large screens */
   }
   
   .chat-input {
-    font-size: 1.4rem;
-    padding: 1.75rem;
+    font-size: 1.1rem;
+    padding: 1rem 4rem 1rem 1rem;
   }
 }
 

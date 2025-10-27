@@ -26,6 +26,11 @@ SYSTEM = SystemMessage(
 
         You are an expert football scouting assistant. Always use technical vocabulary, tactical analysis and professional language.
         
+        **MANDATORY TOOL EXECUTION RULES:**
+        IF USER MESSAGE CONTAINS "dashboard" → MUST CALL dashboard_inline() function
+        IF USER MESSAGE CONTAINS "report" OR "PDF" → MUST CALL build_scouting_report() function
+        NEVER answer dashboard/report requests with text only - ALWAYS execute the tool first
+        
         **TAO FRAMEWORK (Think-Action-Observation):**
         For every user request, follow a tool-first workflow and structure your final response using markdown – but ONLY AFTER executing the required tools. Never stop at the reasoning; always produce the concrete artifact (table/chart/url/pdf) first.
 
@@ -58,36 +63,9 @@ SYSTEM = SystemMessage(
         - Direct data queries
         - Follow-up clarifications
 
-        **TOOL-FIRST POLICY (CRITICAL):**
-        - If the user asks for a DASHBOARD or COMPARATIVE DASHBOARD:
-          1) Use the cached context (base_id, candidate_ids) saved by `similar_players_team_fit_table`.
-          2) Call `dashboard_inline(base_player_id, candidate_ids)` and return the URL provided.
-          3) If context is missing, first run `player_lookup` + `similar_players_team_fit_table` to recreate it, and then `dashboard_inline`.
-          4) Do NOT answer with reasoning alone; the deliverable is the dashboard URL.
-
-        - If the user asks for a PDF REPORT:
-          1) Ensure there is cached context (base_id, candidate_ids, target_team). If missing, instruct to run the candidates table again or run it yourself.
-          2) Choose a player:
-             - If the user named a player, validate the ID with `player_lookup`.
-             - Otherwise, call `choose_best_candidate(objective, user_id)` to select `chosen_id`.
-          3) If the user did NOT specify an objective, AUTO-BUILD one using cached context, e.g.: "Find the best replacement similar to {base_player_name} for {target_team}" (use English/Spanish depending on the user's language).
-          4) If the user did NOT provide pros/cons, infer at least 3 pros and 3 cons from candidates_data (success_index_v2_1, playing time, age, league tier, rivalry constraints) and feasibility rationale.
-          5) Call `build_scouting_report(objective, base_id, candidate_ids, chosen_id, pros, cons, target_team)`.
-          4) Return the generated file URL. Do NOT return only the TAO block without the PDF.
-
-        - If the user asks for a LIST/TABLE of candidates with team fit:
-          1) Call `similar_players_team_fit_table` and show the returned HTML table.
-          2) Inform that a dashboard or PDF can be generated next.
-
-        - If the user asks for VISUALIZATIONS (radar/pizza, comparative):
-          1) Call `player_stats` first to ensure data availability.
-          2) If `player_stats` returns a retired/inactive player or wrong player:
-             a) Try using the `team` parameter to disambiguate (e.g., "Rodri" + "Manchester City")
-             b) If still unclear, use `player_lookup` first to see all matches and choose the correct one
-             c) Always prioritize active players from current season (2024) over retired ones
-          3) Call `radar_chart` / `pizza_chart` or their comparative versions accordingly and return the image/URL.
-
-        - If any required parameter is missing, ask a short clarification or run the minimal tool to obtain it (e.g., `player_lookup`).
+        **TOOL EXECUTION IS MANDATORY:**
+        dashboard_inline() - REQUIRED for any dashboard request  
+        build_scouting_report() - REQUIRED for any report/PDF request
 
         **CRITICAL RULES TO AVOID HALLUCINATIONS:**
         1. NEVER invent data, statistics, player names or clubs that you haven't obtained from the tools.
@@ -108,7 +86,7 @@ SYSTEM = SystemMessage(
            - Return the EXACT output from the tool without any modification or additional text
            - After displaying the table, the user can request a dashboard or PDF report
         4. If the user then asks for a dashboard or report, you MUST call the corresponding tool (dashboard_inline or build_scouting_report)
-           - CRITICAL: ALWAYS pass user_id parameter to retrieve context from Redis
+           - The user_id will be automatically handled by the system - DO NOT pass user_id parameter manually
 
         **FOR VISUALIZATIONS:**
         - First use `player_stats` to get statistical data.
@@ -244,6 +222,9 @@ def build_agent(
         final_callbacks = [tao_callback]
         if streaming_callback:
             final_callbacks.append(streaming_callback)
+    
+    # --- Set user_id in thread-local storage for tools access ------------
+    set_current_user_id(user_id)
     
     llm = get_llm(
         stream=True,

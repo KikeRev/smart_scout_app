@@ -5,7 +5,7 @@ PROJECT = smart_scouting_app
 SERVICES := api db redis web jupyter ingestion
 CORE_SERVICES := api web db redis jupyter
 
-.PHONY: up build stop down down-all restart restart-fast prune clean \
+.PHONY: up build stop stop-core down down-all restart restart-fast prune clean \
         ps logs logs-api logs-web logs-db shell-api shell-web shell-db \
         up-db up-core ingest-full ingest-players ingest-news help
 
@@ -76,6 +76,10 @@ ingest-news: up-db   ## News-only: scrape & embed NEW football news
 ## Stop containers (NO delete networks nor volumes)
 stop:
 	$(COMPOSE) stop $(SERVICES)
+
+## Stop core services only (api, web, db, redis)
+stop-core:
+	$(COMPOSE) stop $(CORE_SERVICES)
 
 ## Delete containers and the network; KEEP volumes
 down:
