@@ -962,8 +962,8 @@ flowchart TB
 
     subgraph Frontend_Layer["🌐 Frontend Layer - Django"]
         Web[Django Web Server]
-        Templates[Templates & UI]
-        StaticFiles[Static Assets CSS/JS]
+        Templates[Centralized Templates<br/>templates/chats/]
+        StaticFiles[Consolidated Assets<br/>static/css/custom.css<br/>static/js/chat.js]
     end
 
     subgraph Backend_Layer["⚙️ Backend Layer - FastAPI"]
@@ -971,8 +971,8 @@ flowchart TB
         
         subgraph Agent_System["🤖 Single Agent System"]
             Agent[Scout Agent<br/>LangChain OpenAI Functions]
-            Memory[Conversation Memory<br/>Redis-backed]
-            SystemPrompt[TAO System Prompt<br/>Multi-lingual]
+            Memory[Conversation Memory<br/>Redis + Thread-local]
+            SystemPrompt[Nuclear Prompt<br/>Simplified Tool Routing]
         end
         
         subgraph Tools_Layer["🔧 Specialized Tools"]
@@ -992,7 +992,7 @@ flowchart TB
 
     subgraph Data_Layer["💾 Data Layer"]
         Postgres[(PostgreSQL<br/>players, ratings,<br/>news, history)]
-        Redis[(Redis<br/>context cache,<br/>sessions)]
+        Redis[(Redis<br/>context cache,<br/>dashboard sessions)]
         Storage[File Storage<br/>PDFs, Charts]
     end
 
@@ -1071,15 +1071,15 @@ flowchart TB
     subgraph Agent_Core["🤖 Single Scout Agent - LangChain"]
         direction TB
         
-        subgraph TAO_Cycle["TAO Framework Cycle"]
-            Think[🧠 THINK<br/>Understand Intent]
-            Action[⚡ ACTION<br/>Execute Tools]
-            Observe[👁️ OBSERVE<br/>Validate Results]
+        subgraph Agent_Flow["Simplified Agent Flow"]
+            Request[📥 USER REQUEST<br/>Natural Language]
+            Route[🎯 ROUTE<br/>Nuclear Prompt Logic]
+            Execute[⚡ EXECUTE<br/>Direct Tool Call]
         end
         
         LLM[OpenAI GPT-4<br/>Function Calling]
         ContextMgr[Context Manager<br/>Redis + Thread-local]
-        SystemPrompt[System Prompt<br/>TAO Rules + Multi-lingual]
+        SystemPrompt[Nuclear Prompt<br/>Direct Tool Routing]
     end
 
     subgraph Available_Tools["🔧 Available Tools (18 total)"]
@@ -1130,22 +1130,21 @@ flowchart TB
     end
 
     %% User to Agent
-    User --> Think
-    Think --> LLM
+    User --> Request
+    Request --> Route
+    Route --> LLM
     LLM --> ContextMgr
     ContextMgr --> SystemPrompt
     
-    %% TAO Cycle
-    Think --> Action
-    Action --> Observe
-    Observe -.->|"Loop if needed"| Think
-    Observe -->|"Final Response"| User
+    %% Simplified Flow
+    Route --> Execute
+    Execute -->|"Direct Response"| User
     
-    %% Action calls Tools
-    Action --> PlayerTools
-    Action --> NewsTools
-    Action --> VizTools
-    Action --> ReportTools
+    %% Execute calls Tools
+    Execute --> PlayerTools
+    Execute --> NewsTools
+    Execute --> VizTools
+    Execute --> ReportTools
     
     %% Tools call Backend Services
     PlayerTools --> PlayersAPI
@@ -1172,14 +1171,14 @@ flowchart TB
     %% Styling
     classDef userStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
     classDef agentStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px
-    classDef taoStyle fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    classDef flowStyle fill:#fff9c4,stroke:#f57f17,stroke-width:2px
     classDef toolStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
     classDef serviceStyle fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
     classDef dataStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px
     
     class User userStyle
     class LLM,ContextMgr,SystemPrompt agentStyle
-    class Think,Action,Observe taoStyle
+    class Request,Route,Execute flowStyle
     class PlayerTools,NewsTools,VizTools,ReportTools toolStyle
     class PlayersAPI,RatingsAPI,NewsAPI,ChatAPI serviceStyle
     class PostgreSQL,RedisCache,FileStorage dataStyle
@@ -1192,8 +1191,8 @@ flowchart TB
 ### Single-Agent Design
 - **One LangChain Agent** orchestrates all operations
 - **18 specialized tools** (not independent agents)
-- **TAO Framework** for transparency and structured thinking
-- **Stateful context** persisted in Redis across conversation turns
+- **Nuclear Prompt** for direct tool routing and optimal performance
+- **Stateful context** persisted in Redis + Thread-local storage
 
 ### Tool Categories
 1. **Player Tools (7)**: Search, similarity, stats, comparison, team fit analysis
@@ -1203,8 +1202,9 @@ flowchart TB
 
 ### Context Management
 - **Redis-backed memory**: Conversation history and search context
-- **Thread-local storage**: User-specific context during request
-- **Dual cache system**: Primary + backup for reliability
+- **Thread-local storage**: User-specific context isolation during requests
+- **Session-based storage**: Unique dashboard data with automatic cleanup
+- **Context persistence**: Robust user context management preventing data mixing
 
 ### NOT Multi-Agent
 - Single agent with multiple tools (not autonomous sub-agents)
