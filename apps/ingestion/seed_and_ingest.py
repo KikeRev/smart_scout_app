@@ -593,6 +593,198 @@ def embed_texts(texts: list[str], verbose: bool = False) -> list[list[float]]:
     ).tolist()
 
 
+def load_news_from_csv(engine: sa.Engine, csv_path: Path, verbose: bool = False, if_exists: str = "append"):
+    """
+    Load news articles from CSV file.
+    
+    Expected CSV columns:
+    - url (required, unique): Article URL
+    - title (required): Article title
+    - published_at (required): ISO format datetime string (e.g., "2024-10-31T12:00:00Z")
+    - article_text (optional): Full article text. If missing, will use title as fallback
+    - summary (optional): Article summary. If missing, will be generated from article_text or title
+    - source_id (optional): News source identifier (e.g., "transfermarkt_es")
+    - player_ids (optional): Comma-separated list of player IDs to link directly
+    - player_names (optional): Comma-separated list of player names (will be resolved to IDs)
+    
+    Args:
+        engine: SQLAlchemy engine
+        csv_path: Path to CSV file
+        verbose: Print progress
+        if_exists: "append" (default) or "replace" (truncate table first)
+    """
+    if not csv_path.exists():
+        print(f"❌ CSV file not found: {csv_path}")
+        return False
+    
+    try:
+        df = pd.read_csv(csv_path)
+        print(f"📰 Loaded {len(df)} news articles from CSV", flush=True)
+        
+        # Validate required columns
+        required_cols = ["url", "title", "published_at"]
+        missing = [col for col in required_cols if col not in df.columns]
+        if missing:
+            print(f"❌ Missing required columns: {missing}")
+            return False
+        
+        # Replace mode: truncate table
+        if if_exists == "replace":
+            with engine.begin() as conn:
+                conn.exec_driver_sql("TRUNCATE TABLE football_news CASCADE")
+            print("🗑️  Truncated football_news table", flush=True)
+        
+        # Prepare data
+        texts = []
+        summaries = []
+        metas = []
+        
+        for _, row in tqdm(df.iterrows(), total=len(df), desc="Preparing news", disable=not verbose):
+            url = str(row["url"]).strip()
+            title = str(row["title"]).strip()
+            
+            # Parse published_at
+            try:
+                if pd.notna(row["published_at"]):
+                    dt = pd.to_datetime(row["published_at"])
+                    if dt.tz is None:
+                        published_at = dt.tz_localize("UTC")
+                    else:
+                        published_at = dt.tz_convert("UTC")
+                else:
+                    published_at = datetime.now(timezone.utc)
+            except Exception:
+                published_at = datetime.now(timezone.utc)
+            
+            # Get article_text (use title if missing)
+            article_text = str(row.get("article_text", "")) if pd.notna(row.get("article_text")) else title
+            if not article_text or article_text.strip() == "":
+                article_text = title
+            
+            # Get summary (generate if missing)
+            summary = str(row.get("summary", "")) if pd.notna(row.get("summary")) else ""
+            if not summary or summary.strip() == "":
+                # Generate summary from article_text (max 400 chars)
+                try:
+                    summary = safe_summarize(article_text)
+                except Exception:
+                    summary = article_text[:400] + "…" if len(article_text) > 400 else article_text
+            
+            source_id = str(row.get("source_id", "csv_import")) if pd.notna(row.get("source_id")) else "csv_import"
+            
+            texts.append(article_text)
+            summaries.append(summary)
+            metas.append({
+                "url": url,
+                "title": title,
+                "published_at": published_at,
+                "source": source_id,
+                "player_ids": str(row.get("player_ids", "")) if pd.notna(row.get("player_ids")) else "",
+                "player_names": str(row.get("player_names", "")) if pd.notna(row.get("player_names")) else "",
+            })
+        
+        if not texts:
+            print("⚠️  No valid news articles found in CSV")
+            return False
+        
+        # Generate embeddings from summaries
+        embeddings = embed_texts(summaries, verbose=verbose)
+        
+        # Insert into database
+        with orm.Session(engine) as session:
+            inserted = 0
+            for text, summary, emb, meta in tqdm(
+                zip(texts, summaries, embeddings, metas),
+                total=len(metas),
+                desc="Inserting news",
+                unit="row",
+                disable=not verbose,
+                dynamic_ncols=True
+            ):
+                # Check for duplicates
+                existing = session.query(FootballNews).filter_by(url=meta["url"]).first()
+                if existing:
+                    continue
+                
+                news_item = FootballNews(
+                    url=meta["url"],
+                    title=meta["title"],
+                    published_at=meta["published_at"],
+                    article_text=text,
+                    summary=summary,
+                    embedding=list(map(float, emb)),
+                    source_id=meta["source"],
+                    article_meta={"source": meta["source"], "import_method": "csv"},
+                )
+                session.add(news_item)
+                inserted += 1
+            
+            session.commit()
+        
+        print(f"✅ News inserted from CSV: {inserted}/{len(metas)}", flush=True)
+        
+        # Link players if specified
+        with orm.Session(engine) as session:
+            linked_count = 0
+            for meta in metas:
+                if not meta["player_ids"] and not meta["player_names"]:
+                    continue
+                
+                # Get news_id
+                news = session.query(FootballNews).filter_by(url=meta["url"]).first()
+                if not news:
+                    continue
+                
+                player_ids_to_link = []
+                
+                # Process player_ids
+                if meta["player_ids"]:
+                    for pid_str in meta["player_ids"].split(","):
+                        try:
+                            pid = int(pid_str.strip())
+                            player_ids_to_link.append(pid)
+                        except ValueError:
+                            pass
+                
+                # Process player_names (resolve to IDs)
+                if meta["player_names"]:
+                    for name in meta["player_names"].split(","):
+                        name_clean = name.strip()
+                        player = session.query(Player).filter(Player.full_name.ilike(f"%{name_clean}%")).first()
+                        if player:
+                            player_ids_to_link.append(player.id)
+                
+                # Link players
+                for player_id in set(player_ids_to_link):
+                    player = session.get(Player, player_id)
+                    if not player:
+                        continue
+                    
+                    stmt = pg_insert(player_news).values(
+                        player_id=player_id,
+                        news_id=news.id,
+                        player_club=player.club,
+                        player_league=player.league
+                    )
+                    stmt = stmt.on_conflict_do_nothing()
+                    session.execute(stmt)
+                    linked_count += 1
+            
+            session.commit()
+        
+        if linked_count > 0:
+            print(f"✅ Linked {linked_count} player-news associations from CSV", flush=True)
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error loading news from CSV: {e}")
+        if verbose:
+            import traceback
+            traceback.print_exc()
+        return False
+
+
 def ingest_news(engine: sa.Engine, verbose: bool = False):
     items = sorted(fetch_rss_items(), key=lambda x: x["published_at"], reverse=True)
     print(f"Fetched {len(items)} RSS items → processing …", flush=True)
@@ -1151,10 +1343,12 @@ def main():
     parser.add_argument("--players-csv", type=Path, help="Path to players CSV", required=False)
     parser.add_argument("--history-csv", type=Path, help="Path to historical players CSV (non-aggregated)", required=False)
     parser.add_argument("--ratings-csv", type=Path, help="Path to player ratings CSV", required=False)
+    parser.add_argument("--news-csv", type=Path, help="Path to news CSV for initial ingestion (optional, use --ingest-news for RSS feeds)", required=False)
     parser.add_argument("--replace", action="store_true", help="TRUNCATE players before importing CSV")
     parser.add_argument("--replace-history", action="store_true", help="TRUNCATE player_history before importing CSV")
     parser.add_argument("--replace-ratings", action="store_true", help="TRUNCATE player_ratings before importing CSV")
-    parser.add_argument("--ingest-news", action="store_true", help="Fetch & embed latest news")
+    parser.add_argument("--replace-news", action="store_true", help="TRUNCATE football_news before importing CSV")
+    parser.add_argument("--ingest-news", action="store_true", help="Fetch & embed latest news from RSS feeds")
     parser.add_argument("--calculate-ratings", action="store_true", help="Calculate FIFA-style ratings for all players (DEPRECATED: use --ratings-csv instead)")
     parser.add_argument("--ratings-season", type=str, help="Season for ratings calculation (default: all)")
     parser.add_argument("--echo-sql", action="store_true")
@@ -1178,6 +1372,17 @@ def main():
     if args.history_csv:
         load_player_history(engine, args.history_csv, if_exists="replace" if args.replace_history else "append")
 
+    # Load news from CSV (for initial/bootstrap data)
+    if args.news_csv:
+        load_news_from_csv(
+            engine=engine,
+            csv_path=args.news_csv,
+            verbose=args.verbose,
+            if_exists="replace" if args.replace_news else "append"
+        )
+        link_player_news(engine)
+    
+    # Fetch news from RSS feeds (for ongoing updates, can be run via cron)
     if args.ingest_news:
         ingest_news(engine, verbose=args.verbose)
         link_player_news(engine)

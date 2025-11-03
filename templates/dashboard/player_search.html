@@ -366,7 +366,7 @@ function loadFilterOptions() {
     })
     .catch(error => {
         // Fallback al endpoint de FastAPI
-        fetch('http://api:8001/players/filter-options')
+        fetch('{% url "dashboard:search_api" %}?action=filter_options')
         .then(response => response.json())
         .then(data => {
             populateFilterOptions(data);

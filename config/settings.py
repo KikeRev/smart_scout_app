@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +21,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-rdm_ikdm6o_l(-6t+uw1vo-#gfo(x^#hwc7f^_()+@+!5y(_-e'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'change-me-in-env')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
+
+SECURE_PROXY_SSL_HEADER = tuple(os.getenv("SECURE_PROXY_SSL_HEADER", "HTTP_X_FORWARDED_PROTO,https").split(","))
+
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "true").lower() == "true"
+CSRF_COOKIE_SECURE    = os.getenv("CSRF_COOKIE_SECURE", "true").lower() == "true"
+
+_csrf = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [o for o in _csrf.split(",") if o] 
 
 
 # Application definition
@@ -88,11 +97,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "scouting",
-        "USER": "scout",
-        "PASSWORD": "scout",
-        "HOST": "db",
-        "PORT": "5432",
+        "NAME": os.getenv("DB_NAME", "scouting"),
+        "USER": os.getenv("DB_USER", "scout"),
+        "PASSWORD": os.getenv("DB_PASSWORD", "scout"),
+        "HOST": os.getenv("DB_HOST", "pg"),
+        "PORT": os.getenv("DB_PORT", "5432"),
     }
 }
 
