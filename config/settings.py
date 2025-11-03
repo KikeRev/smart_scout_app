@@ -11,6 +11,14 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+
+# Carga opcional de variables desde .env si python-dotenv está disponible
+try:
+    from dotenv import load_dotenv  # type: ignore
+    load_dotenv()
+except Exception:
+    pass
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +28,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-rdm_ikdm6o_l(-6t+uw1vo-#gfo(x^#hwc7f^_()+@+!5y(_-e'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'change-me-in-env')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() in {'1','true','yes','on'}
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",") if os.getenv("ALLOWED_HOSTS") else ["*"]
 
 
 # Application definition
@@ -88,11 +96,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "scouting",
-        "USER": "scout",
-        "PASSWORD": "scout",
-        "HOST": "db",
-        "PORT": "5432",
+        "NAME": os.getenv("DB_NAME", "scouting"),
+        "USER": os.getenv("DB_USER", "scout"),
+        "PASSWORD": os.getenv("DB_PASSWORD", "scout"),
+        "HOST": os.getenv("DB_HOST", "db"),
+        "PORT": os.getenv("DB_PORT", "5432"),
     }
 }
 
@@ -174,3 +182,23 @@ MARKDOWNIFY = {
         },
     }
 }
+
+# Seguridad / proxy (ALB/Cloudflare)
+_secure_proxy = os.getenv("SECURE_PROXY_SSL_HEADER")
+if _secure_proxy:
+    try:
+        header, value = [x.strip() for x in _secure_proxy.split(",", 1)]
+        SECURE_PROXY_SSL_HEADER = (header, value)
+    except Exception:
+        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+else:
+    SECURE_PROXY_SSL_HEADER = None
+
+SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'True').lower() in {'1','true','yes','on'}
+CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'True').lower() in {'1','true','yes','on'}
+
+_csrf_trusted = os.getenv('CSRF_TRUSTED_ORIGINS', '')
+if _csrf_trusted:
+    CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_trusted.split(',') if o.strip()]
+else:
+    CSRF_TRUSTED_ORIGINS = []
