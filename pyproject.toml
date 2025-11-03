@@ -20,6 +20,9 @@ dependencies = [
   "python-decouple==3.8",
   "django-allauth==65.11.2",
   "django-markdownify==0.9.5",
+  # Production web server & static files
+  "gunicorn==21.2.0",
+  "whitenoise==6.7.0",
 
   # --- GenAI & RAG ---
   "langchain==0.3.27",

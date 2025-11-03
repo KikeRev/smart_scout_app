@@ -84,11 +84,26 @@ def search_players(
         if min_minutes is not None:
             search_params["min_minutes"] = min_minutes
         
-        # Make request to API
-        response = requests.post(f"{API_BASE_URL}/players/search", json=search_params)
+        # Make request to API - use /players/all and filter client-side if needed
+        # or wait for POST endpoint to be implemented
+        response = requests.get(f"{API_BASE_URL}/players/all", timeout=120)
         response.raise_for_status()
+        all_players = response.json().get('players', [])
         
-        return response.json()
+        # Simple client-side filtering (basic implementation)
+        filtered = all_players
+        if position:
+            filtered = [p for p in filtered if p.get('position') == position]
+        if nationality:
+            filtered = [p for p in filtered if p.get('nationality') == nationality]
+        if age_min:
+            filtered = [p for p in filtered if p.get('age', 0) >= age_min]
+        if age_max:
+            filtered = [p for p in filtered if p.get('age', 100) <= age_max]
+        if min_minutes:
+            filtered = [p for p in filtered if p.get('minutes', 0) >= min_minutes]
+        
+        return {"players": filtered[:limit] if limit else filtered}
         
     except requests.exceptions.RequestException as e:
         # In case of error, return empty structure
@@ -127,9 +142,17 @@ def get_player_details(player_ids: List[int]) -> List[Dict[str, Any]]:
         
         return filtered_players
         
-    except requests.exceptions.RequestException as e:
+    except (requests.exceptions.RequestException, requests.exceptions.ConnectionError) as e:
         print(f"Error in get_player_details: {e}")
-        return []
+        # Retry once with shorter timeout
+        try:
+            response = requests.get(f"{API_BASE_URL}/players/all", timeout=60)
+            response.raise_for_status()
+            all_players = response.json().get('players', [])
+            filtered_players = [p for p in all_players if p.get('id') in player_ids]
+            return filtered_players
+        except:
+            return []
 
 def get_all_players() -> Dict[str, Any]:
     """
@@ -141,7 +164,7 @@ def get_all_players() -> Dict[str, Any]:
         List of all players with their data
     """
     try:
-        response = requests.get(f"{API_BASE_URL}/players/all", timeout=90)
+        response = requests.get(f"{API_BASE_URL}/players/all", timeout=120)
         response.raise_for_status()
         
         return response.json()
@@ -149,8 +172,8 @@ def get_all_players() -> Dict[str, Any]:
     except requests.exceptions.RequestException as e:
         # Fallback: get players in batches
         try:
-            # Get some example players
-            response = requests.get(f"{API_BASE_URL}/players/search", params={"limit": 1000})
+            # Get all players instead of using /players/search without query
+            response = requests.get(f"{API_BASE_URL}/players/all", params={"limit": 1000}, timeout=90)
             response.raise_for_status()
             return response.json()
         except:
@@ -317,7 +340,7 @@ def get_available_metrics() -> List[str]:
     """
     try:
         # Get an example player to see what metrics are available
-        response = requests.get(f"{API_BASE_URL}/players/search", params={"limit": 1})
+        response = requests.get(f"{API_BASE_URL}/players/all", params={"limit": 1}, timeout=90)
         response.raise_for_status()
         data = response.json()
         
