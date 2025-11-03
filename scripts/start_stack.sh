@@ -53,8 +53,6 @@ docker run -d --restart=always --network "${NETWORK_NAME}" --name api \
     --host 0.0.0.0 --port 8001 \
     --workers ${UVICORN_WORKERS:-1} \
     --timeout-keep-alive ${UVICORN_TKA:-60} \
-    --limit-max-requests ${UVICORN_MAX_REQ:-300} \
-    --limit-keep-alive ${UVICORN_LKA:-30} \
     --log-level info'
 
 # 5) APP (Django + gunicorn)
