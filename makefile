@@ -7,7 +7,7 @@ CORE_SERVICES := api web db redis jupyter
 
 .PHONY: up build stop stop-core down down-all restart restart-fast prune clean \
         ps logs logs-api logs-web logs-db shell-api shell-web shell-db \
-        up-db up-core ingest-full ingest-players ingest-news help
+        up-db up-core ingest-full ingest-players ingest-news ingest-news-csv export-news-csv help
 
 ## Show available commands
 help:
@@ -64,14 +64,21 @@ shell-db:
 	$(COMPOSE) exec db psql -U scout -d scouting
 
 ## Manual ingestion targets 
-ingest-full: up-db   ## Full bootstrap: players + history + ratings + news
+ingest-full: up-db   ## Full bootstrap: players + history + ratings + news (from CSV)
 	$(COMPOSE) run --rm -t -e INGEST_MODE="" ingestion
 
 ingest-players: up-db   ## Players-only: players + history + ratings (no news)
 	$(COMPOSE) run --rm -t -e INGEST_MODE="players" ingestion
 
-ingest-news: up-db   ## News-only: scrape & embed NEW football news
+ingest-news: up-db   ## News-only: use CSV if present; fallback to RSS ingest
 	$(COMPOSE) run --rm -t -e INGEST_MODE="news" ingestion
+
+ingest-news-csv: up-db  ## News-only: force CSV import (requires data/news_export.csv)
+	$(COMPOSE) run --rm -t -e INGEST_MODE="news" ingestion
+
+export-news-csv:  ## Export football_news (with embeddings) to data/news_export.csv
+	$(COMPOSE) exec web python scripts/export_news_to_csv.py --out /app/data/news_export.csv || \
+	  (echo "Web container not running. Start with 'make up-core' and retry." && exit 1)
 
 ## Stop containers (NO delete networks nor volumes)
 stop:

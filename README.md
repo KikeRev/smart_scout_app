@@ -1,4 +1,4 @@
-<h1 align="center">SMART SCOUT APP v1.6.1</h1>
+<h1 align="center">SMART SCOUT APP v1.6.2</h1>
 
 <p align="center">
   <img src="./static/img/app_logo_6.png" alt="Logo">
@@ -1521,9 +1521,11 @@ python -m apps.ingestion.seed_and_ingest \
 | `--players-csv PATH` | CSV with raw player stats |
 | `--history-csv PATH` | CSV with seasonal records |
 | `--ratings-csv PATH` | CSV with pre-calculated ratings (v1.6) |
+| `--news-csv PATH` | CSV with football news for bootstrap import (uses embedding from CSV if present) |
 | `--replace` | Truncate `players` and `player_news` before inserting |
 | `--replace-history` | Truncate `player_history` before inserting |
 | `--replace-ratings` | Truncate `player_ratings` before inserting |
+| `--replace-news` | Truncate `football_news` before inserting from CSV |
 | `--refresh-embs` | Recompute every `feature_vector` with StandardScaler + pgvector |
 | `--ingest-news` | Fetch, summarize, embed and upsert RSS news |
 | `--skip-players` | Skip player ingestion (news-only run) |
@@ -1531,6 +1533,18 @@ python -m apps.ingestion.seed_and_ingest \
 | `--verbose` | Detailed logging |
 
 **Note**: `--calculate-ratings` flag has been replaced with `--ratings-csv` for better performance and reliability.
+
+#### News CSV Bootstrap Examples
+```bash
+# Export current news (with embeddings) to CSV
+python scripts/export_news_to_csv.py --out data/news_export.csv
+
+# Import news from CSV (uses embeddings from CSV if present)
+python -m apps.ingestion.seed_and_ingest \
+  --news-csv data/news_export.csv \
+  --replace-news \
+  --verbose
+```
 
 ---
 

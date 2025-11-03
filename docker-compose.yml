@@ -57,7 +57,16 @@ services:
         echo "INGEST_MODE=$${INGEST_MODE:-<unset>}"
         if [ "$${INGEST_MODE:-}" = "news" ]; then
           echo "▶ News-only ingestion"
-          python -m apps.ingestion.seed_and_ingest --ingest-news --skip-players --verbose
+          if [ -f data/news_export.csv ]; then
+            echo "Using CSV bootstrap: data/news_export.csv"
+            python -m apps.ingestion.seed_and_ingest \
+              --news-csv data/news_export.csv \
+              --replace-news \
+              --verbose
+          else
+            echo "CSV not found, falling back to RSS ingest"
+            python -m apps.ingestion.seed_and_ingest --ingest-news --skip-players --verbose
+          fi
         elif [ "$${INGEST_MODE:-}" = "players" ]; then
           echo "▶ Players-only ingestion (players + history + ratings)"
           python -m apps.ingestion.seed_and_ingest \
@@ -67,7 +76,7 @@ services:
             --replace --replace-history --replace-ratings --refresh-embs \
             --verbose
         else
-          echo "▶ Full bootstrap (players + history + ratings + news)"
+          echo "▶ Full bootstrap (players + history + ratings + news from CSV)"
           echo "Step 1: Generate ratings CSV..."
           python scripts/calculate_ratings_to_csv.py --verbose
           echo "Step 2: Load all data..."
@@ -76,7 +85,7 @@ services:
             --history-csv data/all_players_plus_historic_data_non_aggregated_v3.csv \
             --ratings-csv data/player_ratings.csv \
             --replace --replace-history --replace-ratings --refresh-embs \
-            --ingest-news --verbose
+            --news-csv data/news_export.csv --replace-news --verbose
         fi
       '
     volumes:
