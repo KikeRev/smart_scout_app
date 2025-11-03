@@ -23,6 +23,7 @@ import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+import json
 from typing import List, Tuple
 
 import pandas as pd
@@ -593,6 +594,108 @@ def embed_texts(texts: list[str], verbose: bool = False) -> list[list[float]]:
     ).tolist()
 
 
+def load_news_from_csv(engine: sa.Engine, csv_path: Path, verbose: bool = False, if_exists: str = "append") -> bool:
+    """Load news from CSV. If column 'embedding' (JSON) is present, use it; otherwise generate embeddings.
+
+    Expected columns (minimum):
+      - url, title, published_at, article_text, summary, source_id
+      - embedding (optional, JSON array of floats)
+      - player_ids / player_names (optional; linking is performed later)
+    """
+    if not csv_path.exists():
+        print(f"❌ CSV file not found: {csv_path}")
+        return False
+
+    df = pd.read_csv(csv_path)
+    if df.empty:
+        print("⚠️ Empty CSV")
+        return False
+
+    required_cols = ["url", "title", "published_at"]
+    missing = [c for c in required_cols if c not in df.columns]
+    if missing:
+        print(f"❌ Missing required columns: {missing}")
+        return False
+
+    if if_exists == "replace":
+        with engine.begin() as conn:
+            conn.exec_driver_sql("TRUNCATE TABLE football_news CASCADE")
+
+    texts, summaries, metas = [], [], []
+    csv_embeddings: list[list[float]] = []
+
+    for _, row in df.iterrows():
+        url = str(row.get("url", "")).strip()
+        title = str(row.get("title", "")).strip()
+        # Normalize timestamp to UTC
+        try:
+            dt = pd.to_datetime(row.get("published_at"))
+            if dt.tz is None:
+                published_at = dt.tz_localize("UTC")
+            else:
+                published_at = dt.tz_convert("UTC")
+        except Exception:
+            published_at = datetime.now(timezone.utc)
+
+        article_text = str(row.get("article_text", ""))
+        if not article_text:
+            article_text = title
+        summary = str(row.get("summary", ""))
+        if not summary:
+            summary = article_text[:400]
+        source_id = str(row.get("source_id", "csv_import"))
+
+        texts.append(article_text)
+        summaries.append(summary)
+        metas.append({
+            "url": url,
+            "title": title,
+            "published_at": published_at,
+            "source": source_id,
+        })
+
+        if "embedding" in df.columns:
+            raw = row.get("embedding")
+            try:
+                if pd.notna(raw) and raw != "":
+                    vec = raw if isinstance(raw, (list, tuple)) else json.loads(str(raw))
+                    csv_embeddings.append([float(x) for x in vec])
+                else:
+                    csv_embeddings.append([])
+            except Exception:
+                csv_embeddings.append([])
+
+    if csv_embeddings and any(len(v) > 0 for v in csv_embeddings):
+        # Rellenar huecos generando solo los que falten
+        to_gen = [i for i, v in enumerate(csv_embeddings) if not v]
+        if to_gen:
+            gen = embed_texts([summaries[i] for i in to_gen], verbose=verbose)
+            for i, v in zip(to_gen, gen):
+                csv_embeddings[i] = v
+        embeddings = csv_embeddings
+    else:
+        embeddings = embed_texts(summaries, verbose=verbose)
+
+    with orm.Session(engine) as session:
+        inserted = 0
+        for text, summary, emb, meta in zip(texts, summaries, embeddings, metas):
+            if session.query(FootballNews).filter_by(url=meta["url"]).first():
+                continue
+            session.add(FootballNews(
+                url=meta["url"],
+                title=meta["title"],
+                published_at=meta["published_at"],
+                article_text=text,
+                summary=summary,
+                embedding=list(map(float, emb)) if emb else None,
+                source_id=meta["source"],
+                article_meta={"source": meta["source"], "import_method": "csv"},
+            ))
+            inserted += 1
+        session.commit()
+    print(f"✅ News inserted from CSV: {inserted}/{len(metas)}")
+    return True
+
 def ingest_news(engine: sa.Engine, verbose: bool = False):
     items = sorted(fetch_rss_items(), key=lambda x: x["published_at"], reverse=True)
     print(f"Fetched {len(items)} RSS items → processing …", flush=True)
@@ -1151,6 +1254,8 @@ def main():
     parser.add_argument("--players-csv", type=Path, help="Path to players CSV", required=False)
     parser.add_argument("--history-csv", type=Path, help="Path to historical players CSV (non-aggregated)", required=False)
     parser.add_argument("--ratings-csv", type=Path, help="Path to player ratings CSV", required=False)
+    parser.add_argument("--news-csv", type=Path, help="Path to news CSV (bootstrap import)", required=False)
+    parser.add_argument("--replace-news", action="store_true", help="TRUNCATE football_news before importing CSV")
     parser.add_argument("--replace", action="store_true", help="TRUNCATE players before importing CSV")
     parser.add_argument("--replace-history", action="store_true", help="TRUNCATE player_history before importing CSV")
     parser.add_argument("--replace-ratings", action="store_true", help="TRUNCATE player_ratings before importing CSV")
@@ -1177,6 +1282,15 @@ def main():
 
     if args.history_csv:
         load_player_history(engine, args.history_csv, if_exists="replace" if args.replace_history else "append")
+
+    if args.news_csv:
+        load_news_from_csv(
+            engine=engine,
+            csv_path=args.news_csv,
+            verbose=args.verbose,
+            if_exists="replace" if args.replace_news else "append",
+        )
+        link_player_news(engine)
 
     if args.ingest_news:
         ingest_news(engine, verbose=args.verbose)
