@@ -70,10 +70,22 @@ docker run -d --restart=always --network "${NETWORK_NAME}" -p 80:8000 --name app
     --max-requests-jitter ${GUNICORN_MAX_REQ_JITTER:-50} \
     --access-logfile - --error-logfile -'
 
-# 6) Basic checks
-echo "▶ Basic checks"
-docker exec app curl -sS http://api:8001/docs | head -n 3 || true
-docker exec app curl -sI http://localhost:8000/ | head -n 1 || true
+# 6) Basic checks with small waits
+echo "▶ Waiting for API (health)"
+for i in {1..30}; do
+  if docker exec app sh -lc 'curl -sS http://api:8001/docs >/dev/null 2>&1'; then
+    echo "   API OK"; break
+  fi
+  sleep 2
+done
+
+echo "▶ Waiting for APP (HTTP)"
+for i in {1..30}; do
+  if docker exec app sh -lc 'curl -sI -m 2 -s http://localhost:8000/ | head -n1 | grep -qE "HTTP/1.1|HTTP/2"'; then
+    echo "   APP OK"; break
+  fi
+  sleep 2
+done
 
 echo "✅ Stack is up with image ${IMAGE_REF}"
 

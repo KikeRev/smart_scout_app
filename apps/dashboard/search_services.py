@@ -63,47 +63,23 @@ def search_players(
         Search results with pagination
     """
     try:
-        # Build search parameters
-        search_params = {
-            "query": query,
+        # Build payload for server-side search (efficient)
+        payload = {
+            "query": query or None,
+            "positions": positions or None,
+            "leagues": leagues or None,
+            "clubs": clubs or None,
+            "nationalities": None,
+            "age_min": age_min,
+            "age_max": age_max,
+            "min_minutes": min_minutes,
             "page": page,
-            "per_page": per_page
+            "per_page": per_page,
+            "order": "minutes_desc",
         }
-        
-        # Add filters if present
-        if leagues:
-            search_params["leagues"] = leagues
-        if clubs:
-            search_params["clubs"] = clubs
-        if positions:
-            search_params["positions"] = positions
-        if age_min is not None:
-            search_params["age_min"] = age_min
-        if age_max is not None:
-            search_params["age_max"] = age_max
-        if min_minutes is not None:
-            search_params["min_minutes"] = min_minutes
-        
-        # Make request to API - use /players/all and filter client-side if needed
-        # or wait for POST endpoint to be implemented
-        response = requests.get(f"{API_BASE_URL}/players/all", timeout=120)
+        response = requests.post(f"{API_BASE_URL}/players/search", json=payload, timeout=180)
         response.raise_for_status()
-        all_players = response.json().get('players', [])
-        
-        # Simple client-side filtering (basic implementation)
-        filtered = all_players
-        if position:
-            filtered = [p for p in filtered if p.get('position') == position]
-        if nationality:
-            filtered = [p for p in filtered if p.get('nationality') == nationality]
-        if age_min:
-            filtered = [p for p in filtered if p.get('age', 0) >= age_min]
-        if age_max:
-            filtered = [p for p in filtered if p.get('age', 100) <= age_max]
-        if min_minutes:
-            filtered = [p for p in filtered if p.get('minutes', 0) >= min_minutes]
-        
-        return {"players": filtered[:limit] if limit else filtered}
+        return response.json()
         
     except requests.exceptions.RequestException as e:
         # In case of error, return empty structure
@@ -131,16 +107,14 @@ def get_player_details(player_ids: List[int]) -> List[Dict[str, Any]]:
         List of player data
     """
     try:
-        # Use the /players/all endpoint that already works and filter locally
-        response = requests.get(f"{API_BASE_URL}/players/all", timeout=90)
+        # Use dedicated details endpoint for specific IDs
+        response = requests.post(
+            f"{API_BASE_URL}/players/details",
+            json={"player_ids": player_ids},
+            timeout=60,
+        )
         response.raise_for_status()
-        
-        all_players = response.json().get('players', [])
-        
-        # Filter only the players we need
-        filtered_players = [p for p in all_players if p.get('id') in player_ids]
-        
-        return filtered_players
+        return response.json()
         
     except (requests.exceptions.RequestException, requests.exceptions.ConnectionError) as e:
         print(f"Error in get_player_details: {e}")
@@ -189,8 +163,10 @@ def get_filter_options() -> Dict[str, List[str]]:
         Dictionary with options per filter
     """
     try:
-        # Use the FastAPI endpoint that gets all unique options
-        response = requests.get('http://api:8001/players/filter-options', timeout=120)
+        # Use FastAPI endpoint with dependent filters (all optional)
+        params = {}
+        # In this context we don't have current selections; leave empty
+        response = requests.get(f'{API_BASE_URL}/players/filter-options', params=params, timeout=180)
         if response.status_code == 200:
             return response.json()
         else:

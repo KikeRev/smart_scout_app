@@ -5,7 +5,7 @@ import numpy as np
 from pgvector.sqlalchemy import Vector
 from apps.ingestion.seed_and_ingest import Player   # existing model
 from apps.agent_service.db import get_session
-from typing import List
+from typing import List, Optional
 from decimal import Decimal
 from pgvector.sqlalchemy import Vector as PGVector
 from pydantic import BaseModel
@@ -39,6 +39,13 @@ def _serialize(v):
 
 def player_to_dict(p: Player) -> dict:
     return {c.name: _serialize(getattr(p, c.name)) for c in Player.__table__.columns}
+
+def player_to_light_dict(p: Player) -> dict:
+    """Slim serialization for listings: excludes heavy fields like feature_vector."""
+    data = player_to_dict(p)
+    # Remove heavy/non-needed fields
+    data.pop("feature_vector", None)
+    return data
 
 router = APIRouter(prefix="/players", tags=["players"])
 
@@ -305,39 +312,53 @@ def search_players(query: str, limit: int = 200, db: Session = Depends(get_sessi
     return [dict(r._mapping) for r in rows]
 
 @router.get("/all")
-def get_all_players(limit: int = 47000, db: Session = Depends(get_session)):
-    """Gets all players for dynamic filtering"""
-    rows = (
-        db.query(Player)
-          .limit(limit)
-          .all()
-    )
-    return {"players": [player_to_dict(p) for p in rows]}
+def get_all_players(
+    limit: Optional[int] = Query(None, ge=1, le=100000),
+    db: Session = Depends(get_session),
+):
+    """Gets players for dynamic filtering (deprecated for UI). Excludes feature_vector.
+
+    Note: Kept for backwards compatibility. Prefer POST /players/search.
+    """
+    q = db.query(Player)
+    if limit is not None:
+        q = q.limit(limit)
+    rows = q.all()
+    return {"players": [player_to_light_dict(p) for p in rows]}
 
 @router.get("/filter-options")
-def get_filter_options(db: Session = Depends(get_session)):
-    """Gets unique options for filters without player limit"""
-    # Get unique leagues
-    leagues = db.query(Player.league).filter(Player.league.isnot(None)).distinct().all()
-    leagues = [league[0] for league in leagues if league[0]]
-    
-    # Get unique clubs
-    clubs = db.query(Player.club).filter(Player.club.isnot(None)).distinct().all()
-    clubs = [club[0] for club in clubs if club[0]]
-    
-    # Get unique positions
-    positions = db.query(Player.position).filter(Player.position.isnot(None)).distinct().all()
-    positions = [position[0] for position in positions if position[0]]
-    
-    # Get unique nationalities
-    nationalities = db.query(Player.nationality).filter(Player.nationality.isnot(None)).distinct().all()
-    nationalities = [nationality[0] for nationality in nationalities if nationality[0]]
-    
+def get_filter_options(
+    positions: Optional[List[str]] = Query(None),
+    leagues: Optional[List[str]] = Query(None),
+    clubs: Optional[List[str]] = Query(None),
+    nationalities: Optional[List[str]] = Query(None),
+    db: Session = Depends(get_session),
+):
+    """Gets unique options for filters, optionally conditioned by current selections."""
+    q = db.query(Player)
+    # Apply conditioning filters
+    if positions:
+        q = q.filter(Player.position.in_(positions))
+    if leagues:
+        q = q.filter(Player.league.in_(leagues))
+    if clubs:
+        q = q.filter(Player.club.in_(clubs))
+    if nationalities:
+        q = q.filter(Player.nationality.in_(nationalities))
+
+    def distinct_list(col):
+        return [v for (v,) in q.with_entities(col).filter(col.isnot(None)).distinct().all() if v]
+
+    leagues_out = sorted(distinct_list(Player.league))
+    clubs_out = sorted(distinct_list(Player.club))
+    positions_out = sorted(distinct_list(Player.position))
+    nationalities_out = sorted(distinct_list(Player.nationality))
+
     return {
-        "leagues": sorted(leagues),
-        "clubs": sorted(clubs),
-        "positions": sorted(positions),
-        "nationalities": sorted(nationalities)
+        "leagues": leagues_out,
+        "clubs": clubs_out,
+        "positions": positions_out,
+        "nationalities": nationalities_out,
     }
 
 @router.post("/details")
@@ -353,3 +374,111 @@ def get_players_details(request: PlayerBatchRequest, db: Session = Depends(get_s
           .all()
     )
     return [player_to_dict(p) for p in players]
+
+
+# -------------------- New efficient endpoints --------------------
+
+class SearchRequest(BaseModel):
+    query: Optional[str] = None
+    positions: Optional[List[str]] = None
+    leagues: Optional[List[str]] = None
+    clubs: Optional[List[str]] = None
+    nationalities: Optional[List[str]] = None
+    age_min: Optional[int] = None
+    age_max: Optional[int] = None
+    min_minutes: Optional[int] = None
+    page: int = 1
+    per_page: int = 24
+    order: Optional[str] = "minutes_desc"
+
+
+@router.get("/lookup", summary="Quick lookup by name or uid (no vectors)")
+def players_lookup(
+    query: str = Query(..., min_length=1),
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_session),
+):
+    q = (
+        db.query(Player)
+        .with_entities(
+            Player.id,
+            Player.player_uid,
+            Player.full_name,
+            Player.club,
+            Player.league,
+            Player.position,
+            Player.nationality,
+            Player.age,
+            Player.minutes,
+            Player.team_logo,
+        )
+        .filter((Player.full_name.ilike(f"%{query}%")) | (Player.player_uid.ilike(f"%{query}%")))
+        .limit(limit)
+    )
+    rows = [dict(r._mapping) for r in q.all()]
+    return {"players": rows}
+
+
+@router.post("/search", summary="Server-side filtered search with pagination (no vectors)")
+def players_search(req: SearchRequest, db: Session = Depends(get_session)):
+    q = db.query(Player)
+
+    # Apply filters
+    if req.query:
+        q = q.filter((Player.full_name.ilike(f"%{req.query}%")) | (Player.player_uid.ilike(f"%{req.query}%")))
+    if req.positions:
+        q = q.filter(Player.position.in_(req.positions))
+    if req.leagues:
+        q = q.filter(Player.league.in_(req.leagues))
+    if req.clubs:
+        q = q.filter(Player.club.in_(req.clubs))
+    if req.nationalities:
+        q = q.filter(Player.nationality.in_(req.nationalities))
+    if req.age_min is not None:
+        q = q.filter(Player.age >= req.age_min)
+    if req.age_max is not None:
+        q = q.filter(Player.age <= req.age_max)
+    if req.min_minutes is not None:
+        q = q.filter(Player.minutes >= req.min_minutes)
+
+    # Total count before pagination
+    total = q.count()
+
+    # Ordering
+    if req.order == "minutes_desc":
+        q = q.order_by(Player.minutes.desc())
+    elif req.order == "age_asc":
+        q = q.order_by(Player.age.asc())
+    elif req.order == "age_desc":
+        q = q.order_by(Player.age.desc())
+    else:
+        q = q.order_by(Player.full_name.asc())
+
+    # Pagination
+    page = max(1, req.page)
+    per_page = max(1, min(100, req.per_page))
+    offset = (page - 1) * per_page
+
+    rows = (
+        q.with_entities(
+            Player.id,
+            Player.player_uid,
+            Player.full_name,
+            Player.club,
+            Player.league,
+            Player.position,
+            Player.nationality,
+            Player.age,
+            Player.minutes,
+            Player.minutes_90s,
+            Player.goals,
+            Player.assists,
+            Player.team_logo,
+        )
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+
+    players = [dict(r._mapping) for r in rows]
+    return {"players": players, "total": total, "page": page, "per_page": per_page}
