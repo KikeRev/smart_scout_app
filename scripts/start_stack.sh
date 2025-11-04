@@ -52,7 +52,7 @@ docker run -d --restart=always --network "${NETWORK_NAME}" --name api \
   "${IMAGE_REF}" sh -lc 'uvicorn apps.agent_service.main:app \
     --host 0.0.0.0 --port 8001 \
     --workers ${UVICORN_WORKERS:-1} \
-    --timeout-keep-alive ${UVICORN_TKA:-60} \
+    --timeout-keep-alive ${UVICORN_TKA:-120} \
     --log-level info'
 
 # 5) APP (Django + gunicorn)
@@ -64,8 +64,8 @@ docker run -d --restart=always --network "${NETWORK_NAME}" -p 80:8000 --name app
     -b 0.0.0.0:8000 \
     --workers ${GUNICORN_WORKERS:-2} \
     --threads ${GUNICORN_THREADS:-2} \
-    --timeout ${GUNICORN_TIMEOUT:-300} \
-    --graceful-timeout ${GUNICORN_GRACEFUL_TIMEOUT:-30} \
+    --timeout ${GUNICORN_TIMEOUT:-600} \
+    --graceful-timeout ${GUNICORN_GRACEFUL_TIMEOUT:-60} \
     --max-requests ${GUNICORN_MAX_REQ:-1000} \
     --max-requests-jitter ${GUNICORN_MAX_REQ_JITTER:-50} \
     --access-logfile - --error-logfile -'
