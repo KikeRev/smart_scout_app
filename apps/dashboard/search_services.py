@@ -27,6 +27,7 @@ def search_players(
     leagues: List[str] = None,
     clubs: List[str] = None,
     positions: List[str] = None,
+    nationalities: List[str] = None,
     age_min: int = None,
     age_max: int = None,
     min_minutes: int = None,
@@ -34,7 +35,7 @@ def search_players(
     per_page: int = 20
 ) -> Dict[str, Any]:
     """
-    Searches players with applied filters
+    Searches players with applied filters (all filters are AND conditions)
     
     Parameters
     ----------
@@ -46,6 +47,8 @@ def search_players(
         List of clubs to filter
     positions : List[str]
         List of positions to filter
+    nationalities : List[str]
+        List of nationalities to filter
     age_min : int
         Minimum age
     age_max : int
@@ -64,12 +67,13 @@ def search_players(
     """
     try:
         # Build payload for server-side search (efficient)
+        # All filters are applied as AND conditions
         payload = {
-            "query": query or None,
-            "positions": positions or None,
-            "leagues": leagues or None,
-            "clubs": clubs or None,
-            "nationalities": None,
+            "query": query if query else None,
+            "positions": positions if positions else None,
+            "leagues": leagues if leagues else None,
+            "clubs": clubs if clubs else None,
+            "nationalities": nationalities if nationalities else None,
             "age_min": age_min,
             "age_max": age_max,
             "min_minutes": min_minutes,
@@ -244,7 +248,7 @@ def get_comparison_data(players: List[Dict[str, Any]], metrics: List[str] = None
 
 def build_search_filters(request_data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Builds search filters from request data
+    Builds search filters from request data (all filters are AND conditions)
     
     Parameters
     ----------
@@ -259,18 +263,24 @@ def build_search_filters(request_data: Dict[str, Any]) -> Dict[str, Any]:
     filters = {}
     
     # Text search
-    if request_data.get('query'):
-        filters['query'] = request_data['query']
+    query = request_data.get('query')
+    if query and query.strip():
+        filters['query'] = query.strip()
     
-    # List filters
-    for filter_name in ['leagues', 'clubs', 'positions']:
-        if request_data.get(filter_name):
-            filters[filter_name] = request_data[filter_name]
+    # List filters - only include if list is not empty
+    for filter_name in ['leagues', 'clubs', 'positions', 'nationalities']:
+        value = request_data.get(filter_name)
+        if value and isinstance(value, list) and len(value) > 0:
+            filters[filter_name] = value
     
-    # Numeric filters
+    # Numeric filters - only include if not None
     for filter_name in ['age_min', 'age_max', 'min_minutes']:
-        if request_data.get(filter_name):
-            filters[filter_name] = int(request_data[filter_name])
+        value = request_data.get(filter_name)
+        if value is not None:
+            try:
+                filters[filter_name] = int(value)
+            except (ValueError, TypeError):
+                pass
     
     # Pagination
     filters['page'] = int(request_data.get('page', 1))

@@ -60,19 +60,33 @@ def get_llm(
     if langfuse_enabled and langfuse_public_key and langfuse_secret_key:
         try:
             from langfuse.langchain import CallbackHandler as LangfuseCallback
+            from langfuse import Langfuse
             
-            # Langfuse v3 API - simple initialization without parameters
-            # The callback will read credentials from environment variables
-            langfuse_handler = LangfuseCallback()
+            # Initialize Langfuse client to ensure it's available for the callback
+            # This ensures the callback can properly send traces
+            langfuse_client = Langfuse(
+                public_key=langfuse_public_key,
+                secret_key=langfuse_secret_key,
+                host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com"),
+            )
+            
+            # Langfuse v3 API - The callback reads credentials from environment variables
+            # LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, and LANGFUSE_HOST are read from env vars
+            # The CallbackHandler only accepts public_key and update_trace as parameters
+            langfuse_handler = LangfuseCallback(
+                public_key=langfuse_public_key,
+            )
             
             all_callbacks.append(langfuse_handler)
-            print(f"✅ Langfuse tracking enabled (user context will be added per call)")
+            print(f"✅ Langfuse tracking enabled (user_id={user_id}, session_id={session_id})")
             
         except ImportError as e:
             print(f"⚠️  Langfuse package import failed: {e}")
             print("💡 Make sure langfuse is installed: pip install langfuse")
         except Exception as e:
             print(f"⚠️  Error initializing Langfuse: {e}")
+            import traceback
+            traceback.print_exc()
     else:
         if not langfuse_enabled:
             print("ℹ️  Langfuse tracking disabled (LANGFUSE_ENABLED=false)")
