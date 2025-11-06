@@ -124,13 +124,15 @@
     <!-- Main results area -->
     <div class="search-main">
       <div class="main-header">
-        <h5 class="main-title">Players</h5>
+        <div class="header-left">
+          <h5 class="main-title">Players</h5>
+        </div>
         <div class="header-center">
           <nav id="pagination" class="pagination-wrapper d-none" aria-label="Page navigation">
             <ul class="pagination mb-0" id="paginationList"></ul>
           </nav>
         </div>
-        <div class="main-actions">
+        <div class="header-right">
           <span id="selectedCount" class="btn btn-outline-primary me-2" role="status" aria-live="polite">0 selected</span>
           <button id="createDashboard" class="btn btn-success" disabled
                   role="button" aria-label="Create comparison dashboard with selected players">
@@ -211,9 +213,33 @@
   padding: 1rem;
   border-bottom: 1px solid #dee2e6;
   background: #f8f9fa;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-areas: "left center right";
   align-items: center;
+  gap: 1rem;
+}
+
+.header-left {
+  grid-area: left;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.header-center {
+  grid-area: center;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.header-right {
+  grid-area: right;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .main-title {
@@ -222,16 +248,55 @@
   font-weight: 600;
 }
 
-.main-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.main-header .pagination-wrapper {
+  margin-top: 0;
 }
 
-/* Center pagination absolutely within header */
-.main-header { position: relative; }
-.header-center { position: absolute; left: 50%; transform: translateX(-50%); display: flex; justify-content: center; }
-.main-header .pagination-wrapper { margin-top: 0; }
+/* Responsive grid adjustments */
+@media (max-width: 992px) {
+  .main-header {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: 
+      "left right"
+      "center center";
+    gap: 0.75rem;
+  }
+  
+  .header-center {
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .main-header {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "left"
+      "center"
+      "right";
+    gap: 0.75rem;
+  }
+  
+  .header-left,
+  .header-center,
+  .header-right {
+    justify-content: center;
+  }
+  
+  .header-right {
+    width: 100%;
+  }
+  
+  .header-right .btn {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .main-title {
+    text-align: center;
+  }
+}
 
 .main-content {
   flex: 1;

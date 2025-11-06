@@ -1,0 +1,3673 @@
+/* ==========================================================================
+   0) Imports and fonts
+   ========================================================================== */
+/* 1) Import Montserrat for the entire site */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+body, h1, h2, h3, h4, h5, h6, .btn, .card {
+  font-family: "Montserrat", sans-serif;
+}
+
+
+/* ==========================================================================
+   1) RESET / GENERAL UTILITIES
+   ========================================================================== */
+/* Generic borders */
+.border {
+  border: 2px solid #222 !important;
+}
+
+/* ==========================================================================
+   TAO Events - Agent Transparency (Blockquote Style)
+   ========================================================================== */
+.bubble-bot blockquote {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-left: 4px solid #0b3d0b;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #495057;
+  animation: fadeInSlide 0.4s ease-out;
+}
+
+.bubble-bot blockquote p {
+  margin: 0.25rem 0;
+}
+
+.bubble-bot blockquote strong {
+  color: #0b3d0b;
+  font-weight: 600;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Legacy TAO styles (keep for backward compatibility) */
+.tao-events {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-left: 4px solid #0b3d0b;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.tao-event {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  animation: fadeInSlide 0.3s ease-out;
+}
+
+.event-message {
+  color: #495057;
+  font-weight: 500;
+}
+
+/* Event type styling */
+.event-action .event-message {
+  color: #0066cc;
+}
+
+.event-success .event-message {
+  color: #0b3d0b;
+}
+
+.event-error .event-message {
+  color: #dc3545;
+}
+
+.event-thinking .event-message {
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Generic "register/login" anchor */
+.link-register {
+  color: #0b3d0b;
+  font-weight: bold;
+  text-decoration: none;
+}
+.link-register:hover {
+  color: #165b16;
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   BUTTONS - Submit Button (Consolidated)
+   ========================================================================== */
+.btn-submit {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.9) 0%, 
+    rgba(20, 90, 20, 0.8) 50%, 
+    rgba(11, 61, 11, 0.9) 100%);
+  border: 1px solid rgba(11, 61, 11, 0.3);
+  border-color: #0b3d0b;
+  color: #fff !important;
+  text-transform: uppercase;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  padding: 1.5rem 2rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.btn-submit:hover {
+  background: linear-gradient(135deg, 
+    rgba(15, 80, 15, 0.95) 0%, 
+    rgba(25, 110, 25, 0.9) 50%, 
+    rgba(15, 80, 15, 0.95) 100%);
+  border-color: #094a09;
+  background-color: #094a09;
+}
+
+
+/* ==========================================================================
+   2) GENERAL BACKGROUND AND EFFECTS
+   ========================================================================== */
+/* Soft color background - removed grass image for faster loading */
+body {
+  position: relative;
+  z-index: 0;
+  background: linear-gradient(135deg, #f0f4f0 0%, #e8f0e8 100%); /* Soft green gradient */
+}
+
+/* ===========================================================================
+   A) GLOBAL FORMS: CHECKBOX/RADIO TICKS TO APP GREEN
+   ======================================================================== */
+.form-check-input:checked {
+  background-color: #0b3d0b !important;
+  border-color: #0b3d0b !important;
+}
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(11, 61, 11, 0.25) !important;
+  border-color: #0b3d0b !important;
+}
+
+/* ===========================================================================
+   B) DASHBOARD COMPARISON LAYOUT UTILITIES
+   ======================================================================== */
+.sticky-sidebar {
+  position: sticky;
+  top: 1rem;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.card-fill {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.card-fill .card-body {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.vh-92 { max-height: 92vh; }
+.vh-80 { max-height: 80vh; }
+
+.hist-row { gap: .5rem !important; }
+
+.chart-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.bg-panel {
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: .5rem;
+  padding: .25rem;
+}
+
+/* Historical charts sizing to avoid overlap */
+.hist-card {
+  height: 240px;            /* normalized height per chart */
+  display: flex;
+  flex-direction: column;
+}
+.hist-card .card-body {
+  flex: 1 1 auto;
+  padding: .5rem !important;
+}
+.hist-card .chart-img {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+@media (min-height: 900px) {
+  .hist-card { height: 280px; }
+}
+
+/* ==========================================================================
+   3) NAVBAR - Fixed header with logo
+   ========================================================================== */
+.navbar.bg-primary {
+  background-color: #0b3d0b !important;  /* dark green */
+  border-color: #064009 !important;      /* darker border optional */
+  min-height: 95px;                      /* Taller header for 75px logo */
+  padding: 0.75rem 0;
+}
+
+/* Fixed navbar - add padding to body to compensate */
+body {
+  padding-top: 95px; /* Match navbar height */
+}
+
+.navbar .navbar-brand,
+.navbar .nav-link {
+  color: #f8f9fa !important;             /* light text */
+}
+.navbar .nav-link:hover {
+  color: #c4e1c4 !important;             /* soft hover */
+}
+
+/* Logo in header */
+.header-logo {
+  height: 75px;
+  width: auto;
+  transition: transform 0.3s ease;
+}
+
+.header-logo-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.header-logo-link:hover .header-logo {
+  transform: scale(1.05);
+}
+
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* My Account dropdown toggle - match HOME style */
+.nav-link.dropdown-toggle {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+}
+
+
+/* ==========================================================================
+   4) LOGO EFFECTS (Removed - logo now only in header)
+   ========================================================================== */
+/* Logo effects removed for cleaner, simpler design */
+
+/* ==========================================================================
+   5) TOOLTIPS WITH LIQUID GLASS EFFECT
+   ========================================================================== */
+.glass-tooltip .tooltip-inner {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.95) 0%, 
+    rgba(20, 90, 20, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.75rem 1rem;
+  max-width: 300px;
+  text-align: center;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.glass-tooltip .tooltip-arrow::before {
+  border-top-color: rgba(11, 61, 11, 0.95);
+}
+
+/* ==========================================================================
+   6) GLOBAL BUTTONS WITH LIQUID GLASS EFFECT
+   ========================================================================== */
+/* Base styles for all buttons */
+.btn {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn:hover {
+  transform: scale(1.02) translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.btn:hover::before {
+  opacity: 1;
+}
+
+.btn:focus {
+  outline: 3px solid #ffd700;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.5);
+}
+
+.btn:focus-visible {
+  outline: 3px solid #ffd700;
+  outline-offset: 2px;
+}
+
+/* Primary buttons - Dark green */
+.btn-primary {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.9) 0%, 
+    rgba(20, 90, 20, 0.8) 50%, 
+    rgba(11, 61, 11, 0.9) 100%);
+  border: 1px solid rgba(11, 61, 11, 0.3);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, 
+    rgba(15, 80, 15, 0.95) 0%, 
+    rgba(25, 110, 25, 0.9) 50%, 
+    rgba(15, 80, 15, 0.95) 100%);
+  border: 1px solid rgba(15, 80, 15, 0.4);
+  color: white;
+}
+
+/* Success buttons - Medium green */
+.btn-success {
+  background: linear-gradient(135deg, 
+    rgba(20, 90, 20, 0.9) 0%, 
+    rgba(32, 140, 32, 0.8) 50%, 
+    rgba(20, 90, 20, 0.9) 100%);
+  border: 1px solid rgba(20, 90, 20, 0.3);
+  color: white;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, 
+    rgba(25, 110, 25, 0.95) 0%, 
+    rgba(40, 160, 40, 0.9) 50%, 
+    rgba(25, 110, 25, 0.95) 100%);
+  border: 1px solid rgba(25, 110, 25, 0.4);
+  color: white;
+}
+
+/* Info buttons - Bluish green */
+.btn-info {
+  background: linear-gradient(135deg, 
+    rgba(13, 202, 240, 0.9) 0%, 
+    rgba(32, 201, 151, 0.8) 50%, 
+    rgba(13, 202, 240, 0.9) 100%);
+  border: 1px solid rgba(13, 202, 240, 0.3);
+  color: white;
+}
+
+.btn-info:hover {
+  background: linear-gradient(135deg, 
+    rgba(20, 220, 255, 0.95) 0%, 
+    rgba(40, 220, 170, 0.9) 50%, 
+    rgba(20, 220, 255, 0.95) 100%);
+  border: 1px solid rgba(20, 220, 255, 0.4);
+  color: white;
+}
+
+/* Outline buttons - Light green */
+.btn-outline-primary {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.1) 0%, 
+    rgba(20, 90, 20, 0.05) 100%);
+  border: 1px solid rgba(11, 61, 11, 0.3);
+  color: #0b3d0b;
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline-primary:hover {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.2) 0%, 
+    rgba(20, 90, 20, 0.1) 100%);
+  border: 1px solid rgba(11, 61, 11, 0.5);
+  color: #0b3d0b;
+}
+
+.btn-outline-secondary {
+  background: linear-gradient(135deg, 
+    rgba(108, 117, 125, 0.1) 0%, 
+    rgba(108, 117, 125, 0.05) 100%);
+  border: 1px solid rgba(108, 117, 125, 0.3);
+  color: #6c757d;
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline-secondary:hover {
+  background: linear-gradient(135deg, 
+    rgba(108, 117, 125, 0.2) 0%, 
+    rgba(108, 117, 125, 0.1) 100%);
+  border: 1px solid rgba(108, 117, 125, 0.5);
+  color: #6c757d;
+}
+
+/* Link buttons */
+.btn-link {
+  background: transparent;
+  border: none;
+  color: #0b3d0b;
+  text-decoration: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.btn-link:hover {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.1) 0%, 
+    rgba(20, 90, 20, 0.05) 100%);
+  color: #0b3d0b;
+  text-decoration: underline;
+  transform: none;
+}
+
+/* Custom submit buttons */
+.btn-submit {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.9) 0%, 
+    rgba(20, 90, 20, 0.8) 50%, 
+    rgba(11, 61, 11, 0.9) 100%);
+  border: 1px solid rgba(11, 61, 11, 0.3);
+  color: white;
+}
+
+/* ==========================================================================
+   7) PAGINATION STYLING - Match app green theme
+   ========================================================================== */
+.pagination-wrapper {
+  display: block !important;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.pagination {
+  margin-top: 0;
+  display: flex !important;
+}
+
+/* Stronger specificity to beat Bootstrap on dynamic items */
+.pagination-wrapper .pagination .page-link {
+  color: #0b3d0b !important;
+  background: linear-gradient(135deg,
+    rgba(11, 61, 11, 0.05) 0%,
+    rgba(20, 90, 20, 0.02) 100%) !important;
+  border: 1px solid rgba(11, 61, 11, 0.2) !important;
+  padding: 0.5rem 0.75rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.pagination-wrapper .pagination .page-link:hover,
+.pagination-wrapper .pagination .page-link:focus,
+.pagination-wrapper .pagination .page-link:active {
+  color: #0b3d0b !important;
+  background: linear-gradient(135deg,
+    rgba(11, 61, 11, 0.15) 0%,
+    rgba(20, 90, 20, 0.08) 100%) !important;
+  border-color: rgba(11, 61, 11, 0.4) !important;
+  transform: translateY(-1px);
+  box-shadow: none !important;
+}
+
+.pagination-wrapper .pagination .page-item.active .page-link,
+.pagination-wrapper .pagination .page-item.active .page-link:focus,
+.pagination-wrapper .pagination .page-item.active .page-link:active {
+  background: linear-gradient(135deg,
+    rgba(11, 61, 11, 0.9) 0%,
+    rgba(20, 90, 20, 0.8) 50%,
+    rgba(11, 61, 11, 0.9) 100%) !important;
+  border-color: rgba(11, 61, 11, 0.5) !important;
+  color: #fff !important;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(11, 61, 11, 0.3) !important;
+}
+
+.pagination-wrapper .pagination .page-item.disabled .page-link {
+  color: #6c757d !important;
+  background: rgba(108, 117, 125, 0.1) !important;
+  border-color: rgba(108, 117, 125, 0.2) !important;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pagination-wrapper .pagination .page-item.disabled .page-link:hover {
+  transform: none;
+  background: rgba(108, 117, 125, 0.1) !important;
+}
+
+
+.btn-submit:hover {
+  background: linear-gradient(135deg, 
+    rgba(15, 80, 15, 0.95) 0%, 
+    rgba(25, 110, 25, 0.9) 50%, 
+    rgba(15, 80, 15, 0.95) 100%);
+  border: 1px solid rgba(15, 80, 15, 0.4);
+  color: white;
+}
+
+/* Small buttons */
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 0.375rem;
+  margin: 3px;
+}
+
+/* Close buttons */
+.btn-close {
+  background: linear-gradient(135deg, 
+    rgba(108, 117, 125, 0.1) 0%, 
+    rgba(108, 117, 125, 0.05) 100%);
+  border: 1px solid rgba(108, 117, 125, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.btn-close:hover {
+  background: linear-gradient(135deg, 
+    rgba(108, 117, 125, 0.2) 0%, 
+    rgba(108, 117, 125, 0.1) 100%);
+  border: 1px solid rgba(108, 117, 125, 0.5);
+}
+
+/* ==========================================================================
+   7) SAVED SEARCHES
+   ========================================================================== */
+.saved-search-item {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.05) 0%, 
+    rgba(20, 90, 20, 0.02) 100%);
+  border: 1px solid rgba(11, 61, 11, 0.1) !important;
+  transition: all 0.3s ease;
+}
+
+.saved-search-item:hover {
+  background: linear-gradient(135deg, 
+    rgba(11, 61, 11, 0.1) 0%, 
+    rgba(20, 90, 20, 0.05) 100%);
+  border-color: rgba(11, 61, 11, 0.2) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.saved-search-item h6 {
+  color: #0b3d0b;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.saved-search-item small {
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+
+.saved-search-item .btn-outline-danger {
+  border: 2px solid #dc3545 !important;
+  color: #dc3545 !important;
+  background-color: #ffebee !important;
+  min-width: 48px;
+  height: 36px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 4px 8px !important;
+  margin: 0 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  gap: 4px;
+}
+
+.saved-search-item .btn-outline-danger i {
+  font-size: 14px;
+}
+
+.saved-search-item .btn-outline-danger span {
+  font-size: 14px;
+}
+
+.saved-search-item .btn-outline-danger:hover {
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+  color: white !important;
+  transform: scale(1.05);
+}
+
+.saved-search-item .btn-outline-primary {
+  min-width: 80px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #0b3d0b !important;
+  color: #0b3d0b !important;
+  background-color: white !important;
+}
+
+/* ==========================================================================
+   8) ACCESSIBILITY
+   ========================================================================== */
+/* Class for screen reader only content */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Improve focus for keyboard navigation */
+.action-btn:focus {
+  outline: 3px solid #ffd700;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.5);
+}
+
+.action-btn:focus-visible {
+  outline: 3px solid #ffd700;
+  outline-offset: 2px;
+}
+
+/* Improve contrast for better readability */
+.btn-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+}
+
+/* Ensure icons don't interfere with screen readers */
+.btn-icon[aria-hidden="true"] {
+  pointer-events: none;
+}
+
+/* Improve keyboard navigation */
+.action-btn:focus .btn-icon {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* ==========================================================================
+   7) FOOTER
+   ========================================================================== */
+footer.site-footer {
+  background-color: #0b3d0b !important;
+  background-image: none !important;
+  color: #f8f9fa !important;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+footer.site-footer img {
+  opacity: 0.8;
+  transition: opacity .2s;
+}
+footer.site-footer img:hover {
+  opacity: 1;
+}
+
+
+/* ==========================================================================
+   5) TYPOGRAPHY / TITLES AND MAIN BUTTONS
+   ========================================================================== */
+/* Uppercase titles, centered and dark green */
+h1.display-5, h2, h4 {
+  text-transform: uppercase;
+  text-align: center;
+  color: #0b3d0b;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+/* Subtitles (p.lead) */
+.lead {
+  text-align: center;
+  color: rgba(0,0,0,0.7);
+  margin-bottom: 2rem;
+}
+/* Main buttons */
+.btn-outline-primary {
+  border-color: #0b3d0b !important;
+  color: #0b3d0b !important;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+}
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background-color: #0b3d0b !important;
+  color: #fff !important;
+}
+
+
+/* ==========================================================================
+   6) PHOTO GALLERY (HOME)
+   ========================================================================== */
+/* Increase image height on mobile */
+@media (max-width: 576px) {
+  #galleryCarousel .carousel-item img {
+    height: 200px !important;
+  }
+}
+/* Light box-shadow */
+#galleryCarousel .carousel-item img {
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+
+/* ==========================================================================
+   7) NEWS TICKER - Continuous scroll
+   ========================================================================== */
+.news-ticker-wrapper {
+  width: 100%;
+  overflow: hidden;
+  background: #0b3d0b;
+  padding: 1rem 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.news-ticker {
+  width: 100%;
+  overflow: hidden;
+}
+
+.news-ticker-content {
+  display: inline-block;
+  white-space: nowrap;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 500;
+  animation: scroll-left 180s linear infinite;
+  padding-left: 100%;
+}
+
+.news-separator {
+  margin: 0 1.5rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 300;
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Pause on hover */
+.news-ticker-content:hover {
+  animation-play-state: paused;
+}
+
+
+/* ==========================================================================
+   8) HOME – LATEST REPORTS
+   ========================================================================== */
+/* Title "Your latest reports" */
+.home-reports-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  font-size: 1.25rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+.home-reports-title svg {
+  font-size: 1.5rem;
+  color: #0b3d0b;
+}
+/* Link below image */
+a.report-link {
+  color: #0b3d0b;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+a.report-link:hover {
+  color: #2a5c2a;
+}
+/* Overlay and zoom on hover */
+.report-thumb {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  border-radius: 4px;
+}
+.report-thumb img {
+  display: block;
+  transition: transform .3s ease;
+}
+.report-thumb::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(11, 61, 11, 0);
+  transition: background .3s ease;
+}
+.report-thumb:hover::after {
+  background: rgba(11, 61, 11, 0.3);
+}
+.report-thumb:hover img {
+  transform: scale(1.05);
+}
+
+
+/* ==========================================================================
+   9) LOGIN PAGE
+   ========================================================================== */
+.login-wrapper {
+  display: flex;
+  align-items: flex-start; /* pushes up */
+  justify-content: center;
+  padding-top: 1vh;
+  padding-bottom: 5vh;
+}
+.login-card {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(8px);
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  padding: 2rem;
+  max-width: 360px;
+  width: 100%;
+}
+.login-logo {
+  max-width: 120px;
+  margin-bottom: 1rem;
+}
+.login-title {
+  color: #0b3d0b;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  font-family: 'Montserrat', serif;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+.login-input {
+  border: 2px solid #0b3d0b;
+}
+.login-card .form-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-transform: uppercase;
+  font-family: 'Montserrat', serif;
+  font-weight: bold;
+  color: #0b3d0b;
+  margin-bottom: 0.5rem;
+}
+.btn-login {
+  background-color: #0b3d0b;
+  color: #fff;
+  text-transform: uppercase;
+  font-weight: bold;
+  border: none;
+}
+.btn-login:hover {
+  background-color: #08320a;
+}
+.login-footer-text {
+  font-size: 0.9rem;
+}
+
+
+/* ==========================================================================
+   10) PROFILE VIEW
+   ========================================================================== */
+.profile-wrapper {
+  padding: 2rem 1rem;
+}
+.profile-card {
+  max-width: 900px;
+  background: rgba(255,255,255,0.9);
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+}
+.avatar-img {
+  width: 350px;
+  height: 350px;
+  object-fit: cover;
+  border: 4px solid #0b3d0b;
+}
+.profile-username {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #0b3d0b;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+.profile-info ul li {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #1a1a1a;
+}
+.team-logo {
+  max-height: 60px;
+}
+.btn-edit-profile {
+  background-color: #0b3d0b;
+  border-color: #0b3d0b;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+.btn-edit-profile:hover {
+  background-color: #165b16;
+  border-color: #165b16;
+}
+
+
+/* ==========================================================================
+   11) PROFILE EDIT FORM
+   ========================================================================== */
+.profile-form-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+.profile-form-card {
+  width: 100%;
+  max-width: 500px;
+  background: rgba(255,255,255,0.9);
+  border: none;
+  border-radius: .5rem;
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,0.1);
+  padding: 2rem;
+}
+.profile-form-card h2 {
+  font-size: 1.75rem;
+  color: #0b3d0b;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.profile-form-card label {
+  font-weight: bold;
+  color: #0b3d0b;
+  text-transform: uppercase;
+}
+.profile-form-card .form-control {
+  border: 2px solid #0b3d0b;
+  border-radius: .25rem;
+  padding: .5rem;
+}
+.profile-form-card .form-control:focus {
+  box-shadow: 0 0 0 .2rem rgba(11,61,11,.25);
+  border-color: #0b3d0b;
+}
+.profile-form-card .btn-save {
+  background-color: #0b3d0b;
+  border-color: #0b3d0b;
+  color: #fff !important;
+  text-transform: uppercase;
+  font-weight: bold;
+  width: 100%;
+  margin-top: 1rem;
+}
+.profile-form-card .btn-save:hover {
+  background-color: #165b16;
+  border-color: #165b16;
+  color: #fff !important;
+}
+.profile-form-card .alert-success {
+  background-color: rgba(11,61,11,.1);
+  color: #0b3d0b;
+  border: 1px solid #0b3d0b;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+
+/* ==========================================================================
+   12) GENERIC FORM CARD (REPORT FORM, REGISTER FORM...)
+   ========================================================================== */
+.form-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+/* -------------- Finder form box -------------- */
+.finder-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.form-card {
+  background: rgba(255,255,255,0.95);
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 900px;
+  box-shadow: 0 0 12px rgba(0,0,0,.15);
+}
+
+.form-card .card-title,
+.form-card .form-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 3rem;
+  color: #0b3d0b;
+  text-align: center;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+.form-card h3 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  color: #004400;
+}
+
+.form-card .control-label,
+.form-card .form-label {
+  text-transform: uppercase;
+  font-family: 'Montserrat', sans-serif;
+  color: #0b3d0b;
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.form-card .form-input,
+.form-card textarea.form-input {
+  border: 1px solid #0b3d0b;
+  font-size: 1.25rem;
+  font-family: 'Montserrat', sans-serif;
+  padding: 0.5rem;
+}
+
+/* unify select-multiple height */
+select[multiple] { min-height: 150px; }
+
+/* --- REPORTS: LIST --- */
+.reports-list-title { 
+  font-family: 'Montserrat', sans-serif; 
+}
+
+.reports-badge { 
+  font-size: .75rem; 
+  max-width: 40ch; 
+}
+
+/* --- REPORTS: DETAIL --- */
+#candidates-table thead th { 
+  text-transform: uppercase; 
+  font-size: .8rem; 
+}
+
+/*------------------- Profile Menu ----------------------*/
+/* 1. Make sure to use the same font family and weights */
+.navbar-nav .nav-link,
+.navbar-brand,
+.navbar-nav .dropdown-item {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+}
+
+/* 2. Dropdown: background and borders consistent with navbar */
+.navbar-dark .dropdown-menu {
+  background-color: #0b3d0b !important;
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+}
+
+/* 3. Dropdown items: text and hover */
+.navbar-dark .dropdown-menu .dropdown-item {
+  color: #fff;                              /* white text */
+  padding: 0.75rem 1.5rem;
+  text-transform: uppercase;                /* uppercase */
+  font-weight: 600;                         /* bold */
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+}
+.navbar-dark .dropdown-menu .dropdown-item:hover,
+.navbar-dark .dropdown-menu .dropdown-item:focus {
+  background-color: rgba(255,255,255,0.15); /* slightly lighten on hover */
+  color: #fff;
+}
+
+/* 4. Softer separator (if you use it) */
+.navbar-dark .dropdown-menu .dropdown-divider {
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* 5. Toggle box same as nav-link but with pointer cursor */
+.navbar-dark .nav-link.dropdown-toggle {
+  color: #fff;
+}
+.navbar-dark .nav-link.dropdown-toggle:hover,
+.navbar-dark .nav-link.dropdown-toggle:focus {
+  color: rgba(255,255,255,0.75);
+}
+
+/* 6. Padding adjustment for more space */
+.navbar-nav .nav-item {
+  margin-left: 1rem;
+}
+
+/* limits the logout form within the navbar to behave like a link */
+.navbar .logout-form {
+    display: inline-flex;          /* behaves like <a> */
+    margin: 0;    
+}
+.navbar .logout-form button {
+    padding: 0;                    /* looks like text */
+    color: var(--bs-navbar-color); /* same color as nav-link */
+    background: none;
+    border: none;
+    line-height: 1;
+}
+.navbar .logout-form button:hover,
+.navbar .logout-form button:focus {
+    color: var(--bs-navbar-hover-color);
+    text-decoration: underline;    /* mimics <a> on hover */
+}
+
+/* ==========================================================================
+   SEARCH DASHBOARD FULLSCREEN LAYOUT
+   ========================================================================== */
+
+.fullscreen-search-wrapper {
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0;
+  margin: 0;
+}
+
+.search-layout {
+  display: flex;
+  height: 100vh;
+  background: white;
+  margin: 0;
+}
+
+.search-sidebar {
+  width: 350px;
+  background: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.sidebar-content {
+  padding: 1rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.search-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+.main-header {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.main-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.main-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.results-container {
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .search-layout {
+    flex-direction: column;
+  }
+  
+  .search-sidebar {
+  width: 100%;
+    height: 300px;
+  }
+  
+  .search-main {
+    height: calc(100vh - 300px);
+  }
+}
+
+/* ==========================================================================
+   13) HOME PAGE RESPONSIVE LAYOUT
+   ========================================================================== */
+/* Wrapper principal with width of 80% */
+.home-page-wrapper {
+  width: 80%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Main container of the home page */
+.home-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 2rem 1rem;
+}
+
+/* Welcome header */
+.home-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+}
+
+.home-welcome {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #0b3d0b;
+  text-transform: uppercase;
+  margin-bottom: 0;
+}
+
+/* Actions section */
+.home-actions {
+  margin-bottom: 4rem;
+  padding: 0 1rem;
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 2rem;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  height: 140px;
+  min-height: 140px;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.action-btn:hover::before {
+  opacity: 1;
+}
+
+/* Unified green palette - ALL buttons same color */
+.action-btn.btn-primary,
+.action-btn.btn-success,
+.action-btn.btn-info {
+  background: #0b3d0b;
+  color: white;
+}
+
+.action-btn.btn-primary:hover,
+.action-btn.btn-success:hover,
+.action-btn.btn-info:hover {
+  background: #0d4d0d;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.btn-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.action-btn:hover .btn-icon {
+  transform: scale(1.1) rotate(5deg);
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-content {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+}
+
+.btn-subtitle {
+  font-size: 0.95rem;
+  font-weight: 400;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Efecto de brillo al hover */
+.action-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    transparent 70%);
+  transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  transition: transform 0.6s ease;
+}
+
+.action-btn:hover::after {
+  transform: translateX(100%) translateY(100%) rotate(45deg);
+}
+
+/* Gallery of images */
+.home-gallery {
+  width: 100%;
+  margin-bottom: 3rem;
+  padding: 0 2rem;
+}
+
+.gallery-image {
+  height: 350px;
+  object-fit: cover;
+  border-radius: 1rem;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+  width: 100%;
+  aspect-ratio: 16/9;
+}
+
+/* News section */
+.home-news {
+  width: 100%;
+}
+
+.news-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0b3d0b;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.news-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Responsive design */
+@media (max-width: 767px) {
+  .action-buttons {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .action-btn {
+    padding: 1.2rem 1.5rem;
+    height: 90px;
+    min-height: 90px;
+  }
+  
+  .btn-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 2rem;
+    margin-right: 1rem;
+  }
+  
+  .btn-title {
+    font-size: 1.4rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .home-page-wrapper {
+    width: 85%;
+    padding: 0 2rem;
+  }
+  
+  .home-container {
+    padding: 2rem 0;
+  }
+  
+  .home-welcome {
+    font-size: 3rem;
+  }
+  
+  .gallery-image {
+    height: 400px;
+    aspect-ratio: 16/9;
+  }
+  
+  .action-buttons {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    max-width: 1200px;
+  }
+  
+  .action-btn {
+    padding: 2rem 2rem;
+    height: 160px;
+    min-height: 160px;
+  }
+  
+  .btn-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 2.2rem;
+    margin-bottom: 0.8rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .home-page-wrapper {
+    width: 80%;
+    padding: 0 3rem;
+  }
+  
+  .home-container {
+    padding: 3rem 0;
+  }
+  
+  .home-welcome {
+    font-size: 3.5rem;
+  }
+  
+  .gallery-image {
+    height: 450px;
+    aspect-ratio: 16/9;
+  }
+  
+  .action-btn {
+    padding: 2rem 2rem;
+    height: 160px;
+    min-height: 160px;
+  }
+  
+  .btn-icon {
+    width: 55px;
+    height: 55px;
+    font-size: 2.4rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .btn-title {
+    font-size: 1.7rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .home-page-wrapper {
+    width: 90%;
+    padding: 0 3rem;
+  }
+  
+  .page-wrapper-80 {
+    width: 92%;
+    max-width: 1800px;
+  }
+  
+  .home-container {
+    padding: 3rem 0;
+  }
+  
+  .home-welcome {
+    font-size: 3.5rem;
+  }
+  
+  .gallery-image {
+    height: 500px;
+    aspect-ratio: 16/9;
+  }
+  
+  .action-btn {
+    padding: 2rem 2rem;
+    height: 150px;
+    min-height: 150px;
+  }
+  
+  .btn-title {
+    font-size: 1.8rem;
+  }
+}
+
+@media (min-width: 1800px) {
+  .page-wrapper-80 {
+    width: 95%;
+    max-width: 2000px;
+  }
+  
+  .home-container {
+    padding: 3rem 2rem;
+  }
+}
+
+/* ==========================================================================
+   14) CHAT PAGE RESPONSIVE LAYOUT
+   ========================================================================== */
+
+/* Fullscreen chat wrapper - bypasses container but keeps navbar */
+.fullscreen-chat-wrapper {
+  width: 100vw;
+  height: calc(100vh - 95px); /* Subtract the height of the navbar */
+  margin-left: calc(-50vw + 50%);
+  background: linear-gradient(135deg, #f0f4f0 0%, #e8f0e8 100%); /* Clean gradient like body */
+  overflow: hidden;
+}
+
+/* Chat logo removed for cleaner design */
+
+/* Welcome message only for new chats */
+.chat-welcome-message {
+  text-align: center;
+  padding: 0;                 /* remove extra vertical padding */
+  background: transparent;
+  border-radius: 0;
+  margin: 0;                  /* remove top/bottom gaps */
+  max-width: none;
+  width: 100%;
+}
+
+.typewriter-wrapper {
+  color: inherit;
+  text-shadow: none;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: center;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.typewriter-text {
+  border-right: none !important;   /* no green cursor */
+}
+/* Wrapper principal of the chat page with width of 80% centered */
+.chat-page-wrapper {
+  width: 80%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  height: calc(100vh - 95px);
+  overflow: hidden;
+}
+
+/* Main container of the chat */
+.chat-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;               /* remove outer padding to kill top/bottom gaps */
+  height: 100%;             /* fill parent, not viewport */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.5); /* consistent background */
+  border-radius: 1rem;
+}
+
+/* Improved chat log */
+.chat-log {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 0;          /* remove gap above the input */
+  padding: 2rem 5%;          /* base padding with percentage sides */
+  background: transparent;   /* inherit from parent container */
+  border-radius: 0;
+  flex: 1;
+  overflow-y: auto;
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.chat-log::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Improved chat form */
+.chat-form {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 2rem 10%;         /* base padding with percentage sides */
+  background: transparent;   /* inherit from parent container */
+  border-radius: 0;
+}
+
+/* Container of the textarea with integrated button */
+.chat-input-container {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto; /* textarea grows, button fits content */
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.25rem 0.25rem 0.5rem; /* inner spacing */
+  border: 2px solid #0b3d0b;            /* green border moved here */
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);  /* unified background */
+}
+
+/* Emphasize container when user focuses the textarea */
+.chat-input-container:focus-within {
+  box-shadow: 0 0 0 0.2rem rgba(11, 61, 11, 0.15);
+}
+
+/* Chat textarea */
+.chat-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 1.75rem; /* ~28px, one line */
+  height: auto;               /* allow JS to set height */
+  max-height: 40vh;           /* cap growth */
+  overflow-y: hidden;         /* hidden until cap is reached */
+  resize: none;               /* growth is automatic */
+  font-size: 1rem;
+  line-height: 1.4;
+  box-sizing: border-box;     /* include padding in width so text wraps earlier */
+  padding: 0.5rem 3.5rem 0.5rem 0.75rem; /* leave space for 2.25rem button + gap */
+  border: none;                /* remove inner border */
+  border-radius: 0.375rem;     /* subtle rounding inside */
+  background: transparent;     /* blend with container */
+}
+
+.chat-input:focus {
+  box-shadow: none;            /* highlight is on container */
+  border-color: transparent;
+  outline: none;
+}
+
+/* Integrated send button - REMOVED DUPLICATE */
+
+/* Download button - separated from the send button */
+.btn-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #0b3d0b;
+  color: white;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  margin: 0.5rem 0;
+}
+
+.btn-download:hover {
+  background: #0d4d0d;
+  color: white;
+  text-decoration: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.btn-download:active {
+  background: #0a3509;
+}
+
+/* Send button - updated with SVG avioncito - HIGH SPECIFICITY */
+button.btn.btn-submit.btn-send {
+  position: static !important;
+  transform: none !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  padding: 0 !important;
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  border-radius: 50% !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  color: #0b3d0b !important;
+  border: none !important;
+  border-color: transparent !important;
+  cursor: pointer !important;
+  min-width: 2.25rem !important;
+  min-height: 2.25rem !important;
+  max-width: 2.25rem !important;
+  max-height: 2.25rem !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  z-index: 1 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+button.btn.btn-submit.btn-send:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: #0b3d0b !important;
+}
+
+button.btn.btn-submit.btn-send:active {
+  transform: scale(0.95) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+button.btn.btn-submit.btn-send:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: #ccc !important;
+  transform: none !important;
+}
+
+/* Send icon styles */
+button.btn.btn-submit.btn-send .send-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+button.btn.btn-submit.btn-send .send-icon svg {
+  width: 32px !important;
+  height: 32px !important;
+  transition: all 0.3s ease;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke: currentColor !important;
+  fill: none !important;
+  color: #0b3d0b !important;
+}
+
+button.btn.btn-submit.btn-send:hover .send-icon svg {
+  transform: translateX(3px) rotate(5deg);
+  stroke-width: 2.2;
+}
+
+button.btn.btn-submit.btn-send:disabled .send-icon {
+  display: none !important;
+}
+
+/* Spinner styles */
+button.btn.btn-submit.btn-send .spinner {
+  display: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid #c3e6cb !important;
+  border-top-color: #0b3d0b !important;
+  border-radius: 50% !important;
+  animation: spin .6s linear infinite !important;
+}
+
+button.btn.btn-submit.btn-send:disabled .spinner {
+  display: inline-block !important;
+}
+
+/* Prevent global .btn:hover scale on send button inside chat input */
+.chat-input-container .btn:hover {
+  transform: none !important;
+}
+
+/* Disable ::before pseudo-element for send button */
+button.btn.btn-submit.btn-send::before {
+  display: none !important;
+}
+
+/* Fix textarea cursor */
+textarea.chat-input {
+  cursor: text !important;
+}
+
+textarea.chat-input:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  background-color: #f8f9fa;
+}
+
+
+/* Chat messages - Simple and clean, no avatars */
+.chat-row {
+  display: flex;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  align-items: flex-end;
+}
+
+/* User messages on the LEFT */
+.chat-user {
+  justify-content: flex-start;
+}
+
+/* Bot messages on the RIGHT */
+.chat-bot {
+  justify-content: flex-end;
+}
+
+.bubble {
+  max-width: 65%;
+  padding: 0.75rem 1rem;
+  word-wrap: break-word;
+  position: relative;
+  line-height: 1.4;
+  border-radius: 8px;
+}
+
+/* Same color for both - simple and clean */
+.bubble-user,
+.bubble-bot {
+  background: rgba(255, 255, 255, 0.7);
+  color: #000;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* -------- Hide chat avatars -------- */
+.chat-avatar {
+  display: none;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   16) LOGO 3D EFFECTS (Removed - cleaner design)
+   ========================================================================== */
+/* Logo 3D effects removed for simpler, faster design */
+
+/* ==========================================================================
+   17) CHAT SIDEBAR LAYOUT
+   ========================================================================== */
+.fullscreen-chat-wrapper .chat-layout {
+  display: flex;
+  gap: 0;
+  height: calc(100vh - 95px);
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+}
+
+.fullscreen-chat-wrapper .chat-sidebar {
+  width: 300px;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 0;
+  padding: 1.5rem;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  border: none;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 95px);
+  overflow: hidden;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #0b3d0b;
+}
+
+.sidebar-title {
+  color: #0b3d0b;
+  font-weight: 700;
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar-content::-webkit-scrollbar {
+  display: none;
+}
+
+.chat-item {
+  display: block;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background: rgba(248, 249, 250, 0.8);
+  border-radius: 12px;
+  text-decoration: none;
+  color: #333;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.chat-item:hover {
+  background: rgba(11, 61, 11, 0.1);
+  transform: translateX(5px);
+  text-decoration: none;
+  color: #333;
+}
+
+.chat-item.active {
+  background: rgba(11, 61, 11, 0.15);
+  border-color: #0b3d0b;
+  color: #0b3d0b;
+  font-weight: 600;
+}
+
+.chat-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.chat-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: inherit;
+}
+
+.chat-date {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-weight: 400;
+}
+
+.chat-preview {
+  font-size: 0.85rem;
+  color: #6c757d;
+  line-height: 1.3;
+}
+
+.no-chats {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #6c757d;
+}
+
+.no-chats p {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.fullscreen-chat-wrapper .chat-main {
+  flex: 1;
+  min-width: 0;
+  height: calc(100vh - 95px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive for chat with sidebar */
+@media (max-width: 768px) {
+  .chat-layout {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .chat-sidebar {
+    width: 100%;
+    max-height: 200px;
+    order: 2;
+  }
+  
+  .chat-main {
+    order: 1;
+  }
+  
+  .sidebar-content {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  
+  .chat-item {
+    min-width: 200px;
+    margin-bottom: 0;
+  }
+}
+
+/* ==========================================================================
+   18) PROFILE PAGE STYLES
+   ========================================================================== */
+.profile-container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin: 2rem 0;
+}
+
+.profile-title {
+  color: #0b3d0b;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.profile-avatar {
+  text-align: center;
+}
+
+.profile-image {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #0b3d0b;
+  box-shadow: 0 8px 20px rgba(11, 61, 11, 0.3);
+  transition: transform 0.3s ease;
+  display: block;
+  margin: 0 auto;
+  background: #f8f9fa;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23e9ecef"/><path d="M50 30c-11.046 0-20 8.954-20 20s8.954 20 20 20 20-8.954 20-20-8.954-20-20-20zm0 6c7.732 0 14 6.268 14 14s-6.268 14-14 14-14-6.268-14-14 6.268-14 14-14zm0 4c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10z" fill="%236c757d"/></svg>');
+  background-size: 80px 80px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.profile-image:hover {
+  transform: scale(1.05);
+}
+
+.profile-image-fallback {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 4px solid #0b3d0b;
+  box-shadow: 0 8px 20px rgba(11, 61, 11, 0.3);
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  margin: 0 auto;
+}
+
+.profile-image-placeholder {
+  text-align: center;
+}
+
+.profile-info {
+  width: 100%;
+  max-width: 600px;
+}
+
+.profile-table {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.profile-table th {
+  background: #0b3d0b;
+  color: white;
+  padding: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  width: 30%;
+}
+
+.profile-table td {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  font-weight: 500;
+}
+
+.profile-table tr:nth-child(even) td {
+  background: rgba(248, 249, 250, 0.9);
+}
+
+.profile-table {
+  margin-bottom: 2rem;
+}
+
+/* Profile-specific submit button override */
+.profile-container .btn-submit {
+  margin-top: 0rem !important;
+}
+
+/* Responsive for profile */
+@media (min-width: 768px) {
+  .profile-content {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 3rem;
+  }
+  
+  .profile-avatar {
+    flex-shrink: 0;
+  }
+  
+  .profile-info {
+    flex: 1;
+  }
+}
+
+/* Responsive for chat */
+@media (max-width: 767px) {
+  .chat-page-wrapper {
+    width: 95%;
+    max-width: none;
+    padding: 1rem 0.5rem;
+  }
+  
+  .chat-container {
+    padding: 0;
+  }
+  
+  .chat-log {
+    padding: 1rem 2%;          /* minimal side padding on mobile */
+    min-height: 400px;
+  }
+  
+  .chat-form {
+    padding: 1rem 3%;          /* minimal side padding on mobile */
+  }
+  
+  .chat-input {
+    font-size: 1rem;
+    padding: 0.75rem 3rem 0.75rem 0.75rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .chat-page-wrapper {
+    width: 85%;
+    max-width: 1000px;
+    padding: 2rem 1rem;
+  }
+  
+  .chat-container {
+    padding: 0;
+  }
+  
+  .chat-log {
+    padding: 2rem 8%;          /* moderate padding on tablets */
+    min-height: 500px;
+  }
+  
+  .chat-form {
+    padding: 2rem 12%;         /* moderate padding on tablets */
+  }
+  
+  .chat-input {
+    font-size: 1rem;
+    padding: 0.75rem 3.5rem 0.75rem 0.75rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .chat-page-wrapper {
+    width: 70%;
+    max-width: 1400px;
+    padding: 2rem 1rem;
+  }
+  
+  .chat-container {
+    padding: 0;
+  }
+  
+  .chat-log {
+    padding: 3rem 15%;         /* 15% side padding on desktop */
+    min-height: 600px;
+  }
+  
+  .chat-form {
+    padding: 3rem 18%;         /* 18% side padding for input area */
+  }
+  
+  .chat-input {
+    font-size: 1.1rem;
+    padding: 1rem 4rem 1rem 1rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .chat-page-wrapper {
+    width: 60%;
+    max-width: 1600px;
+    padding: 2rem 1rem;
+  }
+  
+  .chat-container {
+    padding: 0;
+  }
+  
+  .chat-log {
+    padding: 4rem 15%;         /* 15% side padding for large screens */
+    min-height: 700px;
+  }
+  
+  .chat-form {
+    padding: 4rem 22%;         /* 22% side padding for input on large screens */
+  }
+  
+  .chat-input {
+    font-size: 1.1rem;
+    padding: 1rem 4rem 1rem 1rem;
+  }
+}
+
+/* ==========================================================================
+   15) GENERAL FULL-WIDTH LAYOUT CLASSES
+   ========================================================================== */
+/* Generic class for pages with width of 80% - increased max-width */
+.page-wrapper-80 {
+  width: 90%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Generic class for pages with width of 85% */
+.page-wrapper-85 {
+  width: 85%;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Generic class for pages with width of 75% */
+.page-wrapper-75 {
+  width: 75%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Generic class for pages with width of 90% */
+.page-wrapper-90 {
+  width: 90%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Generic class for pages with width of 95% */
+.page-wrapper-95 {
+  width: 95%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Responsive for the generic classes */
+@media (min-width: 768px) {
+  .page-wrapper-80, .page-wrapper-85, .page-wrapper-75 {
+    padding: 0 2rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .page-wrapper-80, .page-wrapper-85, .page-wrapper-75 {
+    padding: 0 3rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .page-wrapper-80, .page-wrapper-85, .page-wrapper-75 {
+    padding: 0 4rem;
+  }
+}
+
+/* ==========================================================================
+   16) MISCELLANEOUS
+   ========================================================================== */
+
+form.chat-form {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+form.chat-form textarea.chat-input {
+  width: 100% !important;   
+  max-width: none !important;  
+  min-height: 6rem;
+  resize: none;        
+}
+
+textarea.chat-input {
+  width: 100%;
+  min-width: 6rem;            
+  max-width: 80%;       
+  min-height: 6rem;           
+  font-size: 1rem;        
+}
+
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: #d33;
+  cursor: pointer;
+  font-size: 1.4rem;
+}
+.btn-delete:hover { color:#a00; }
+
+.msg-body img {
+    display: block !important;      
+    max-width: 100%;               
+    height: auto;                  
+    margin: 0.75rem 0;             
+}
+
+/* -- WhatsApp style messages -- */
+.chat-row {
+    display: flex;
+    margin: 3rem 1rem;
+    clear: both;
+}
+
+.chat-user {
+    justify-content: flex-end;
+}
+
+.chat-bot {
+    justify-content: flex-start;
+}
+
+.bubble {
+    position: relative;
+    max-width: 75%;
+    padding: 12px 16px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.25s ease-out forwards;
+}
+
+/* Removed - using unified styles defined earlier in the file */
+
+/* -- Entry animation -- */
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Main container of the effect */
+.typewriter-wrapper {
+  display: inline-block;
+  font-size: clamp(2rem, 3.5vw, 2.5rem);  /* Larger text */
+  font-weight: 700;                       /* Bolder */
+  color: #0b3d0b;
+  white-space: nowrap;                    /* keep one line */
+  overflow: visible;                      /* prevent clipping around */
+  max-width: 100%;
+  text-align: center;
+  position: relative;
+  text-transform: uppercase;              /* Ensure uppercase */
+  letter-spacing: 1px;
+}
+
+/* Typewriter text with self-hiding caret */
+.typewriter-text {
+  display: inline-block;
+  overflow: hidden;                        /* hide text while typing */
+  white-space: nowrap;                     /* single line during typing */
+  width: 0;                                /* start hidden */
+  animation: typing var(--dur, 3s) steps(var(--chars, 32), end) forwards; /* reveal characters */
+}
+
+/* Type to a specific number of characters so full text becomes visible */
+@keyframes typing {
+  to { width: var(--tw, 32ch) }
+}
+
+/* hidden by default */
+#thinking-indicator            { display: none; }
+#thinking-indicator.htmx-request { display: flex !important; }
+
+/* rest unchanged */
+.thinking-indicator {
+  align-items: center;
+  gap: .5rem;
+  font-size: .9rem;
+  color: var(--smart-green,#0b3d0b);
+}
+.thinking-indicator .spinner{
+  width:16px;height:16px;
+  border:2px solid #c3e6cb;
+  border-top-color:var(--smart-green,#0b3d0b);
+  border-radius:50%;
+  animation:spin .6s linear infinite
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ==========================================================================
+   STATISTICS TABLE STYLES
+   ========================================================================== */
+
+.card-header {
+  text-align: center;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+}
+
+.table th {
+  text-align: center;
+  vertical-align: middle;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.table td {
+  text-align: center;
+  vertical-align: middle;
+  font-size: 1rem;
+}
+
+/* ==========================================================================
+   FIFA PLAYER CARDS
+   ========================================================================== */
+
+/* Import Saira Semi Condensed font for FIFA cards */
+@import url('https://fonts.googleapis.com/css?family=Saira+Semi+Condensed:300,400,700');
+
+.fut-player-card {
+  position: relative;
+  width: 285px;
+  height: 400px;
+  background: linear-gradient(135deg, #0b3d0b 0%, #1a5a1a 50%, #0b3d0b 100%);
+  border: 2px solid #28a745;
+  border-radius: 15px;
+  padding: 2.5rem 0;
+  z-index: 2;
+  transition: 200ms ease-in;
+  box-shadow: 0 8px 32px rgba(11, 61, 11, 0.3);
+  overflow: hidden;
+}
+
+.fut-player-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    rgba(40, 167, 69, 0.1) 0%, 
+    transparent 25%, 
+    transparent 75%, 
+    rgba(40, 167, 69, 0.1) 100%);
+  pointer-events: none;
+}
+
+.fut-player-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.fut-player-card .player-card-top {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #ffffff;
+  padding: 1.5rem;
+  height: 120px;
+}
+
+.fut-player-card .player-left-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.3rem;
+  flex: 1;
+  margin-top: 2rem;
+}
+
+.fut-player-card .player-position {
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-shadow: 2px 2px #111;
+  font-family: 'Saira Semi Condensed', sans-serif;
+  margin: 0;
+}
+
+.fut-player-card .player-nation {
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  background: rgba(233, 204, 116, 0.1);
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
+  font-family: 'Saira Semi Condensed', sans-serif;
+  margin: 0;
+}
+
+.fut-player-card .player-club-logo {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 0.2rem;
+}
+
+.fut-player-card .player-right-ovr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fut-player-card .ovr-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-shadow: 1px 1px #111;
+  margin-bottom: 0.5rem;
+  margin-top: 1.5rem;
+  font-family: 'Saira Semi Condensed', sans-serif;
+  text-align: center;
+}
+
+.fut-player-card .overall-display {
+  width: 130px;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 4rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 2px 2px #000;
+  font-family: 'Saira Semi Condensed', sans-serif;
+}
+
+.fut-player-card .player-card-bottom {
+  position: relative;
+}
+
+.fut-player-card .player-card-bottom .player-info {
+  display: block;
+  padding: 0.3rem 0;
+  color: #ffffff;
+  width: 90%;
+  margin: 0 auto;
+  height: auto;
+  position: relative;
+  z-index: 2;
+  font-family: 'Saira Semi Condensed', sans-serif;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-name {
+  width: 100%;
+  display: block;
+  text-align: center;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-name span {
+  display: block;
+  text-shadow: 2px 2px #111;
+  margin-top: 4rem;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-features {
+  margin: 0.5rem auto;
+  display: flex;
+  justify-content: center;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-features .player-features-col {
+  border-right: 2px solid rgba(255, 255, 255, 0.2);
+  padding: 0 1.3rem;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-features .player-features-col span {
+  display: flex;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-value {
+  margin-right: 0.3rem;
+  font-weight: 700;
+  min-width: 2rem;
+  flex-shrink: 0;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-title {
+  font-weight: 300;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fut-player-card .player-card-bottom .player-info .player-features .player-features-col:last-child {
+  border: 0;
+}
+
+/* Team Card Styles */
+.fut-team-card {
+  position: relative;
+  width: 450px;
+  height: 210px;
+  background: linear-gradient(135deg, #0b3d0b 0%, #1a5a1a 50%, #0b3d0b 100%);
+  border: 2px solid #28a745;
+  border-radius: 15px;
+  padding: 1rem;
+  z-index: 2;
+  transition: 200ms ease-in;
+  box-shadow: 0 8px 32px rgba(11, 61, 11, 0.3);
+  overflow: hidden;
+  font-family: 'Saira Semi Condensed', sans-serif;
+}
+
+.fut-team-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    rgba(233, 204, 116, 0.1) 0%, 
+    transparent 25%, 
+    transparent 75%, 
+    rgba(233, 204, 116, 0.1) 100%);
+  pointer-events: none;
+}
+
+.fut-team-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.fut-team-card .team-card-content {
+  display: flex;
+  height: 100%;
+  color: #ffffff;
+}
+
+.fut-team-card .team-overall-section {
+  width: 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border-right: 2px solid rgba(255, 255, 255, 0.2);
+  padding-right: 1rem;
+}
+
+.fut-team-card .team-overall-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+.fut-team-card .team-overall-display {
+  font-size: 3.5rem;
+  font-weight: 700;
+  text-shadow: 3px 3px #111;
+  color: #ffffff;
+}
+
+.fut-team-card .team-info-section {
+  width: 70%;
+  padding-left: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.fut-team-card .team-name-centered {
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-shadow: 2px 2px #111;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fut-team-card .team-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.fut-team-card .team-stat-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(233, 204, 116, 0.1);
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+}
+
+.fut-team-card .team-stat-label {
+  font-size: 0.8rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  text-shadow: 1px 1px #111;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fut-team-card .team-stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  text-shadow: 1px 1px #111;
+  flex-shrink: 0;
+}
+
+/* Radar Toggle Styles */
+.radar-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.6rem;
+  margin-top: 0.6rem;
+  gap: 1rem;
+}
+
+.radar-toggle-btn {
+  background: #f8f9fa;
+  border: 2px solid #dee2e6;
+  color: #6c757d;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  font-family: 'Saira Semi Condensed', sans-serif;
+}
+
+.radar-toggle-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.radar-toggle-btn.active {
+  background: linear-gradient(135deg, #0b3d0b 0%, #1a5a1a 100%);
+  border-color: #0b3d0b;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(11, 61, 11, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .fut-player-card {
+    width: 260px;
+    height: 420px;
+  }
+  
+  .fut-team-card {
+    width: 320px;
+    height: 140px;
+  }
+  
+  .fut-player-card .player-card-top {
+    height: 100px;
+    padding: 1rem;
+  }
+  
+  .fut-player-card .overall-display {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+  
+  .fut-player-card .player-position {
+    font-size: 1.2rem;
+  }
+  
+  .fut-player-card .player-nation {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .fut-team-card .team-overall-display {
+    font-size: 2.5rem;
+  }
+  
+  .fut-team-card .team-name-centered {
+    font-size: 1.1rem;
+  }
+  
+  .fut-team-card .team-stats-grid {
+    gap: 0.2rem;
+  }
+  
+  .fut-team-card .team-stat-value {
+    font-size: 0.9rem;
+  }
+  
+  .fut-team-card .team-stat-label {
+    font-size: 0.6rem;
+  }
+}
+
+/* Override for mini rating cards in comparison view - prevent clipping */
+.rating-mini .fut-player-card {
+  height: auto !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  margin: 0 auto;
+}
+
+/* Desktop sizes - larger fonts for readability */
+@media (min-width: 2000px) {
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col {
+    padding: 0 1rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span {
+    font-size: 1.2rem !important;
+    margin-bottom: 0.3rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-value {
+    min-width: 2.2rem !important;
+    font-size: 1.2rem !important;
+    margin-right: 0.4rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-title {
+    font-size: 1rem !important;
+  }
+}
+
+@media (min-width: 1600px) and (max-width: 1999px) {
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col {
+    padding: 0 0.7rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.3rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-value {
+    min-width: 2rem !important;
+    font-size: 1.1rem !important;
+    margin-right: 0.3rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-title {
+    font-size: 0.9rem !important;
+  }
+}
+
+@media (min-width: 1400px) and (max-width: 1599px) {
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col {
+    padding: 0 0.7rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.3rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-value {
+    min-width: 2rem !important;
+    font-size: 1.1rem !important;
+    margin-right: 0.3rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-title {
+    font-size: 0.9rem !important;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col {
+    padding: 0 0.5rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span {
+    font-size: 1rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-value {
+    min-width: 1.8rem !important;
+    font-size: 1rem !important;
+    margin-right: 0.25rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-title {
+    font-size: 0.85rem !important;
+  }
+}
+
+@media (min-width: 1000px) and (max-width: 1199px) {
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col {
+    padding: 0 0.4rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span {
+    font-size: 0.95rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-value {
+    min-width: 1.6rem !important;
+    font-size: 0.95rem !important;
+    margin-right: 0.2rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-title {
+    font-size: 0.8rem !important;
+  }
+}
+
+@media (min-width: 993px) and (max-width: 999px) {
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col {
+    padding: 0 0.3rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-value {
+    min-width: 1.5rem !important;
+    font-size: 0.9rem !important;
+    margin-right: 0.2rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-title {
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Tablet sizes - medium fonts */
+@media (min-width: 769px) and (max-width: 992px) {
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col {
+    padding: 0 0.5rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span {
+    font-size: 1rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-value {
+    min-width: 1.8rem !important;
+    font-size: 1rem !important;
+    margin-right: 0.25rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-title {
+    font-size: 0.8rem !important;
+  }
+}
+
+/* Small tablets - smaller fonts */
+@media (min-width: 577px) and (max-width: 768px) {
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col {
+    padding: 0 0.3rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-value {
+    min-width: 1.5rem !important;
+    font-size: 0.9rem !important;
+    margin-right: 0.2rem !important;
+  }
+
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-title {
+    font-size: 0.7rem !important;
+  }
+}
+
+/* Layout for comparison view player cards */
+.ratings-row { 
+  display: flex; 
+  gap: 0.5rem; 
+  align-items: stretch; 
+  box-sizing: border-box; 
+}
+
+.player-info-col { 
+  flex: 0 0 66%; 
+  min-width: 0; 
+  text-align: center; 
+  box-sizing: border-box; 
+}
+
+.rating-mini { 
+  flex: 0 0 34%; 
+  max-width: 34%; 
+  min-width: 0; 
+  height: 100%; 
+  box-sizing: border-box; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  margin: 0; 
+}
+
+/* Adjust column ratio for screens smaller than 1200px */
+@media (max-width: 1199px) {
+  .player-info-col { 
+    flex: 0 0 58%; 
+  }
+  
+  .rating-mini { 
+    flex: 0 0 42%; 
+    max-width: 42%; 
+  }
+}
+
+.card .ratings-row { 
+  overflow: hidden; 
+}
+
+.card-body { 
+  box-sizing: border-box; 
+  overflow: hidden; 
+}
+
+.rating-mini .overall-display { 
+  width: 80px; 
+  height: 80px; 
+  font-size: 1.8rem; 
+  font-weight: 800; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+}
+
+/* Responsive overall-display sizing */
+@media (min-width: 2000px) {
+  .rating-mini .overall-display {
+    width: 90px;
+    height: 90px;
+    font-size: 2rem;
+  }
+}
+
+@media (min-width: 1600px) and (max-width: 1999px) {
+  .rating-mini .overall-display {
+    width: 85px;
+    height: 85px;
+    font-size: 1.9rem;
+  }
+}
+
+@media (min-width: 1400px) and (max-width: 1599px) {
+  .rating-mini .overall-display {
+    width: 85px;
+    height: 85px;
+    font-size: 1.9rem;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .rating-mini .overall-display {
+    width: 75px;
+    height: 75px;
+    font-size: 1.7rem;
+  }
+}
+
+@media (min-width: 1000px) and (max-width: 1199px) {
+  .rating-mini .overall-display {
+    width: 70px;
+    height: 70px;
+    font-size: 1.6rem;
+  }
+}
+
+@media (min-width: 993px) and (max-width: 999px) {
+  .rating-mini .overall-display {
+    width: 65px;
+    height: 65px;
+    font-size: 1.5rem;
+  }
+}
+
+/* Responsive card sizing - adjust fut-player-card width within rating-mini container */
+@media (min-width: 2000px) {
+  .rating-mini .fut-player-card {
+    width: 70% !important;
+    max-width: 300px !important;
+    padding: 0.5rem !important;
+  }
+}
+
+@media (min-width: 1600px) and (max-width: 1999px) {
+  .rating-mini .fut-player-card {
+    width: 85% !important;
+    max-width: 280px !important;
+    padding: 0.4rem !important;
+  }
+}
+
+@media (min-width: 1400px) and (max-width: 1599px) {
+  .rating-mini .fut-player-card {
+    width: 85% !important;
+    max-width: 280px !important;
+    padding: 0.4rem !important;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .rating-mini .fut-player-card {
+    width: 95% !important;
+    max-width: 270px !important;
+    padding: 0.35rem !important;
+  }
+}
+
+@media (min-width: 1000px) and (max-width: 1199px) {
+  .rating-mini .fut-player-card {
+    width: 100% !important;
+    max-width: 260px !important;
+    padding: 0.3rem !important;
+  }
+}
+
+@media (min-width: 993px) and (max-width: 999px) {
+  .rating-mini .fut-player-card {
+    width: 100% !important;
+    max-width: 250px !important;
+    padding: 0.25rem !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+  .rating-mini .fut-player-card {
+    width: 100% !important;
+    max-width: 240px !important;
+  }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+  .rating-mini .fut-player-card {
+    width: 100% !important;
+    max-width: 220px !important;
+  }
+}
+
+/* Two-column alignment: push content to separator line - responsive padding */
+@media (min-width: 576px) and (max-width: 768px) {
+  
+  .col-left .ratings-row { 
+    padding-right: 10px; 
+    padding-left: 4px; 
+  }
+  
+  .col-right .ratings-row { 
+    padding-left: 10px; 
+    padding-right: 4px; 
+  }
+  
+  .col-left .card-body { 
+    padding-right: 0 !important; 
+  }
+  
+  .col-right .card-body { 
+    padding-left: 8px !important; 
+  }
+  
+  .col-left .rating-mini { 
+    margin-right: 0 !important; 
+    margin-left: auto; 
+  }
+  
+  .col-right .rating-mini { 
+    margin-left: 0 !important; 
+    margin-right: auto; 
+  }
+  
+  /* Fallback */
+  .row.mb-3 > div:nth-child(odd) .ratings-row { 
+    padding-right: 10px !important; 
+    padding-left: 4px !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(even) .ratings-row { 
+    padding-left: 10px !important; 
+    padding-right: 4px !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(odd) .card-body { 
+    padding-right: 0 !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(even) .card-body { 
+    padding-left: 8px !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(odd) .rating-mini { 
+    margin-left: auto !important; 
+    margin-right: 0 !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(even) .rating-mini { 
+    margin-right: auto !important; 
+    margin-left: 0 !important; 
+  }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+  .col-left .ratings-row { 
+    padding-right: 12px; 
+    padding-left: 5px; 
+  }
+  
+  .col-right .ratings-row { 
+    padding-left: 12px; 
+    padding-right: 5px; 
+  }
+  
+  .col-left .card-body { 
+    padding-right: 0 !important; 
+  }
+  
+  .col-right .card-body { 
+    padding-left: 9px !important; 
+  }
+  
+  .col-left .rating-mini { 
+    margin-right: 0 !important; 
+    margin-left: auto; 
+  }
+  
+  .col-right .rating-mini { 
+    margin-left: 0 !important; 
+    margin-right: auto; 
+  }
+  
+  /* Fallback */
+  .row.mb-3 > div:nth-child(odd) .ratings-row { 
+    padding-right: 12px !important; 
+    padding-left: 5px !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(even) .ratings-row { 
+    padding-left: 12px !important; 
+    padding-right: 5px !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(odd) .card-body { 
+    padding-right: 0 !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(even) .card-body { 
+    padding-left: 9px !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(odd) .rating-mini { 
+    margin-left: auto !important; 
+    margin-right: 0 !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(even) .rating-mini { 
+    margin-right: auto !important; 
+    margin-left: 0 !important; 
+  }
+}
+
+@media (min-width: 993px) {
+  .col-left .ratings-row { 
+    padding-right: 16px; 
+    padding-left: 8px; 
+  }
+  
+  .col-right .ratings-row { 
+    padding-left: 16px; 
+    padding-right: 8px; 
+  }
+  
+  .col-left .card-body { 
+    padding-right: 0 !important; 
+  }
+  
+  .col-right .card-body { 
+    padding-left: 12px !important; 
+  }
+  
+  .col-left .rating-mini { 
+    margin-right: 0 !important; 
+    margin-left: auto; 
+  }
+  
+  .col-right .rating-mini { 
+    margin-left: 0 !important; 
+    margin-right: auto; 
+  }
+  
+  /* Fallback */
+  .row.mb-3 > div:nth-child(odd) .ratings-row { 
+    padding-right: 16px !important; 
+    padding-left: 8px !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(even) .ratings-row { 
+    padding-left: 16px !important; 
+    padding-right: 8px !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(odd) .card-body { 
+    padding-right: 0 !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(even) .card-body { 
+    padding-left: 12px !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(odd) .rating-mini { 
+    margin-left: auto !important; 
+    margin-right: 0 !important; 
+  }
+  
+  .row.mb-3 > div:nth-child(even) .rating-mini { 
+    margin-right: auto !important; 
+    margin-left: 0 !important; 
+  }
+}
+
+/* Medium screens: slightly tighter OVR */
+@media (max-width: 992px) {
+  .rating-mini .overall-display { 
+    width: 60px !important; 
+    height: 60px !important; 
+    font-size: 1.3rem !important; 
+  }
+}
+
+/* Narrow devices up to tablets */
+@media (max-width: 768px) {
+  .rating-mini { 
+    max-width: 260px; 
+  }
+  
+  .rating-mini .overall-display { 
+    width: 64px !important; 
+    height: 64px !important; 
+    font-size: 1.4rem !important; 
+  }
+  
+  .rating-mini .player-card-bottom { 
+    margin-top: 0.5rem !important; 
+  }
+  
+  .rating-mini .player-features { 
+    display: flex; 
+    justify-content: center; 
+    gap: 8px; 
+  }
+  
+  .rating-mini .player-features-col span { 
+    display: flex; 
+    align-items: center; 
+    gap: 4px; 
+  }
+  
+  .rating-mini .player-feature-title { 
+    font-size: 0.75rem; 
+  }
+  
+  .rating-mini .player-feature-value { 
+    font-size: 0.85rem; 
+    min-width: 1.6rem; 
+    text-align: right; 
+  }
+}
+
+/* Mobile-only fixes: stack columns and constrain rating card */
+@media (max-width: 576px) {
+  .ratings-row { 
+    flex-direction: column; 
+    align-items: center; 
+    padding-left: 0 !important; 
+    padding-right: 0 !important; 
+  }
+  
+  .card-body { 
+    padding-left: 6px !important; 
+    padding-right: 6px !important; 
+  }
+  
+  .player-info-col { 
+    flex: 1 1 auto !important; 
+    width: 100%; 
+    text-align: center; 
+  }
+  
+  .rating-mini { 
+    flex: 0 0 auto !important; 
+    width: 100%; 
+    max-width: 180px; 
+    min-width: 0; 
+    margin: 0.5rem auto 0 auto; 
+  }
+  
+  .rating-mini .fut-player-card {
+    width: 100% !important;
+    padding: 0.3rem !important;
+    max-width: 180px !important;
+  }
+  
+  .rating-mini .fut-player-card .overall-display {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 1.1rem !important;
+  }
+  
+  .rating-mini .fut-player-card .player-card-bottom { 
+    margin-top: 0.5rem !important; 
+    padding: 0 !important; 
+  }
+  
+  .rating-mini .fut-player-card .player-card-bottom .player-info { 
+    overflow: hidden !important; 
+    width: 100% !important; 
+    box-sizing: border-box !important; 
+  }
+  
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features { 
+    display: flex !important; 
+    justify-content: center !important; 
+    gap: 2px !important; 
+    padding: 0 !important; 
+    margin: 0.3rem auto !important; 
+    width: 100% !important; 
+    box-sizing: border-box !important; 
+  }
+  
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col { 
+    padding: 0 0.1rem !important;
+    margin: 0 !important; 
+    box-sizing: border-box !important; 
+    border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
+  }
+  
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span { 
+    padding: 0 1px !important; 
+    margin: 0 !important; 
+    box-sizing: border-box !important; 
+    font-size: 0.65rem !important;
+    margin-bottom: 0.1rem !important;
+  }
+  
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-title { 
+    font-size: 0.55rem !important; 
+    margin: 0 !important; 
+    padding: 0 !important; 
+  }
+  
+  .rating-mini .fut-player-card .player-card-bottom .player-info .player-features .player-features-col span .player-feature-value { 
+    font-size: 0.65rem !important; 
+    margin: 0 !important; 
+    padding: 0 !important; 
+    min-width: 1.2rem !important;
+    max-width: 100% !important; 
+    margin-right: 0.1rem !important;
+  }
+}
+
+/* Large screens: cap card width */
+@media (min-width: 1200px) {
+  .rating-mini .fut-player-card { 
+    max-width: 280px; 
+    width: 100%; 
+  }
+}
+
+

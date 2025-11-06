@@ -158,7 +158,7 @@ SITE_ID = 1
 LOGIN_URL            = "users:login"
 LOGOUT_REDIRECT_URL  = "users:login"
 LOGIN_REDIRECT_URL   = "dashboard:home" 
-ACCOUNT_LOGOUT_ON_GET       = True
+ACCOUNT_LOGOUT_ON_GET       = False
 ACCOUNT_LOGOUT_REDIRECT_URL = "users:login" 
 ACCOUNT_AUTHENTICATION_METHODS = {"username", "email"}
 
