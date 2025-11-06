@@ -409,18 +409,51 @@ def comparison_dashboard(request):
 
 @login_required
 def search_api(request):
-    """API for player search"""
+    """API for player search - proxies to FastAPI"""
     from .search_services import search_players, build_search_filters, get_all_players, get_filter_options, get_available_metrics
     import json
+    import requests
     
     if request.method == 'GET':
         action = request.GET.get('action')
         
         if action == 'filter_options':
-            # Return filter options
+            # Proxy to FastAPI with query params for dependent filters
             try:
-                results = get_filter_options()
-                return JsonResponse(results)
+                # Build params list for FastAPI (expects array params)
+                params_list = []
+                for key in ['positions', 'leagues', 'clubs', 'nationalities']:
+                    values = request.GET.getlist(key)
+                    for v in values:
+                        if v:
+                            params_list.append((key, v))
+                
+                # Call FastAPI filter-options endpoint
+                api_url = f"{API_HOST}/players/filter-options"
+                response = requests.get(api_url, params=params_list, timeout=30)
+                response.raise_for_status()
+                return JsonResponse(response.json())
+            except Exception as e:
+                # Fallback to local computation to avoid breaking the UI
+                try:
+                    from .search_services import get_filter_options as local_filter_options
+                    fallback = local_filter_options()
+                    return JsonResponse({'_warning': f'API error: {str(e)}', **fallback})
+                except Exception as e2:
+                    return JsonResponse({'error': f'API error: {str(e)} | Fallback error: {str(e2)}'}, status=400)
+        
+        elif action == 'lookup':
+            # Proxy to FastAPI lookup endpoint
+            try:
+                query = request.GET.get('query', '')
+                limit = request.GET.get('limit', '50')
+                if not query:
+                    return JsonResponse({'players': []})
+                
+                api_url = f"{API_HOST}/players/lookup"
+                response = requests.get(api_url, params={'query': query, 'limit': limit}, timeout=30)
+                response.raise_for_status()
+                return JsonResponse(response.json())
             except Exception as e:
                 return JsonResponse({'error': str(e)}, status=400)
         
@@ -441,12 +474,32 @@ def search_api(request):
                 return JsonResponse({'error': str(e)}, status=400)
     
     elif request.method == 'POST':
-        # Search with filters
+        # Search with filters - proxy to FastAPI
         try:
             data = json.loads(request.body)
-            filters = build_search_filters(data)
-            results = search_players(**filters)
-            return JsonResponse(results)
+            
+            # Build payload for FastAPI
+            payload = {
+                "query": data.get('query') or None,
+                "positions": data.get('positions') if data.get('positions') else None,
+                "leagues": data.get('leagues') if data.get('leagues') else None,
+                "clubs": data.get('clubs') if data.get('clubs') else None,
+                "nationalities": data.get('nationalities') if data.get('nationalities') else None,
+                "age_min": data.get('age_min'),
+                "age_max": data.get('age_max'),
+                "min_minutes": data.get('min_minutes'),
+                "page": data.get('page', 1),
+                "per_page": data.get('per_page', 24),
+                "order": data.get('order', 'minutes_desc'),
+            }
+            
+            # Direct call to FastAPI to avoid double processing
+            api_url = f"{API_HOST}/players/search"
+            response = requests.post(api_url, json=payload, timeout=180)
+            response.raise_for_status()
+            return JsonResponse(response.json())
+        except requests.exceptions.RequestException as e:
+            return JsonResponse({'error': f'API error: {str(e)}'}, status=500)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     
@@ -542,7 +595,7 @@ def player_profile(request, player_id: int):
         }
         metrics = metrics_by_pos.get(pos, DEFAULT_METRICS)
 
-        # Radar clásico (viz_tools) con máximos fijos predefinidos
+        # Classic radar (viz_tools) with predefined fixed maximums
         radar = radar_chart(
             player_name=player["full_name"],
             stats=player,

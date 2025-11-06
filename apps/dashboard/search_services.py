@@ -27,6 +27,7 @@ def search_players(
     leagues: List[str] = None,
     clubs: List[str] = None,
     positions: List[str] = None,
+    nationalities: List[str] = None,
     age_min: int = None,
     age_max: int = None,
     min_minutes: int = None,
@@ -34,7 +35,7 @@ def search_players(
     per_page: int = 20
 ) -> Dict[str, Any]:
     """
-    Searches players with applied filters
+    Searches players with applied filters (all filters are AND conditions)
     
     Parameters
     ----------
@@ -46,6 +47,8 @@ def search_players(
         List of clubs to filter
     positions : List[str]
         List of positions to filter
+    nationalities : List[str]
+        List of nationalities to filter
     age_min : int
         Minimum age
     age_max : int
@@ -63,31 +66,23 @@ def search_players(
         Search results with pagination
     """
     try:
-        # Build search parameters
-        search_params = {
-            "query": query,
+        # Build payload for server-side search (efficient)
+        # All filters are applied as AND conditions
+        payload = {
+            "query": query if query else None,
+            "positions": positions if positions else None,
+            "leagues": leagues if leagues else None,
+            "clubs": clubs if clubs else None,
+            "nationalities": nationalities if nationalities else None,
+            "age_min": age_min,
+            "age_max": age_max,
+            "min_minutes": min_minutes,
             "page": page,
-            "per_page": per_page
+            "per_page": per_page,
+            "order": "minutes_desc",
         }
-        
-        # Add filters if present
-        if leagues:
-            search_params["leagues"] = leagues
-        if clubs:
-            search_params["clubs"] = clubs
-        if positions:
-            search_params["positions"] = positions
-        if age_min is not None:
-            search_params["age_min"] = age_min
-        if age_max is not None:
-            search_params["age_max"] = age_max
-        if min_minutes is not None:
-            search_params["min_minutes"] = min_minutes
-        
-        # Make request to API
-        response = requests.post(f"{API_BASE_URL}/players/search", json=search_params)
+        response = requests.post(f"{API_BASE_URL}/players/search", json=payload, timeout=180)
         response.raise_for_status()
-        
         return response.json()
         
     except requests.exceptions.RequestException as e:
@@ -116,20 +111,26 @@ def get_player_details(player_ids: List[int]) -> List[Dict[str, Any]]:
         List of player data
     """
     try:
-        # Use the /players/all endpoint that already works and filter locally
-        response = requests.get(f"{API_BASE_URL}/players/all", timeout=90)
+        # Use dedicated details endpoint for specific IDs
+        response = requests.post(
+            f"{API_BASE_URL}/players/details",
+            json={"player_ids": player_ids},
+            timeout=60,
+        )
         response.raise_for_status()
+        return response.json()
         
-        all_players = response.json().get('players', [])
-        
-        # Filter only the players we need
-        filtered_players = [p for p in all_players if p.get('id') in player_ids]
-        
-        return filtered_players
-        
-    except requests.exceptions.RequestException as e:
+    except (requests.exceptions.RequestException, requests.exceptions.ConnectionError) as e:
         print(f"Error in get_player_details: {e}")
-        return []
+        # Retry once with shorter timeout
+        try:
+            response = requests.get(f"{API_BASE_URL}/players/all", timeout=60)
+            response.raise_for_status()
+            all_players = response.json().get('players', [])
+            filtered_players = [p for p in all_players if p.get('id') in player_ids]
+            return filtered_players
+        except:
+            return []
 
 def get_all_players() -> Dict[str, Any]:
     """
@@ -141,7 +142,7 @@ def get_all_players() -> Dict[str, Any]:
         List of all players with their data
     """
     try:
-        response = requests.get(f"{API_BASE_URL}/players/all", timeout=90)
+        response = requests.get(f"{API_BASE_URL}/players/all", timeout=120)
         response.raise_for_status()
         
         return response.json()
@@ -149,8 +150,8 @@ def get_all_players() -> Dict[str, Any]:
     except requests.exceptions.RequestException as e:
         # Fallback: get players in batches
         try:
-            # Get some example players
-            response = requests.get(f"{API_BASE_URL}/players/search", params={"limit": 1000})
+            # Get all players instead of using /players/search without query
+            response = requests.get(f"{API_BASE_URL}/players/all", params={"limit": 1000}, timeout=90)
             response.raise_for_status()
             return response.json()
         except:
@@ -166,8 +167,10 @@ def get_filter_options() -> Dict[str, List[str]]:
         Dictionary with options per filter
     """
     try:
-        # Use the FastAPI endpoint that gets all unique options
-        response = requests.get('http://api:8001/players/filter-options', timeout=120)
+        # Use FastAPI endpoint with dependent filters (all optional)
+        params = {}
+        # In this context we don't have current selections; leave empty
+        response = requests.get(f'{API_BASE_URL}/players/filter-options', params=params, timeout=180)
         if response.status_code == 200:
             return response.json()
         else:
@@ -245,7 +248,7 @@ def get_comparison_data(players: List[Dict[str, Any]], metrics: List[str] = None
 
 def build_search_filters(request_data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Builds search filters from request data
+    Builds search filters from request data (all filters are AND conditions)
     
     Parameters
     ----------
@@ -260,18 +263,24 @@ def build_search_filters(request_data: Dict[str, Any]) -> Dict[str, Any]:
     filters = {}
     
     # Text search
-    if request_data.get('query'):
-        filters['query'] = request_data['query']
+    query = request_data.get('query')
+    if query and query.strip():
+        filters['query'] = query.strip()
     
-    # List filters
-    for filter_name in ['leagues', 'clubs', 'positions']:
-        if request_data.get(filter_name):
-            filters[filter_name] = request_data[filter_name]
+    # List filters - only include if list is not empty
+    for filter_name in ['leagues', 'clubs', 'positions', 'nationalities']:
+        value = request_data.get(filter_name)
+        if value and isinstance(value, list) and len(value) > 0:
+            filters[filter_name] = value
     
-    # Numeric filters
+    # Numeric filters - only include if not None
     for filter_name in ['age_min', 'age_max', 'min_minutes']:
-        if request_data.get(filter_name):
-            filters[filter_name] = int(request_data[filter_name])
+        value = request_data.get(filter_name)
+        if value is not None:
+            try:
+                filters[filter_name] = int(value)
+            except (ValueError, TypeError):
+                pass
     
     # Pagination
     filters['page'] = int(request_data.get('page', 1))
@@ -317,7 +326,7 @@ def get_available_metrics() -> List[str]:
     """
     try:
         # Get an example player to see what metrics are available
-        response = requests.get(f"{API_BASE_URL}/players/search", params={"limit": 1})
+        response = requests.get(f"{API_BASE_URL}/players/all", params={"limit": 1}, timeout=90)
         response.raise_for_status()
         data = response.json()
         

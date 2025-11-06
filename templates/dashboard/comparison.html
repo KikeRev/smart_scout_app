@@ -32,12 +32,12 @@
   <!-- Player cards -->
   <div class="row mb-3">
     {% for player in players %}
-    <div class="col-md-{% if player_count == 1 %}12{% elif player_count == 2 %}6{% else %}4{% endif %}">
+    <div class="{% if player_count == 1 %}col-12{% elif player_count == 2 %}col-12 col-sm-6{% else %}col-12 col-sm-6{% endif %} {% if forloop.counter0|divisibleby:2 %}col-left{% else %}col-right{% endif %}">
       <div class="card h-100">
-        <div class="card-body text-center" style="display:flex; gap:0.5rem; align-items:stretch;">
+        <div class="card-body text-center ratings-row">
           
           <!-- Player information -->
-          <div style="flex:0 0 75%; min-width:0; text-align:center;">
+          <div class="player-info-col">
           {% if player.team_logo %}
             <img src="{{ player.team_logo }}" alt="{{ player.club }} logo" class="img-fluid mb-2" style="max-height: 60px; max-width: 60px;" onerror="this.style.display='none'">
           {% endif %}
@@ -67,16 +67,16 @@
           </div>
 
           <!-- Mini FIFA rating card (25%) -->
-          <div style="flex:0 0 25%; height:100%; min-width:140px;">
+          <div class="rating-mini">
             {% with pid=player|player_id_of %}
             {% with r=ratings_map|dict_get:pid %}
             {% if r %}
-            <div class="fut-player-card h-100 w-100" style="padding:0.75rem;">
+            <div class="fut-player-card h-100 w-100" style="padding:0.25rem;">
               <div class="player-card-top" style="display: flex; justify-content: center; align-items: center;">
                 
                 <div class="player-right-ovr" style="display: flex; justify-content: center; align-items: center;">
                   <div class="ovr-title">OVR</div>
-                  <div class="overall-display"style="width: 100px; height: 100px; font-size: 2rem; font-weight: 800;">{{ r.overall_rating }}</div>
+                  <div class="overall-display">{{ r.overall_rating }}</div>
                 </div>
               </div>
               <div class="player-card-bottom" style="margin-top:2.5rem;">

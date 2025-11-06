@@ -13,7 +13,7 @@
       rel="stylesheet">
     
     <!-- Own styles -->
-    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v=3.0">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v=3.1">
 
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 </head>
@@ -79,9 +79,12 @@
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
-                      <a class="dropdown-item" href="{% url 'users:logout' %}">
-                        LOGOUT
-                      </a>
+                      <form method="post" action="{% url 'users:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item">
+                          LOGOUT
+                        </button>
+                      </form>
                     </li>
                   </ul>
                 </li>

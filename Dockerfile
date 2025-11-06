@@ -30,11 +30,13 @@ RUN uv pip install . --system --no-cache-dir
 # ─────────────────────────────────────────────────────────────────
 COPY . .
 
-
+# ---- Entrypoint script -----------------------------------
+COPY scripts/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 # ---- Non-privileged user -----------------------------------
 RUN useradd -m -u 1001 scout
-RUN mkdir -p /app/media/charts && chown -R scout:scout /app/media
+RUN mkdir -p /app/media/charts /app/staticfiles && chown -R scout:scout /app/media /app/staticfiles
 USER scout
 
 ENV PYTHONUNBUFFERED=1 \
@@ -42,4 +44,5 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app   
 
 EXPOSE 8000 8501 8888
-CMD ["bash"]    # the docker-compose overrides this CMD
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["gunicorn", "config.wsgi:application", "-b", "0.0.0.0:8000", "--workers", "2", "--threads", "2", "--timeout", "300", "--graceful-timeout", "30", "--max-requests", "1000", "--max-requests-jitter", "50", "--access-logfile", "-", "--error-logfile", "-"]

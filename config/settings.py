@@ -60,6 +60,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files in production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -101,6 +102,11 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PASSWORD", "scout"),
         "HOST": os.getenv("DB_HOST", "db"),
         "PORT": os.getenv("DB_PORT", "5432"),
+        "OPTIONS": {
+            "connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "30")),
+            "options": "-c statement_timeout={}".format(os.getenv("DB_STATEMENT_TIMEOUT", "300000")),  # 5 minutes
+        },
+        "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "600")),  # 10 minutes connection pool
     }
 }
 
@@ -152,7 +158,7 @@ SITE_ID = 1
 LOGIN_URL            = "users:login"
 LOGOUT_REDIRECT_URL  = "users:login"
 LOGIN_REDIRECT_URL   = "dashboard:home" 
-ACCOUNT_LOGOUT_ON_GET       = True
+ACCOUNT_LOGOUT_ON_GET       = False
 ACCOUNT_LOGOUT_REDIRECT_URL = "users:login" 
 ACCOUNT_AUTHENTICATION_METHODS = {"username", "email"}
 
@@ -165,6 +171,21 @@ TEMPLATES[0]["DIRS"] = [ BASE_DIR / "templates" ]
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [ BASE_DIR / "static" ]   # add your folder
 STATIC_ROOT  = BASE_DIR / "staticfiles"      # para collectstatic
+
+# WhiteNoise configuration for serving static files in production
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": MEDIA_ROOT,
+            "base_url": MEDIA_URL,
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+WHITENOISE_MAX_AGE = int(os.getenv("WHITENOISE_MAX_AGE", "31536000"))  # 1 year cache
 
 MARKDOWNIFY = {
     "bleach": {

@@ -53,31 +53,56 @@ def get_llm(
     all_callbacks = callbacks or []
     
     # Check if Langfuse is enabled and keys are available
-    langfuse_enabled = os.getenv("LANGFUSE_ENABLED", "true").lower() == "true"
+    langfuse_enabled_raw = os.getenv("LANGFUSE_ENABLED", "true")
+    langfuse_enabled = langfuse_enabled_raw.strip().lower() in ("true", "1", "yes", "on")
     langfuse_public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
     langfuse_secret_key = os.getenv("LANGFUSE_SECRET_KEY")
+    
+    # Debug: log the actual values (masked keys)
+    if langfuse_public_key:
+        masked_pk = langfuse_public_key[:10] + "..." if len(langfuse_public_key) > 10 else langfuse_public_key
+    else:
+        masked_pk = None
     
     if langfuse_enabled and langfuse_public_key and langfuse_secret_key:
         try:
             from langfuse.langchain import CallbackHandler as LangfuseCallback
+            from langfuse import Langfuse
             
-            # Langfuse v3 API - simple initialization without parameters
-            # The callback will read credentials from environment variables
-            langfuse_handler = LangfuseCallback()
+            # Initialize Langfuse client to ensure it's available for the callback
+            # This ensures the callback can properly send traces
+            langfuse_client = Langfuse(
+                public_key=langfuse_public_key,
+                secret_key=langfuse_secret_key,
+                host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com"),
+            )
+            
+            # Langfuse v3 API - The callback reads credentials from environment variables
+            # LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, and LANGFUSE_HOST are read from env vars
+            # The CallbackHandler only accepts public_key and update_trace as parameters
+            langfuse_handler = LangfuseCallback(
+                public_key=langfuse_public_key,
+            )
             
             all_callbacks.append(langfuse_handler)
-            print(f"✅ Langfuse tracking enabled (user context will be added per call)")
+            print(f"✅ Langfuse tracking enabled (user_id={user_id}, session_id={session_id})")
             
         except ImportError as e:
             print(f"⚠️  Langfuse package import failed: {e}")
             print("💡 Make sure langfuse is installed: pip install langfuse")
         except Exception as e:
             print(f"⚠️  Error initializing Langfuse: {e}")
+            import traceback
+            traceback.print_exc()
     else:
         if not langfuse_enabled:
-            print("ℹ️  Langfuse tracking disabled (LANGFUSE_ENABLED=false)")
+            print(f"ℹ️  Langfuse tracking disabled (LANGFUSE_ENABLED={langfuse_enabled_raw!r}, parsed={langfuse_enabled})")
+        elif not langfuse_public_key:
+            print("ℹ️  Langfuse tracking disabled (missing LANGFUSE_PUBLIC_KEY)")
+        elif not langfuse_secret_key:
+            print("ℹ️  Langfuse tracking disabled (missing LANGFUSE_SECRET_KEY)")
         else:
-            print("ℹ️  Langfuse tracking disabled (missing API keys)")
+            print("ℹ️  Langfuse tracking disabled (unknown reason)")
 
     return ChatOpenAI(
         api_key=api_key,

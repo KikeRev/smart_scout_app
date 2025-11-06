@@ -1,4 +1,4 @@
-<h1 align="center">SMART SCOUT APP v1.6.2</h1>
+<h1 align="center">SMART SCOUT APP v1.6.3</h1>
 
 <p align="center">
   <img src="./static/img/app_logo_6.png" alt="Logo">
@@ -28,7 +28,7 @@
 
 # 🌟 Overview
 
-**Smart Scout App v1.6.1** is an advanced football scouting platform that helps teams discover, evaluate, and compare players using AI-powered analysis, FIFA-style ratings, and comprehensive statistical insights.
+**Smart Scout App v1.6.3** is an advanced football scouting platform that helps teams discover, evaluate, and compare players using AI-powered analysis, FIFA-style ratings, and comprehensive statistical insights.
 
 ## What Makes Smart Scout Unique?
 
@@ -1780,6 +1780,26 @@ docker-compose restart redis
 docker-compose logs -f api | grep "CONTEXT"
 ```
 
+#### Logout Not Working in Production
+```bash
+# Symptom: Logout button doesn't work when accessed from secondary domain
+# Cause: Missing domain in CSRF_TRUSTED_ORIGINS
+
+# Solution: Add all production domains to .env
+CSRF_TRUSTED_ORIGINS=https://domain1.aws.bain.dev,https://domain2.aws.bain.dev
+
+# Verify current settings
+docker exec app printenv | grep CSRF_TRUSTED_ORIGINS
+
+# Restart containers
+docker restart app
+
+# Also recommended for production:
+DEBUG=false
+SESSION_COOKIE_SECURE=true
+CSRF_COOKIE_SECURE=true
+```
+
 #### Test Failures
 ```bash
 # Install test dependencies
@@ -1815,7 +1835,30 @@ docker-compose exec api python -m pytest tests/unit/test_validation.py::TestPlay
 
 # 🚀 Version Releases
 
-## 📦 Current Release: v1.6.1 (October 2025)
+## 📦 Current Release: v1.6.3 (November 2025)
+
+### 🐛 Bug Fixes & Production Improvements
+
+**Responsive UI Fix:**
+- ✅ **Player Search Grid Layout**: Fixed pagination buttons overlapping with action buttons on small screens
+- ✅ **CSS Grid Implementation**: Added responsive grid to `main-header` div for better mobile/tablet experience
+- ✅ **Media Queries**: Breakpoints at 992px (tablet) and 576px (mobile) for optimal layout adaptation
+- ✅ **Button Stacking**: Action buttons now stack properly on small screens preventing overlap
+
+**Production Issues Documented:**
+- ✅ **CSRF Logout Issue**: Identified and documented logout failure when `CSRF_TRUSTED_ORIGINS` missing secondary domains
+- ✅ **Configuration Guide**: Added troubleshooting section for common production authentication issues
+- ✅ **Multi-Domain Setup**: Documented requirement for all production domains in environment variables
+
+### 🔧 Technical Details
+- **Modified Files**: `templates/dashboard/player_search.html` (HTML structure + CSS Grid)
+- **Grid Layout**: 3-column desktop → 2-column tablet → 1-column mobile
+- **Browser Compatibility**: Tested on Chrome, Firefox, Safari, Edge
+- **Production Fix**: Added all domains to `CSRF_TRUSTED_ORIGINS` environment variable
+
+---
+
+## 📦 Previous Release: v1.6.1 (October 2025)
 
 ### 🔧 Infrastructure & Developer Experience Improvements
 
@@ -2098,7 +2141,7 @@ This project is proprietary. All rights reserved.
 ---
 
 <p align="center">
-  <strong>Smart Scout App v1.6.1</strong><br/>
+  <strong>Smart Scout App v1.6.3</strong><br/>
   Empowering football teams with intelligent player scouting technology
 </p>
 

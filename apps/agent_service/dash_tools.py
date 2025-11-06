@@ -12,7 +12,7 @@ def dashboard_inline(base_player_id: int, candidate_ids: list[int]) -> dict:
             "base_id": base_player_id,
             "candidate_ids": candidate_ids,
         },
-        timeout=15,
+        timeout=120,  # Increased for heavy queries
     )
     r.raise_for_status()
     return {"url": r.headers["HX-Redirect"]}
